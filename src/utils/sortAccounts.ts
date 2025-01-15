@@ -33,62 +33,58 @@ export const ACCOUNT_SORT_OPTIONS: AccountSortConfig[] = [
   { id: "oldest_modified", label: "Oldest Modified", icon: "timer-outline" },
 ];
 
-function getIdentifier(account: Account): string {
+function getIdentifier(account: Account, displayField?: string): string {
+  if (displayField && account[displayField]) {
+    return String(account[displayField]);
+  }
   return account.email || account.username || account.name || "";
 }
 
-export function sortAccounts(accounts: Account[], sortOption: AccountSortOption): Account[] {
+export function sortAccounts(
+  accounts: Account[],
+  sortOption: AccountSortOption,
+  displayField?: string
+): Account[] {
   const sorted = [...accounts];
 
   switch (sortOption) {
     case "name_asc":
       return sorted.sort((a, b) => {
-        const aId = getIdentifier(a).toLowerCase();
-        const bId = getIdentifier(b).toLowerCase();
+        const aId = getIdentifier(a, displayField).toLowerCase();
+        const bId = getIdentifier(b, displayField).toLowerCase();
         return aId.localeCompare(bId);
       });
-
     case "name_desc":
       return sorted.sort((a, b) => {
-        const aId = getIdentifier(a).toLowerCase();
-        const bId = getIdentifier(b).toLowerCase();
+        const aId = getIdentifier(a, displayField).toLowerCase();
+        const bId = getIdentifier(b, displayField).toLowerCase();
         return bId.localeCompare(aId);
       });
-
     case "recent_added":
       return sorted.sort((a, b) => {
         const aTime = a.createdAt || 0;
         const bTime = b.createdAt || 0;
         return bTime - aTime;
       });
-
     case "oldest_added":
       return sorted.sort((a, b) => {
         const aTime = a.createdAt || 0;
         const bTime = b.createdAt || 0;
         return aTime - bTime;
       });
-
     case "recent_modified":
       return sorted.sort((a, b) => {
         const aTime = a.updatedAt || 0;
         const bTime = b.updatedAt || 0;
         return bTime - aTime;
       });
-
     case "oldest_modified":
       return sorted.sort((a, b) => {
         const aTime = a.updatedAt || 0;
         const bTime = b.updatedAt || 0;
         return aTime - bTime;
       });
-
     default:
       return sorted;
   }
-}
-
-export function getAccountSortLabel(sortOption: AccountSortOption): string {
-  const option = ACCOUNT_SORT_OPTIONS.find((o) => o.id === sortOption);
-  return option?.label || "Sort";
 }

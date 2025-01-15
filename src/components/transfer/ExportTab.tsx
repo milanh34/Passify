@@ -19,7 +19,7 @@ type Selection = {
 
 export default function ExportTab() {
   const { colors, fontConfig } = useTheme();
-  const { database, schemas } = useDb();
+  const { database, schemas, platformsMetadata } = useDb();
 
   const [selection, setSelection] = useState<Selection>({});
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
@@ -28,7 +28,11 @@ export default function ExportTab() {
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
   const [exportedText, setExportedText] = useState("");
 
-  const platformIds = Object.keys(database);
+  const platformIds = Object.keys(database).sort((a, b) => {
+    const nameA = (database[a]?.[0]?.platform || toTitleCase(a.replace(/_/g, " "))).toLowerCase();
+    const nameB = (database[b]?.[0]?.platform || toTitleCase(b.replace(/_/g, " "))).toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
 
   const showToastMessage = (
     message: string,
@@ -91,6 +95,24 @@ export default function ExportTab() {
     });
   };
 
+  const getDisplayField = (platformId: string): string => {
+    return platformsMetadata[platformId]?.displayField || "name";
+  };
+
+  const getAccountDisplayValue = (account: any, platformId: string): string => {
+    const displayField = getDisplayField(platformId);
+    return account[displayField] || account.name || "Unnamed Account";
+  };
+
+  const getSortedAccounts = (accounts: any[], platformId: string): any[] => {
+    const displayField = getDisplayField(platformId);
+    return [...accounts].sort((a, b) => {
+      const valueA = (a[displayField] || a.name || "").toLowerCase();
+      const valueB = (b[displayField] || b.name || "").toLowerCase();
+      return valueA.localeCompare(valueB);
+    });
+  };
+
   const selectAll = () => {
     const newSelection: Selection = {};
     platformIds.forEach((platformId) => {
@@ -115,13 +137,21 @@ export default function ExportTab() {
   const handleExport = async () => {
     const selectedData: any = {};
 
-    for (const platformId of platformIds) {
+    const sortedPlatformIds = [...platformIds].sort((a, b) => {
+      const nameA = (database[a]?.[0]?.platform || toTitleCase(a.replace(/_/g, " "))).toLowerCase();
+      const nameB = (database[b]?.[0]?.platform || toTitleCase(b.replace(/_/g, " "))).toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    for (const platformId of sortedPlatformIds) {
       const platformSelection = selection[platformId];
       if (!platformSelection) continue;
 
-      const selectedAccounts = (database[platformId] || []).filter(
+      const rawAccounts = (database[platformId] || []).filter(
         (acc: any) => platformSelection.accounts[acc.id]
       );
+
+      const selectedAccounts = getSortedAccounts(rawAccounts, platformId);
 
       if (selectedAccounts.length > 0) {
         const platformName =
@@ -230,7 +260,8 @@ export default function ExportTab() {
           </View>
         ) : (
           platformIds.map((platformId) => {
-            const accounts = database[platformId] || [];
+            const rawAccounts = database[platformId] || [];
+            const accounts = getSortedAccounts(rawAccounts, platformId);
             const platformName =
               accounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
             const isExpanded = expandedPlatforms.has(platformId);
@@ -348,7 +379,7 @@ export default function ExportTab() {
                                     },
                                   ]}
                                 >
-                                  {account.name}
+                                  {getAccountDisplayValue(account, platformId)}
                                 </Text>
                               </Pressable>
                             </MotiView>
