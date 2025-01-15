@@ -1,4 +1,4 @@
-// app/(tabs)/connected-accounts.tsx
+// app/connected-accounts.tsx
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl } from "react-native";
@@ -6,17 +6,17 @@ import { useLocalSearchParams, useRouter, useNavigation, Stack } from "expo-rout
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../../src/context/ThemeContext";
-import { useDb } from "../../src/context/DbContext";
-import { useAuth } from "../../src/context/AuthContext";
-import { useInactivityTracker } from "../../src/utils/inactivityTracker";
-import PlatformIcon from "../../src/components/PlatformIcon";
+import { useTheme } from "../src/context/ThemeContext";
+import { useDb } from "../src/context/DbContext";
+import { useAuth } from "../src/context/AuthContext";
+import { useInactivityTracker } from "../src/utils/inactivityTracker";
+import PlatformIcon from "../src/components/PlatformIcon";
 import {
   findConnectedAccounts,
   ConnectedAccountsResult,
   ConnectedPlatform,
   toTitleCase,
-} from "../../src/utils/connectedAccounts";
+} from "../src/utils/connectedAccounts";
 
 export default function ConnectedAccountsScreen() {
   const { email, sourcePlatform, sourceAccountId, sourceAccountName } = useLocalSearchParams<{
@@ -90,16 +90,21 @@ export default function ConnectedAccountsScreen() {
     }
   };
 
-  const handleNavigateToPlatform = (platformKey: string, platformName: string) => {
+  const handleNavigateToPlatform = (
+    platformKey: string,
+    platformName: string,
+    accountId?: string
+  ) => {
     if (isAuthEnabled) {
       updateActivity();
     }
-
     router.push({
-      pathname: "/(tabs)/accounts",
+      pathname: "/accounts",
       params: {
         platform: platformName,
         key: platformKey,
+        highlightAccountId: accountId || "",
+        fromConnectedAccounts: "true",
       },
     });
   };
@@ -173,7 +178,10 @@ export default function ConnectedAccountsScreen() {
             <View style={styles.platformHeaderRight}>
               {!isSourcePlatform && (
                 <Pressable
-                  onPress={() => handleNavigateToPlatform(item.platformKey, item.platformName)}
+                  onPress={() => {
+                    const firstAccountId = item.accounts[0]?.accountId;
+                    handleNavigateToPlatform(item.platformKey, item.platformName, firstAccountId);
+                  }}
                   style={[
                     styles.goButton,
                     {
@@ -226,7 +234,16 @@ export default function ConnectedAccountsScreen() {
                           delay: accIndex * 50,
                         }}
                       >
-                        <View
+                        <Pressable
+                          onPress={() => {
+                            if (!isSourcePlatform) {
+                              handleNavigateToPlatform(
+                                item.platformKey,
+                                item.platformName,
+                                account.accountId
+                              );
+                            }
+                          }}
                           style={[
                             styles.accountItem,
                             {
@@ -238,6 +255,9 @@ export default function ConnectedAccountsScreen() {
                                 : colors.cardBorder,
                             },
                           ]}
+                          android_ripple={
+                            !isSourcePlatform ? { color: colors.accent + "22" } : undefined
+                          }
                         >
                           <Ionicons
                             name="person-circle"
@@ -275,7 +295,7 @@ export default function ConnectedAccountsScreen() {
                               <Ionicons name="checkmark" size={12} color="#fff" />
                             </View>
                           )}
-                        </View>
+                        </Pressable>
                       </MotiView>
                     );
                   })}

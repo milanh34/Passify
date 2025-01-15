@@ -239,7 +239,7 @@ export default function ManageScreen() {
       if (hasMatchedAccounts) {
         const matchedIds = matchInfo.matchedAccounts!.map((acc) => acc.id);
         router.push({
-          pathname: "/(tabs)/accounts",
+          pathname: "/accounts",
           params: {
             platform: platformName,
             key: platformKey,
@@ -249,7 +249,7 @@ export default function ManageScreen() {
         });
       } else {
         router.push({
-          pathname: "/(tabs)/accounts",
+          pathname: "/accounts",
           params: { platform: platformName, key: platformKey },
         });
       }

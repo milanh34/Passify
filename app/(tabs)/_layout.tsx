@@ -97,11 +97,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="accounts" options={{ href: null, title: "Accounts" }} />
-      <Tabs.Screen
-        name="connected-accounts"
-        options={{ href: null, title: "Connected Accounts" }}
-      />
     </Tabs>
   );
 }
