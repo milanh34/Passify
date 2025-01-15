@@ -25,6 +25,13 @@ import {
   DateFormatOption,
   DATE_FORMAT_OPTIONS,
 } from "../src/utils/dateFormat";
+import {
+  getPhoneFormat,
+  setPhoneFormat,
+  getPhoneFormatLabel,
+  PhoneFormatOption,
+  PHONE_FORMAT_OPTIONS,
+} from "../src/utils/phoneFormat";
 
 export default function Settings() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } =
@@ -46,6 +53,7 @@ export default function Settings() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [renderKey, setRenderKey] = useState(0);
   const [dateFormat, setDateFormatState] = useState<DateFormatOption>("DD/MM/YYYY");
+  const [phoneFormat, setPhoneFormatState] = useState<PhoneFormatOption>("PLAIN");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
@@ -80,6 +88,14 @@ export default function Settings() {
       setDateFormatState(format);
     };
     loadDateFormat();
+  }, []);
+
+  useEffect(() => {
+    const loadPhoneFormat = async () => {
+      const format = await getPhoneFormat();
+      setPhoneFormatState(format);
+    };
+    loadPhoneFormat();
   }, []);
 
   const toggleSection = (section: string) => {
@@ -222,6 +238,12 @@ export default function Settings() {
     await setDateFormat(format);
     setDateFormatState(format);
     showToastMessage(`Date format set to ${getDateFormatLabel(format)}`, "success");
+  };
+
+  const handlePhoneFormatChange = async (format: PhoneFormatOption) => {
+    await setPhoneFormat(format);
+    setPhoneFormatState(format);
+    showToastMessage(`Phone format set to ${getPhoneFormatLabel(format)}`, "success");
   };
 
   const handleReplayTutorial = () => {
@@ -904,6 +926,80 @@ export default function Settings() {
                     </Pressable>
                   ))}
                 </View>
+
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="call-outline" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
+                      <Text
+                        style={[
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Phone Format
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {getPhoneFormatLabel(phoneFormat)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.phoneFormatGrid}>
+                  {PHONE_FORMAT_OPTIONS.map((option) => (
+                    <Pressable
+                      key={option.id}
+                      onPress={() => handlePhoneFormatChange(option.id)}
+                      style={[
+                        styles.phoneFormatButton,
+                        {
+                          backgroundColor:
+                            phoneFormat === option.id ? colors.accent + "15" : colors.card,
+                          borderWidth: phoneFormat === option.id ? 2 : 1,
+                          borderColor:
+                            phoneFormat === option.id ? colors.accent : colors.cardBorder,
+                        },
+                      ]}
+                      android_ripple={{ color: colors.accent + "22" }}
+                    >
+                      <Text
+                        style={[
+                          styles.phoneFormatLabel,
+                          {
+                            color: phoneFormat === option.id ? colors.accent : colors.text,
+                            fontFamily: fontConfig.bold,
+                          },
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.phoneFormatExample,
+                          {
+                            color: phoneFormat === option.id ? colors.accent : colors.muted,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {option.example}
+                      </Text>
+                      {phoneFormat === option.id && (
+                        <View style={styles.phoneFormatCheck}>
+                          <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
+                        </View>
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
               </MotiView>
             )}
           </AnimatePresence>
@@ -1547,6 +1643,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   dateFormatCheck: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+  },
+  phoneFormatGrid: {
+    gap: 8,
+  },
+  phoneFormatButton: {
+    padding: 14,
+    borderRadius: 12,
+    position: "relative",
+  },
+  phoneFormatLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  phoneFormatExample: {
+    fontSize: 12,
+  },
+  phoneFormatCheck: {
     position: "absolute",
     top: 12,
     right: 12,
