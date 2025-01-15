@@ -83,13 +83,16 @@ export default function AccountsScreen() {
     updatePlatformSchema,
   } = useDb();
   const insets = useSafeAreaInsets();
-
   const { isAuthEnabled } = useAuth();
   const router = useRouter();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
+
   const lastNavIdRef = useRef<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const scrollPositionRef = useRef<number>(0);
+  const navigatedToConnectedRef = useRef(false);
+  const isInitialMountRef = useRef(true);
+
   const [dateFormat, setDateFormatState] = useState<DateFormatOption>("DD/MM/YYYY");
   const [phoneFormat, setPhoneFormatState] = useState<PhoneFormatOption>("PLAIN");
 
@@ -119,7 +122,6 @@ export default function AccountsScreen() {
     visible: boolean;
     editing?: Account;
   }>({ visible: false });
-
   const [schemaModal, setSchemaModal] = useState(false);
   const [visiblePw, setVisiblePw] = useState<Record<string, boolean>>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -127,30 +129,48 @@ export default function AccountsScreen() {
     visible: boolean;
     item?: any;
   }>({ visible: false });
-
   const [animationKey, setAnimationKey] = useState(0);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
-
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-
   const [sortOption, setSortOption] = useState<AccountSortOption>("recent_added");
   const [sortModalVisible, setSortModalVisible] = useState(false);
-
   const [refreshing, setRefreshing] = useState(false);
-
   const [highlightedAccountIds, setHighlightedAccountIds] = useState<Set<string>>(new Set());
   const [showHighlightBanner, setShowHighlightBanner] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       const previousScrollPosition = scrollPositionRef.current;
+      const isReturningFromConnected = navigatedToConnectedRef.current;
+
+      if (isReturningFromConnected) {
+        navigatedToConnectedRef.current = false;
+
+        setVisiblePw({});
+
+        if (previousScrollPosition > 0) {
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              flatListRef.current?.scrollToOffset({
+                offset: previousScrollPosition,
+                animated: false,
+              });
+            }, 50);
+          });
+        }
+
+        if (isAuthEnabled) {
+          updateActivity();
+        }
+
+        return;
+      }
 
       setAnimationKey((prev) => prev + 1);
       setVisiblePw({});
@@ -192,14 +212,15 @@ export default function AccountsScreen() {
         setShowHighlightBanner(false);
       }
 
-      if (previousScrollPosition > 0) {
-        setTimeout(() => {
-          flatListRef.current?.scrollToOffset({
-            offset: previousScrollPosition,
-            animated: false,
-          });
-        }, 100);
+      if (
+        !isInitialMountRef.current &&
+        previousScrollPosition > 0 &&
+        !highlightAccountId &&
+        !expandAccountId
+      ) {
+        scrollPositionRef.current = 0;
       }
+      isInitialMountRef.current = false;
 
       if (isAuthEnabled) {
         updateActivity();
@@ -613,6 +634,7 @@ export default function AccountsScreen() {
     const primaryEmail = getPrimaryEmail(account);
 
     if (!primaryEmail || !platformKey) return;
+    navigatedToConnectedRef.current = true;
 
     router.push({
       pathname: "/connected-accounts",
