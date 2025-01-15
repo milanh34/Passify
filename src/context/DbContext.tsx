@@ -36,6 +36,7 @@ type PlatformMetadata = {
   updatedAt: number;
   icon?: string | null;
   iconColor?: string | null;
+  displayField?: string | null;
 };
 type PlatformsMetadata = Record<string, PlatformMetadata>;
 
@@ -55,6 +56,7 @@ interface DbContextType {
   addPlatform: (key: string, displayName?: string) => void;
   updatePlatformName: (oldKey: string, newName: string) => void;
   updatePlatformIcon: (platformKey: string, icon: string | null, iconColor?: string | null) => void;
+  updatePlatformDisplayField: (platformKey: string, displayField: string | null) => void;
   deletePlatform: (key: string) => void;
   addAccount: (
     platformKey: string,
@@ -350,6 +352,21 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const updatePlatformDisplayField = useCallback(
+    (platformKey: string, displayField: string | null) => {
+      const now = Date.now();
+      setPlatformsMetadata((m) => ({
+        ...m,
+        [platformKey]: {
+          ...m[platformKey],
+          displayField,
+          updatedAt: now,
+        },
+      }));
+    },
+    []
+  );
+
   const deletePlatform = useCallback((key: string) => {
     setDatabase((db) => {
       const { [key]: _, ...rest } = db;
@@ -467,6 +484,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       addPlatform,
       updatePlatformName,
       updatePlatformIcon,
+      updatePlatformDisplayField,
       deletePlatform,
       addAccount,
       updateAccount,
@@ -484,6 +502,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       addPlatform,
       updatePlatformName,
       updatePlatformIcon,
+      updatePlatformDisplayField,
       deletePlatform,
       addAccount,
       updateAccount,
