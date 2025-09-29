@@ -1,0 +1,12 @@
+{
+  "google": [
+    { "id": "g1", "name": "Personal Account", "email": "personal.email@example.com", "password": "securepassword123" },
+    { "id": "g2", "name": "Work Account", "email": "work.email@example.com", "password": "anotherpassword456" }
+  ],
+  "instagram": [
+    { "id": "i1", "name": "Main Profile", "username": "my_insta", "password": "instapassword789" }
+  ],
+  "github": [
+    { "id": "gh1", "name": "Primary GitHub", "username": "my_github_user", "email": "personal.email@example.com", "password": "githubpassword!@#" }
+  ]
+}
