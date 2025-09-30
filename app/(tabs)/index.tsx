@@ -1,87 +1,100 @@
-import * as React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, Platform, StyleSheet as RN } from "react-native";
-import { Link, useRouter } from "expo-router";
-
-type DB = Record<string, any[]>;
+import React, { useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, useColorScheme, Platform, Alert } from "react-native";
+import { useRouter } from "expo-router";
+import { useDb } from "../../src/context/DbContext";
+import FAB from "../../src/components/FAB";
+import FormModal from "../../src/components/FormModal";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PlatformListScreen() {
   const scheme = useColorScheme();
   const router = useRouter();
-  const [data, setData] = React.useState<DB>({});
+  const { database, isDbLoading, addPlatform, updatePlatformName, deletePlatform } = useDb();
 
-  React.useEffect(() => {
-    const db = require("../../assets/database.json") as DB;
-    setData(db);
-  }, []);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingPlatform, setEditingPlatform] = useState<{ key: string; name: string } | null>(null);
 
-  const platforms = React.useMemo(() => Object.keys(data), [data]);
+  const platforms = React.useMemo(() => Object.keys(database).map(key => ({
+    key,
+    name: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " "),
+    count: database[key].length
+  })), [database]);
 
-  const bgTop = scheme === "dark" ? "#0f172a" : "#f8fafc";
-  const bgBottom = scheme === "dark" ? "#0b1220" : "#eef2ff";
-  const card = scheme === "dark" ? "#0b1220" : "#ffffff";
+  const handleOpenAddModal = () => {
+    setEditingPlatform(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenEditModal = (platform: { key: string; name: string }) => {
+    setEditingPlatform(platform);
+    setModalVisible(true);
+  };
+
+  const handleDelete = (key: string, name: string) => {
+    Alert.alert("Delete Platform", `Are you sure you want to delete "${name}" and all its accounts?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deletePlatform(key) },
+    ]);
+  };
+
+  const handleSavePlatform = (data: { name: string }) => {
+    if (editingPlatform) {
+      updatePlatformName(editingPlatform.key, data.name);
+    } else {
+      addPlatform(data.name);
+    }
+  };
+
+  const bg = scheme === "dark" ? "#0f172a" : "#f8fafc";
   const text = scheme === "dark" ? "#e5e7eb" : "#0f172a";
   const sub = scheme === "dark" ? "rgba(229,231,235,0.75)" : "rgba(15,23,42,0.65)";
-  const border = scheme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)";
+  const cardBg = scheme === "dark" ? "#1f2937" : "#fff";
   const accent = scheme === "dark" ? "#22d3ee" : "#4f46e5";
 
+  if (isDbLoading) return <View style={[styles.root, { backgroundColor: bg }]}><Text style={{ color: text }}>Loading...</Text></View>;
+
   return (
-    <View style={styles.root}>
-      <View style={[RN.absoluteFill, { backgroundColor: bgTop }]} />
-      <View style={[styles.bgBottom, { backgroundColor: bgBottom }]} />
-
-      <View style={styles.header}>
-        <View style={[styles.pill, { backgroundColor: scheme === "dark" ? "rgba(34,211,238,0.12)" : "rgba(79,70,229,0.12)" }]}>
-          <Text style={{ color: accent, fontWeight: "800", fontSize: 12 }}>Password Manager</Text>
-        </View>
-        <Text style={{ color: accent, fontWeight: "900", fontSize: 22 }}>◎</Text>
-      </View>
-
-      <Text style={[styles.title, { color: text }]}>Your Platforms</Text>
-      <Text style={[styles.subtitle, { color: sub }]}>Tap a platform to view accounts.</Text>
-
+    <View style={[styles.root, { backgroundColor: bg }]}>
       <FlatList
         data={platforms}
-        keyExtractor={(k) => k}
-        contentContainerStyle={{ paddingVertical: 8 }}
-        renderItem={({ item }) => {
-          const label = item.charAt(0).toUpperCase() + item.slice(1);
-          return (
-            <TouchableOpacity
-              style={[styles.card, { backgroundColor: card, borderColor: border }]}
-              activeOpacity={0.75}
-              onPress={() =>
-                router.push({ pathname: "/(tabs)/accounts", params: { platform: label, key: item } })
-              }
-            >
-              <Text style={[styles.cardTitle, { color: text }]}>{label}</Text>
-              <Text style={[styles.cardSub, { color: sub }]}>{data[item]?.length ?? 0} accounts</Text>
-            </TouchableOpacity>
-          );
-        }}
+        keyExtractor={(item) => item.key}
+        ListHeaderComponent={<Text style={[styles.title, { color: text }]}>Your Platforms</Text>}
+        contentContainerStyle={{ paddingBottom: 80 }}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[styles.card, { backgroundColor: cardBg }]}
+            activeOpacity={0.8}
+            onPress={() => router.push({ pathname: "/(tabs)/accounts", params: { platform: item.name, key: item.key } })}
+          >
+            <View>
+              <Text style={[styles.cardTitle, { color: text }]}>{item.name}</Text>
+              <Text style={[styles.cardSub, { color: sub }]}>{item.count} accounts</Text>
+            </View>
+            <View style={styles.actions}>
+              <TouchableOpacity onPress={() => handleOpenEditModal(item)}><Ionicons name="pencil" size={20} color={sub} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(item.key, item.name)}><Ionicons name="trash-outline" size={22} color="#ef4444" /></TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        )}
       />
-
-      <Link href="/encoder" asChild>
-        <TouchableOpacity style={[styles.button, { backgroundColor: accent }]} activeOpacity={0.8}>
-          <Text style={styles.buttonText}>Go to Encoder</Text>
-        </TouchableOpacity>
-      </Link>
+      <FAB onPress={handleOpenAddModal} />
+      <FormModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleSavePlatform}
+        title={editingPlatform ? "Edit Platform" : "Add New Platform"}
+        fields={[{ name: "name", label: "Platform Name" }]}
+        initialData={editingPlatform ? { name: editingPlatform.name } : {}}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingTop: Platform.select({ ios: 64, android: 48, default: 48 }), paddingHorizontal: 20, gap: 12 },
-  bgBottom: { position: "absolute", left: 0, right: 0, bottom: 0, height: "55%", borderTopLeftRadius: 28, borderTopRightRadius: 28 },
-  header: { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
-  title: { fontSize: 22, fontWeight: "800" },
-  subtitle: { fontSize: 13, marginBottom: 12 },
-  card: {
-    borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, marginBottom: 12,
-    shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 4,
-  },
-  cardTitle: { fontSize: 16, fontWeight: "800" },
-  cardSub: { fontSize: 12, marginTop: 4 },
-  button: { marginTop: 8, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, alignSelf: "flex-start" },
-  buttonText: { color: "#fff", fontWeight: "800", letterSpacing: 0.4 },
+  root: { flex: 1, paddingTop: Platform.OS === 'android' ? 30 : 50, paddingHorizontal: 20 },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20 },
+  card: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 16, padding: 20, marginBottom: 12, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 } },
+  cardTitle: { fontSize: 18, fontWeight: '600' },
+  cardSub: { fontSize: 14, marginTop: 4 },
+  actions: { flexDirection: 'row', gap: 20, alignItems: 'center' },
 });
