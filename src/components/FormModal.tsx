@@ -1,56 +1,55 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Modal, TextInput, StyleSheet, Button, useColorScheme, Pressable } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Modal, Pressable, View, Text, TextInput, StyleSheet, Button, useColorScheme } from "react-native";
 
 type Field = { name: string; label: string; secure?: boolean };
 
-interface FormModalProps {
+export default function FormModal({
+  visible,
+  onClose,
+  onSubmit,
+  title,
+  fields,
+  initialData = {},
+}: {
   visible: boolean;
   onClose: () => void;
   onSubmit: (data: Record<string, string>) => void;
   title: string;
   fields: Field[];
-  initialData?: Record<string, string>;
-}
-
-export default function FormModal({ visible, onClose, onSubmit, title, fields, initialData }: FormModalProps) {
+  initialData?: Record<string, any>;
+}) {
   const scheme = useColorScheme();
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [data, setData] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (visible) {
-      setFormData(initialData || {});
-    }
+    if (visible) setData(initialData as any);
   }, [visible, initialData]);
 
-  const handleSave = () => {
-    onSubmit(formData);
-    onClose();
-  };
-
-  const cardBg = scheme === "dark" ? "#1f2937" : "#fff";
-  const text = scheme === "dark" ? "#f9fafb" : "#111827";
-  const inputBg = scheme === "dark" ? "#374151" : "#f3f4f6";
+  const bg = scheme === "dark" ? "#0f172a" : "#fff";
+  const text = scheme === "dark" ? "#e6edff" : "#0f172a";
+  const input = scheme === "dark" ? "#1f2937" : "#f1f5f9";
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.modalCard, { backgroundColor: cardBg }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[styles.card, { backgroundColor: bg }]} onPress={(e) => e.stopPropagation()}>
           <Text style={[styles.title, { color: text }]}>{title}</Text>
-          {fields.map((field) => (
-            <View key={field.name} style={styles.inputContainer}>
-              <Text style={[styles.label, { color: text }]}>{field.label}</Text>
+          {fields.map((f) => (
+            <View key={f.name} style={{ marginBottom: 12 }}>
+              <Text style={{ color: text, fontWeight: "700", marginBottom: 6 }}>{f.label}</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: inputBg, color: text }]}
-                value={formData[field.name] || ""}
-                onChangeText={(val) => setFormData((prev) => ({ ...prev, [field.name]: val }))}
-                secureTextEntry={field.secure}
-                placeholderTextColor={scheme === "dark" ? "#9ca3af" : "#6b7280"}
+                value={data[f.name] ?? ""}
+                onChangeText={(v) => setData((d) => ({ ...d, [f.name]: v }))}
+                placeholder={f.label}
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={f.secure}
+                style={{ backgroundColor: input, color: text, padding: 12, borderRadius: 10 }}
               />
             </View>
           ))}
-          <View style={styles.buttonRow}>
-            <Button title="Cancel" onPress={onClose} color="#ef4444" />
-            <Button title="Save" onPress={handleSave} />
+          <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 14 }}>
+            <Button title="Cancel" color="#ef4444" onPress={onClose} />
+            <Button title="Save" onPress={() => onSubmit(data)} />
           </View>
         </Pressable>
       </Pressable>
@@ -59,11 +58,7 @@ export default function FormModal({ visible, onClose, onSubmit, title, fields, i
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center" },
-  modalCard: { width: "90%", borderRadius: 16, padding: 20, elevation: 10 },
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
-  inputContainer: { marginBottom: 15 },
-  label: { fontSize: 14, marginBottom: 6 },
-  input: { borderRadius: 8, padding: 12, fontSize: 16 },
-  buttonRow: { flexDirection: "row", justifyContent: "flex-end", gap: 20, marginTop: 10 },
+  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center", padding: 20 },
+  card: { width: "100%", borderRadius: 16, padding: 20, gap: 8 },
+  title: { fontSize: 20, fontWeight: "900", marginBottom: 8 },
 });
