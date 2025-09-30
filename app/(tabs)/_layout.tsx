@@ -1,28 +1,24 @@
 import { Tabs } from "expo-router";
-import { useColorScheme, Text } from "react-native";
+import { useThemeColors } from "../../src/context/ThemeContext";
+import { Text, View } from "react-native";
 
 function Glyph({ label, color }: { label: string; color: string }) {
   return <Text style={{ color, fontWeight: "900" }}>{label}</Text>;
 }
 
 export default function TabsLayout() {
-  const scheme = useColorScheme();
-  const active = scheme === "dark" ? "#22d3ee" : "#4f46e5";
-  const inactive = scheme === "dark" ? "#94a3b8" : "#64748b";
-  const barBg = scheme === "dark" ? "#0b1220" : "#ffffff";
-  const border = scheme === "dark" ? "rgba(148,163,184,0.12)" : "rgba(15,23,42,0.06)";
-  const headerTint = scheme === "dark" ? "#e5e7eb" : "#0f172a";
+  const t = useThemeColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: active,
-        tabBarInactiveTintColor: inactive,
-        tabBarStyle: { backgroundColor: barBg, borderTopColor: border, height: 56 },
+        tabBarActiveTintColor: t.active,
+        tabBarInactiveTintColor: t.inactive,
+        tabBarStyle: { backgroundColor: t.barBg, borderTopColor: t.border, height: 56 },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
+        headerStyle: { backgroundColor: t.headerBg },
+        headerTitleStyle: { color: t.headerText, fontWeight: "800" },
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: barBg },
-        headerTitleStyle: { color: headerTint, fontWeight: "800" },
       }}
     >
       <Tabs.Screen
@@ -37,8 +33,10 @@ export default function TabsLayout() {
         name="decoder"
         options={{ title: "Decoder", tabBarIcon: ({ color }) => <Glyph label="⚙︎" color={color} /> }}
       />
-      {/* Hide accounts from tab bar; it's pushed from the View screen */}
-      <Tabs.Screen name="accounts" options={{ href: null }} />
+      <Tabs.Screen
+        name="accounts"
+        options={{ href: null, title: "Accounts" }}
+      />
     </Tabs>
   );
 }

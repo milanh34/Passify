@@ -1,141 +1,161 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, useColorScheme, Platform, Alert } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useDb } from "../../src/context/DbContext";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
-import { Ionicons } from "@expo/vector-icons";
+import SchemaModal from "../../src/components/SchemaModal";
+import { useThemeColors } from "../../src/context/ThemeContext";
 
-type Account = { id: string; name: string; email?: string; username?: string; password: string };
+type Account = { id: string; name: string; [k: string]: any };
 
 export default function AccountsScreen() {
-  const scheme = useColorScheme();
-  const navigation = useNavigation();
   const { platform, key: platformKey } = useLocalSearchParams<{ platform: string; key: string }>();
-  
-  const { database, addAccount, updateAccount, deleteAccount, updatePlatformName } = useDb();
-  const accounts: Account[] = platformKey ? database[String(platformKey)] ?? [] : [];
+  const nav = useNavigation();
+  const t = useThemeColors();
+  const { database, schemas, addAccount, updateAccount, deleteAccount, updatePlatformSchema } = useDb();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [platformModalVisible, setPlatformModalVisible] = useState(false);
-  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const accounts: Account[] = useMemo(() => (platformKey ? database[String(platformKey)] || [] : []), [database, platformKey]);
+  const schema = useMemo(() => (platformKey ? schemas[String(platformKey)] || ["name", "password"] : ["name", "password"]), [schemas, platformKey]);
+
+  const [accModal, setAccModal] = useState<{ visible: boolean; editing?: Account }>({ visible: false });
+  const [schemaModal, setSchemaModal] = useState(false);
+  const [visiblePw, setVisiblePw] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    navigation.setOptions({
+    nav.setOptions({
+      headerShown: true,
+      title: platform || "Accounts",
       headerRight: () => (
-        <TouchableOpacity onPress={() => setPlatformModalVisible(true)} style={{ marginRight: 15 }}>
-          <Ionicons name="cog-outline" size={24} color={scheme === 'dark' ? '#fff' : '#000'} />
+        <TouchableOpacity onPress={() => setSchemaModal(true)} style={{ marginRight: 12 }}>
+          <Ionicons name="options-outline" size={22} color={t.active} />
         </TouchableOpacity>
       ),
+      headerStyle: { backgroundColor: t.headerBg },
+      headerTitleStyle: { color: t.headerText, fontWeight: "800" },
+      headerShadowVisible: false,
     });
-  }, [navigation, scheme]);
+  }, [platform, t]);
 
-  const handleOpenAddModal = () => {
-    setEditingAccount(null);
-    setModalVisible(true);
-  };
+  const openAdd = () => setAccModal({ visible: true });
+  const openEdit = (a: Account) => setAccModal({ visible: true, editing: a });
 
-  const handleOpenEditModal = (account: Account) => {
-    setEditingAccount(account);
-    setModalVisible(true);
-  };
-
-  const handleDelete = (accountId: string, name: string) => {
-    Alert.alert("Delete Account", `Are you sure you want to delete the account "${name}"?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => platformKey && deleteAccount(String(platformKey), accountId) },
-    ]);
-  };
-  
-  const handleSaveAccount = (data: Record<string, string>) => {
+  const onSaveAccount = (data: Record<string, string>) => {
     if (!platformKey) return;
-    const accountData = {
-      id: editingAccount?.id || '',
-      name: data.name || 'No Name',
-      email: data.email,
-      username: data.username,
-      password: data.password || 'password'
-    };
-    if (editingAccount) {
-      updateAccount(String(platformKey), editingAccount.id, accountData);
+    if (accModal.editing) {
+      const updated = { ...accModal.editing, ...data };
+      updateAccount(String(platformKey), accModal.editing.id, updated);
     } else {
-      addAccount(String(platformKey), accountData);
+      // Omit id; provider will add it
+      const payload: any = {};
+      schema.forEach((f) => (payload[f] = data[f] || ""));
+      addAccount(String(platformKey), payload);
     }
   };
 
-  const handleSavePlatform = (data: { name: string }) => {
-    if (platformKey) {
-      updatePlatformName(String(platformKey), data.name);
-      navigation.setOptions({ title: data.name }); // Update header immediately
-    }
-  };
-
-  const togglePassword = (id: string) => setVisiblePasswords(p => ({ ...p, [id]: !p[id] }));
-
-  const bg = scheme === "dark" ? "#0f172a" : "#f8fafc";
-  const text = scheme === "dark" ? "#e5e7eb" : "#0f172a";
-  const sub = scheme === "dark" ? "rgba(229,231,235,0.75)" : "rgba(15,23,42,0.65)";
-  const cardBg = scheme === "dark" ? "#1f2937" : "#fff";
-  const accent = scheme === "dark" ? "#22d3ee" : "#4f46e5";
+  const onDelete = (id: string, name: string) =>
+    Alert.alert("Delete Account", `Delete "${name}"?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => platformKey && deleteAccount(String(platformKey), id) },
+    ]);
 
   return (
-    <View style={[styles.root, { backgroundColor: bg }]}>
+    <View style={[styles.root, { backgroundColor: t.bg }]}>
       <FlatList
         data={accounts}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 80 }}
+        keyExtractor={(a) => a.id}
+        contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => (
-          <View style={[styles.card, { backgroundColor: cardBg }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: text }]}>{item.name}</Text>
+          <View style={[styles.card, { backgroundColor: t.card, borderColor: t.cardBorder, shadowColor: t.shadow }]}>
+            <View style={styles.rowBetween}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>{item.name || "Untitled"}</Text>
               <View style={styles.actions}>
-                <TouchableOpacity onPress={() => handleOpenEditModal(item)}><Ionicons name="pencil" size={20} color={sub} /></TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(item.id, item.name)}><Ionicons name="trash-outline" size={22} color="#ef4444" /></TouchableOpacity>
+                <TouchableOpacity onPress={() => openEdit(item)} style={styles.iconBtn}>
+                  <Ionicons name="pencil" size={18} color={t.subtext} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => onDelete(item.id, item.name || "this account")} style={styles.iconBtn}>
+                  <Ionicons name="trash-outline" size={20} color={t.danger} />
+                </TouchableOpacity>
               </View>
             </View>
-            {item.email && <Text style={{ color: sub }}>{item.email}</Text>}
-            {item.username && <Text style={{ color: sub }}>@{item.username}</Text>}
-            <View style={styles.passwordRow}>
-              <Text style={{ color: sub }}>{visiblePasswords[item.id] ? item.password : '********'}</Text>
-              <TouchableOpacity onPress={() => togglePassword(item.id)}>
-                <Ionicons name={visiblePasswords[item.id] ? "eye-off-outline" : "eye-outline"} size={22} color={accent} />
-              </TouchableOpacity>
-            </View>
+
+            {schema.map((field) => {
+              if (field === "name" || field === "id") return null;
+              const value = item[field] ?? "";
+              const isPassword = field.toLowerCase() === "password";
+              return (
+                <View key={field} style={styles.fieldRow}>
+                  <Text style={[styles.fieldLabel, { color: t.subtext }]}>{field}</Text>
+                  <View style={styles.rowBetween}>
+                    <Text style={{ color: t.subtext }}>
+                      {isPassword ? (visiblePw[item.id] ? value : "********") : String(value)}
+                    </Text>
+                    {isPassword ? (
+                      <TouchableOpacity onPress={() => setVisiblePw((m) => ({ ...m, [item.id]: !m[item.id] }))}>
+                        <Ionicons
+                          name={visiblePw[item.id] ? "eye-off-outline" : "eye-outline"}
+                          size={20}
+                          color={t.active}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
+        ListEmptyComponent={<Text style={{ color: t.muted, textAlign: "center", marginTop: 24 }}>No accounts yet</Text>}
       />
-      <FAB onPress={handleOpenAddModal} />
+
+      {/* Schema edit floating button (secondary) */}
+      <FAB icon="options" onPress={() => setSchemaModal(true)} style={{ bottom: 100 }} color={t.fabSecondary} />
+      {/* Add account */}
+      <FAB icon="add" onPress={openAdd} color={t.fab} />
+
+      {/* Account form */}
       <FormModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSubmit={handleSaveAccount}
-        title={editingAccount ? "Edit Account" : "Add New Account"}
-        fields={[
-          { name: "name", label: "Account Name" },
-          { name: "email", label: "Email" },
-          { name: "username", label: "Username" },
-          { name: "password", label: "Password", secure: true },
-        ]}
-        initialData={editingAccount || {}}
+        visible={accModal.visible}
+        onClose={() => setAccModal({ visible: false })}
+        onSubmit={onSaveAccount}
+        title={accModal.editing ? "Edit Account" : "Add Account"}
+        fields={schema
+          .filter((f) => f !== "id")
+          .map((f) => ({ name: f, label: f.charAt(0).toUpperCase() + f.slice(1), secure: f.toLowerCase() === "password" }))}
+        initialData={accModal.editing || {}}
       />
-      <FormModal
-        visible={platformModalVisible}
-        onClose={() => setPlatformModalVisible(false)}
-        onSubmit={handleSavePlatform}
-        title="Edit Platform Name"
-        fields={[{ name: "name", label: "New Platform Name" }]}
-        initialData={{ name: platform || '' }}
+
+      {/* Schema editor */}
+      <SchemaModal
+        visible={schemaModal}
+        initialSchema={schema}
+        onClose={() => setSchemaModal(false)}
+        onSave={(fields) => {
+          if (platformKey) updatePlatformSchema(String(platformKey), fields);
+          setSchemaModal(false);
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 20 },
-  card: { borderRadius: 16, padding: 20, marginBottom: 12, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  cardTitle: { fontSize: 18, fontWeight: '600' },
-  actions: { flexDirection: 'row', gap: 20, alignItems: 'center' },
-  passwordRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(128,128,128,0.3)'},
+  root: { flex: 1, paddingHorizontal: 18, paddingTop: 12 },
+  card: {
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    elevation: 6,
+  },
+  rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  actions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  iconBtn: { padding: 8, borderRadius: 12 },
+  cardTitle: { fontSize: 18, fontWeight: "800" },
+  fieldRow: { marginTop: 8, gap: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: "700", textTransform: "capitalize" },
 });
