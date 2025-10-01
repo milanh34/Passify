@@ -19,10 +19,7 @@ export default function SchemaModal({
     if (visible) setFields(initialSchema);
   }, [visible, initialSchema]);
 
-  const update = (i: number, v: string) => {
-    setFields((arr) => arr.map((f, idx) => (idx === i ? v : f)));
-  };
-
+  const update = (i: number, v: string) => setFields((arr) => arr.map((f, idx) => (idx === i ? v : f)));
   const addField = () => setFields((arr) => [...arr, ""]);
   const remove = (i: number) => setFields((arr) => arr.filter((_, idx) => idx !== i));
 
@@ -33,12 +30,7 @@ export default function SchemaModal({
           <Text style={styles.title}>Edit Schema</Text>
           {fields.map((f, i) => (
             <View key={i} style={styles.row}>
-              <TextInput
-                value={f}
-                onChangeText={(v) => update(i, v)}
-                placeholder="field name (e.g., dateOfBirth)"
-                style={styles.input}
-              />
+              <TextInput value={f} onChangeText={(v) => update(i, v)} placeholder="field name (e.g., dateOfBirth)" style={styles.input} />
               <TouchableOpacity onPress={() => remove(i)} style={styles.del}>
                 <Ionicons name="trash-outline" size={20} color="#ef4444" />
               </TouchableOpacity>
@@ -48,7 +40,6 @@ export default function SchemaModal({
             <Ionicons name="add" size={20} color="#fff" />
             <Text style={{ color: "#fff", fontWeight: "800" }}>Add Field</Text>
           </TouchableOpacity>
-
           <View style={styles.actions}>
             <TouchableOpacity onPress={onClose} style={[styles.btn, { backgroundColor: "#ef4444" }]}>
               <Text style={styles.btnTxt}>Cancel</Text>

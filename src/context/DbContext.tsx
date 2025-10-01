@@ -105,7 +105,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       const updated = (db[platformKey] || []).map((acc) => {
         const next = { ...acc };
         filtered.forEach((f) => {
-          if (!(f in next)) next[f] = "";
+          if (!(f in next)) (next as any)[f] = "";
         });
         Object.keys(next).forEach((k) => {
           if (k !== "id" && !filtered.includes(k)) delete (next as any)[k];
