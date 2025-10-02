@@ -1,11 +1,11 @@
 import { View, Text } from "react-native";
-import { useThemeColors } from "../../src/context/ThemeContext";
+import { useTheme } from "../../src/context/ThemeContext";
 
-export default function Screen() {
-  const t = useThemeColors();
+export default function Decoder() {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: t.bg }}>
-      <Text style={{ color: t.text, fontWeight: "800" }}>Placeholder</Text>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
+      <Text style={{ color: colors.text, fontWeight: "800" }}>Decoder Screen</Text>
     </View>
   );
 }

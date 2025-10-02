@@ -1,28 +1,28 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useTheme, useThemeColors } from "../src/context/ThemeContext";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { useTheme } from "../src/context/ThemeContext";
 import { Stack } from "expo-router";
 
 export default function Settings() {
-  const { theme, setTheme, useSystem } = useTheme();
-  const t = useThemeColors();
+  const { mode, changeTheme, colors, THEMES } = useTheme();
 
   return (
-    <View style={[styles.root, { backgroundColor: t.bg }]}>
-      <Stack.Screen options={{ title: "Theme", headerStyle: { backgroundColor: t.headerBg }, headerTitleStyle: { color: t.headerText } }} />
-      <Text style={[styles.title, { color: t.text }]}>Appearance</Text>
-      <View style={styles.row}>
-        <Option label="Light" active={theme === "light"} onPress={() => setTheme("light")} />
-        <Option label="Dark" active={theme === "dark"} onPress={() => setTheme("dark")} />
-        <Option label="System" active={theme === "system"} onPress={useSystem} />
-      </View>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+      <Stack.Screen options={{ title: "Appearance", headerStyle: { backgroundColor: colors.headerBg }, headerTitleStyle: { color: colors.text } }} />
+      <ScrollView>
+        <Text style={[styles.title, { color: colors.text }]}>Select a Theme</Text>
+        <ThemeOption label="System Default" active={mode === "system"} onPress={() => changeTheme("system")} borderColor={colors.active} />
+        {Object.entries(THEMES).map(([key, theme]) => (
+          <ThemeOption key={key} label={theme.name} active={mode === key} onPress={() => changeTheme(key as any)} borderColor={theme.active} />
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
-function Option({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function ThemeOption({ label, active, onPress, borderColor }: any) {
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.opt, { borderColor: active ? "#22d3ee" : "rgba(127,127,127,0.3)" }]}>
-      <Text style={{ fontWeight: "800" }}>{label}</Text>
+    <TouchableOpacity onPress={onPress} style={[styles.option, { borderColor: active ? borderColor : "transparent", borderWidth: 2 }]}>
+      <Text style={{ fontWeight: "800", color: active ? borderColor : "#888" }}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -30,6 +30,5 @@ function Option({ label, active, onPress }: { label: string; active: boolean; on
 const styles = StyleSheet.create({
   root: { flex: 1, padding: 18 },
   title: { fontSize: 22, fontWeight: "800", marginBottom: 12 },
-  row: { flexDirection: "row", gap: 12 },
-  opt: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, borderWidth: 2 },
+  option: { padding: 16, borderRadius: 14, marginBottom: 10, backgroundColor: "rgba(128,128,128,0.1)" },
 });
