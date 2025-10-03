@@ -1,55 +1,46 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Pressable, View, Text, TextInput, StyleSheet, Button, useColorScheme } from "react-native";
+import { Modal, Pressable, View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "../context/ThemeContext";
 
 type Field = { name: string; label: string; secure?: boolean };
 
-export default function FormModal({
-  visible,
-  onClose,
-  onSubmit,
-  title,
-  fields,
-  initialData = {},
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onSubmit: (data: Record<string, string>) => void;
-  title: string;
-  fields: Field[];
-  initialData?: Record<string, any>;
-}) {
-  const scheme = useColorScheme();
+export default function FormModal({ visible, onClose, onSubmit, title, fields, initialData = {} }: { visible: boolean; onClose: () => void; onSubmit: (data: Record<string, string>) => void; title: string; fields: Field[]; initialData?: Record<string, any>; }) {
+  const { colors, fontConfig } = useTheme();
   const [data, setData] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (visible) setData(initialData as any);
   }, [visible, initialData]);
 
-  const bg = scheme === "dark" ? "#0f172a" : "#fff";
-  const text = scheme === "dark" ? "#e6edff" : "#0f172a";
-  const input = scheme === "dark" ? "#1f2937" : "#f1f5f9";
+  const handleSave = () => onSubmit(data);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.card, { backgroundColor: bg }]} onPress={(e) => e.stopPropagation()}>
-          <Text style={[styles.title, { color: text }]}>{title}</Text>
+        <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} onPress={(e) => e.stopPropagation()}>
+          <LinearGradient colors={[colors.accent, colors.accent2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientHeader} />
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>{title}</Text>
           {fields.map((f) => (
             <View key={f.name} style={{ marginBottom: 12 }}>
-              <Text style={{ color: text, fontWeight: "700", marginBottom: 6 }}>{f.label}</Text>
+              <Text style={{ color: colors.subtext, fontFamily: fontConfig.bold, marginBottom: 6 }}>{f.label}</Text>
               <TextInput
                 value={data[f.name] ?? ""}
                 onChangeText={(v) => setData((d) => ({ ...d, [f.name]: v }))}
                 placeholder={f.label}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.muted}
                 secureTextEntry={f.secure}
-                style={{ backgroundColor: input, color: text, padding: 12, borderRadius: 10 }}
+                style={{ backgroundColor: "rgba(127,127,127,0.12)", color: colors.text, padding: 12, borderRadius: 10, fontFamily: fontConfig.regular, borderWidth: 1, borderColor: colors.cardBorder }}
               />
             </View>
           ))}
-          <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 14 }}>
-            <Button title="Cancel" color="#ef4444" onPress={onClose} />
-            <Button title="Save" onPress={() => onSubmit(data)} />
+          <View style={styles.buttonRow}>
+            <TouchableOpacity onPress={onClose} style={[styles.btn, { backgroundColor: colors.danger }]}>
+              <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSave} style={[styles.btn, { backgroundColor: colors.accent }]}>
+              <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Save</Text>
+            </TouchableOpacity>
           </View>
         </Pressable>
       </Pressable>
@@ -59,6 +50,10 @@ export default function FormModal({
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center", padding: 20 },
-  card: { width: "100%", borderRadius: 16, padding: 20, gap: 8 },
-  title: { fontSize: 20, fontWeight: "900", marginBottom: 8 },
+  card: { width: "100%", borderRadius: 16, padding: 20, gap: 8, borderWidth: 1 },
+  gradientHeader: { height: 6, width: "100%", position: "absolute", top: 0, left: 0, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  title: { fontSize: 20, marginBottom: 8 },
+  buttonRow: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 8 },
+  btn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+  btnTxt: { color: "#fff" },
 });

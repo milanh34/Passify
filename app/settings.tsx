@@ -3,32 +3,41 @@ import { useTheme } from "../src/context/ThemeContext";
 import { Stack } from "expo-router";
 
 export default function Settings() {
-  const { mode, changeTheme, colors, THEMES } = useTheme();
+  const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } = useTheme();
+
+  if (!fontsLoaded) {
+    return <View style={[styles.root, { backgroundColor: colors.bg[0] }]} />;
+  }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <Stack.Screen options={{ title: "Appearance", headerStyle: { backgroundColor: colors.headerBg }, headerTitleStyle: { color: colors.text } }} />
-      <ScrollView>
-        <Text style={[styles.title, { color: colors.text }]}>Select a Theme</Text>
-        <ThemeOption label="System Default" active={mode === "system"} onPress={() => changeTheme("system")} borderColor={colors.active} />
+    <View style={[styles.root, { backgroundColor: colors.bg[0] }]}>
+      <Stack.Screen options={{ title: "Appearance", headerStyle: { backgroundColor: colors.bg[0] }, headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold } }} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>Color Theme</Text>
+        <Option label="System Default" active={mode === "system"} onPress={() => changeTheme("system")} colors={colors} fontConfig={fontConfig} />
         {Object.entries(THEMES).map(([key, theme]) => (
-          <ThemeOption key={key} label={theme.name} active={mode === key} onPress={() => changeTheme(key as any)} borderColor={theme.active} />
+          <Option key={key} label={theme.name} active={mode === key} onPress={() => changeTheme(key as any)} colors={{ ...colors, accent: theme.accent }} fontConfig={fontConfig} />
+        ))}
+
+        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold, marginTop: 28 }]}>Font Family</Text>
+        {Object.entries(FONTS).map(([key, f]) => (
+          <Option key={key} label={f.label} active={font === key} onPress={() => changeFont(key as any)} colors={colors} fontConfig={f} />
         ))}
       </ScrollView>
     </View>
   );
 }
 
-function ThemeOption({ label, active, onPress, borderColor }: any) {
+function Option({ label, active, onPress, colors, fontConfig }: any) {
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.option, { borderColor: active ? borderColor : "transparent", borderWidth: 2 }]}>
-      <Text style={{ fontWeight: "800", color: active ? borderColor : "#888" }}>{label}</Text>
+    <TouchableOpacity onPress={onPress} style={[styles.option, { borderColor: active ? colors.accent : "transparent", borderWidth: 2, backgroundColor: "rgba(128,128,128,0.12)" }]}>
+      <Text style={{ color: active ? colors.accent : colors.subtext, fontFamily: fontConfig.bold }}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, padding: 18 },
-  title: { fontSize: 22, fontWeight: "800", marginBottom: 12 },
-  option: { padding: 16, borderRadius: 14, marginBottom: 10, backgroundColor: "rgba(128,128,128,0.1)" },
+  title: { fontSize: 22, marginBottom: 12 },
+  option: { padding: 16, borderRadius: 14, marginBottom: 10 },
 });
