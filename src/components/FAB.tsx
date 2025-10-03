@@ -14,7 +14,11 @@ export default function FAB({
   color?: string;
 }) {
   return (
-    <TouchableOpacity style={[styles.fab, { backgroundColor: color }, style]} onPress={onPress} activeOpacity={0.9}>
+    <TouchableOpacity
+      style={[styles.fab, { backgroundColor: color }, style]}
+      onPress={onPress}
+      activeOpacity={0.9}
+    >
       <Ionicons name={icon as any} size={26} color="#fff" />
     </TouchableOpacity>
   );

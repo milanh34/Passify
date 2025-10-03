@@ -2,9 +2,20 @@ import React, { useEffect, useState } from "react";
 import { Modal, Pressable, View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { MotiView } from "moti";
 import { useTheme } from "../context/ThemeContext";
 
-export default function SchemaModal({ visible, initialSchema, onClose, onSave }: { visible: boolean; initialSchema: string[]; onClose: () => void; onSave: (fields: string[]) => void; }) {
+export default function SchemaModal({
+  visible,
+  initialSchema,
+  onClose,
+  onSave,
+}: {
+  visible: boolean;
+  initialSchema: string[];
+  onClose: () => void;
+  onSave: (fields: string[]) => void;
+}) {
   const { colors, fontConfig } = useTheme();
   const [fields, setFields] = useState<string[]>([]);
 
@@ -18,32 +29,60 @@ export default function SchemaModal({ visible, initialSchema, onClose, onSave }:
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} onPress={(e) => e.stopPropagation()}>
-          <LinearGradient colors={[colors.accent, colors.accent2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientHeader} />
-          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>Edit Schema</Text>
-          {fields.map((f, i) => (
-            <View key={`${i}-${f}`} style={styles.row}>
-              <TextInput value={f} onChangeText={(v) => update(i, v)} placeholder="field name (e.g., dateOfBirth)" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.text, borderColor: colors.cardBorder, fontFamily: fontConfig.regular }]} />
-              <TouchableOpacity onPress={() => remove(i)} style={styles.del}>
-                <Ionicons name="trash-outline" size={20} color={colors.danger} />
+      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.backdrop}>
+        <MotiView
+          from={{ translateY: 100, opacity: 0 }}
+          animate={{ translateY: 0, opacity: 1 }}
+          transition={{ type: "timing", duration: 300 }}
+        >
+          <Pressable
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <LinearGradient
+              colors={[colors.accent, colors.accent2 ?? colors.accent]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradientHeader}
+            />
+            <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+              Edit Schema
+            </Text>
+            {fields.map((f, i) => (
+              <View key={`${i}-${f}`} style={styles.row}>
+                <TextInput
+                  value={f}
+                  onChangeText={(v) => update(i, v)}
+                  placeholder="field name (e.g., dateOfBirth)"
+                  placeholderTextColor={colors.muted}
+                  style={[
+                    styles.input,
+                    { color: colors.text, borderColor: colors.cardBorder, fontFamily: fontConfig.regular },
+                  ]}
+                />
+                <TouchableOpacity onPress={() => remove(i)} style={styles.del}>
+                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity onPress={addField} style={[styles.add, { backgroundColor: colors.accent }]}>
+              <Ionicons name="add" size={20} color="#fff" />
+              <Text style={{ color: "#fff", fontFamily: fontConfig.bold }}>Add Field</Text>
+            </TouchableOpacity>
+            <View style={styles.actions}>
+              <TouchableOpacity onPress={onClose} style={[styles.btn, { backgroundColor: colors.danger }]}>
+                <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => onSave(fields)} style={[styles.btn, { backgroundColor: colors.accent }]}>
+                <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Save</Text>
               </TouchableOpacity>
             </View>
-          ))}
-          <TouchableOpacity onPress={addField} style={[styles.add, { backgroundColor: colors.accent }]}>
-            <Ionicons name="add" size={20} color="#fff" />
-            <Text style={{ color: "#fff", fontFamily: fontConfig.bold }}>Add Field</Text>
-          </TouchableOpacity>
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} style={[styles.btn, { backgroundColor: colors.danger }]}>
-              <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => onSave(fields)} style={[styles.btn, { backgroundColor: colors.accent }]}>
-              <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Pressable>
+          </Pressable>
+        </MotiView>
+      </MotiView>
     </Modal>
   );
 }

@@ -13,7 +13,6 @@ import { useFonts as useIbmPlex, IBMPlexSans_400Regular, IBMPlexSans_700Bold } f
 import { useFonts as useJetBrains, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from "@expo-google-fonts/jetbrains-mono";
 import { useFonts as useSpaceGrotesk, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
 
-// Color themes with richer roles for clearer hierarchy
 const THEMES = {
   light: { name: "Default Light", bg: ["#f8f9fa", "#e9ecef"], card: "rgba(255,255,255,0.9)", cardBorder: "#dee2e6", text: "#212529", subtext: "#495057", muted: "#868e96", accent: "#4d7cff", accent2: "#4ade80", danger: "#e03131", info: "#0ea5e9", warn: "#f59e0b", fab: "#4d7cff", shadow: "#4d7cff" },
   dark: { name: "Default Dark", bg: ["#0b1020", "#0c1224"], card: "rgba(255,255,255,0.06)", cardBorder: "rgba(255,255,255,0.15)", text: "#e9ecef", subtext: "#b8c0cc", muted: "#8b94a5", accent: "#22d3ee", accent2: "#34d399", danger: "#ff6b6b", info: "#38bdf8", warn: "#fbbf24", fab: "#7c3aed", shadow: "#000" },
@@ -66,13 +65,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [jetLoaded] = useJetBrains({ JetBrainsMono_400Regular, JetBrainsMono_700Bold });
   const [spaceLoaded] = useSpaceGrotesk({ SpaceGrotesk_400Regular, SpaceGrotesk_700Bold });
 
-  const fontsLoaded = interLoaded && lexendLoaded && openLoaded && monoLoaded && playfairLoaded && poppinsLoaded && latoLoaded && serifLoaded && plexLoaded && jetLoaded && spaceLoaded;
+  const fontsLoaded =
+    interLoaded &&
+    lexendLoaded &&
+    openLoaded &&
+    monoLoaded &&
+    playfairLoaded &&
+    poppinsLoaded &&
+    latoLoaded &&
+    serifLoaded &&
+    plexLoaded &&
+    jetLoaded &&
+    spaceLoaded;
 
   useEffect(() => {
-    Promise.all([AsyncStorage.getItem(THEME_KEY), AsyncStorage.getItem(FONT_KEY)]).then(([t, f]) => {
-      if (t && (t === "system" || Object.keys(THEMES).includes(t))) setMode(t as ThemeMode);
-      if (f && Object.keys(FONTS).includes(f)) setFont(f as FontName);
-    });
+    Promise.all([AsyncStorage.getItem(THEME_KEY), AsyncStorage.getItem(FONT_KEY)]).then(
+      ([t, f]) => {
+        if (t && (t === "system" || Object.keys(THEMES).includes(t))) setMode(t as ThemeMode);
+        if (f && Object.keys(FONTS).includes(f)) setFont(f as FontName);
+      }
+    );
   }, []);
 
   const changeTheme = (newMode: ThemeMode) => {
