@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { MotiView, AnimatePresence } from "moti";
+import { MotiView, AnimatePresence} from "moti";
+import { MotiPressable } from "moti/interactions";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import FAB from "../../src/components/FAB";
@@ -18,12 +20,22 @@ export default function AccountsScreen() {
   const { platform, key: platformKey } = useLocalSearchParams<{ platform: string; key: string }>();
   const nav = useNavigation();
   const { colors, fontConfig, fontsLoaded } = useTheme();
-  const { database, schemas, addAccount, updateAccount, deleteAccount, updatePlatformSchema } = useDb();
+  const { database, schemas, addAccount, updateAccount, deleteAccount, updatePlatformSchema } =
+    useDb();
+  const insets = useSafeAreaInsets();
 
-  const accounts: Account[] = useMemo(() => (platformKey ? database[String(platformKey)] || [] : []), [database, platformKey]);
-  const schema = useMemo(() => (platformKey ? schemas[String(platformKey)] || ["name", "password"] : ["name", "password"]), [schemas, platformKey]);
+  const accounts: Account[] = useMemo(
+    () => (platformKey ? database[String(platformKey)] || [] : []),
+    [database, platformKey]
+  );
+  const schema = useMemo(
+    () => (platformKey ? schemas[String(platformKey)] || ["name", "password"] : ["name", "password"]),
+    [schemas, platformKey]
+  );
 
-  const [accModal, setAccModal] = useState<{ visible: boolean; editing?: Account }>({ visible: false });
+  const [accModal, setAccModal] = useState<{ visible: boolean; editing?: Account }>({
+    visible: false,
+  });
   const [schemaModal, setSchemaModal] = useState(false);
   const [visiblePw, setVisiblePw] = useState<Record<string, boolean>>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -32,19 +44,38 @@ export default function AccountsScreen() {
     nav.setOptions({
       headerShown: true,
       title: platform || "Accounts",
-      headerRight: () => (
-        <TouchableOpacity onPress={() => setSchemaModal(true)} style={{ marginRight: 12 }}>
-          <Ionicons name="options-outline" size={22} color={colors.accent} />
-        </TouchableOpacity>
-      ),
-      headerStyle: { backgroundColor: colors.bg[0] },
+      headerTransparent: true,
+      headerStyle: { height: 60 + insets.top },
       headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold },
-      headerShadowVisible: false,
+      headerLeft: () => (
+        <MotiPressable
+          onPress={() => nav.goBack()}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring" }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <View style={{ marginLeft: 15, backgroundColor: colors.card, padding: 8, borderRadius: 12 }}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </View>
+        </MotiPressable>
+      ),
+      headerRight: () => (
+        <MotiPressable
+          onPress={() => setSchemaModal(true)}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring" }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <View style={{ marginRight: 15, backgroundColor: colors.card, padding: 8, borderRadius: 12 }}>
+            <Ionicons name="options-outline" size={24} color={colors.accent} />
+          </View>
+        </MotiPressable>
+      ),
     });
-  }, [platform, colors, fontConfig]);
+  }, [platform, colors, fontConfig, insets]);
 
   if (!fontsLoaded) {
-    return <View style={[styles.root, { backgroundColor: colors.bg[0] }]} />;
+    return <View style={[styles.root, { backgroundColor: colors.bg?.[0] ?? "#fff" }]} />;
   }
 
   const copyToClipboard = async (text: string, key: string) => {
@@ -78,23 +109,42 @@ export default function AccountsScreen() {
     ]);
 
   return (
-    <LinearGradient colors={colors.bg} style={styles.root}>
+    <LinearGradient colors={colors.bg} style={[styles.root, { paddingTop: 60 + insets.top }]}>
       <FlatList
         data={accounts}
         keyExtractor={(a) => a.id}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
         renderItem={({ item, index }) => (
-          <MotiView from={{ opacity: 0, translateY: 40 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: "timing", delay: index * 90 }}>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, shadowColor: colors.shadow }]}>
+          <MotiView
+            from={{ opacity: 0, translateY: 40 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", delay: index * 90 }}
+          >
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.cardBorder,
+                  shadowColor: colors.shadow,
+                },
+              ]}
+            >
               <View style={styles.rowBetween}>
-                <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>{item.name || "Untitled"}</Text>
+                <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                  {item.name || "Untitled"}
+                </Text>
                 <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => openEdit(item)} style={styles.iconBtn}>
-                    <Ionicons name="pencil" size={18} color={colors.subtext} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => onDelete(item.id, item.name)} style={styles.iconBtn}>
-                    <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                  </TouchableOpacity>
+                  <MotiPressable animate={{ scale: 1 }} transition={{ type: "spring" }} whileTap={{ scale: 0.9 }}>
+                    <TouchableOpacity onPress={() => openEdit(item)} style={styles.iconBtn}>
+                      <Ionicons name="pencil" size={18} color={colors.subtext} />
+                    </TouchableOpacity>
+                  </MotiPressable>
+                  <MotiPressable animate={{ scale: 1 }} transition={{ type: "spring" }} whileTap={{ scale: 0.9 }}>
+                    <TouchableOpacity onPress={() => onDelete(item.id, item.name)} style={styles.iconBtn}>
+                      <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                    </TouchableOpacity>
+                  </MotiPressable>
                 </View>
               </View>
 
@@ -106,31 +156,74 @@ export default function AccountsScreen() {
                 const isCopied = copiedField === fieldKey;
 
                 return (
-                  <View key={field} style={[styles.fieldRow, { borderTopColor: colors.cardBorder }]}>
-                    <Text style={[styles.fieldLabel, { color: colors.subtext, fontFamily: fontConfig.bold }]}>{field}</Text>
+                  <View
+                    key={field}
+                    style={[
+                      styles.fieldRow,
+                      {
+                        borderTopColor:
+                          colors.bg?.[0] === "#0b1020"
+                            ? "rgba(127,127,127,0.25)"
+                            : "rgba(127,127,127,0.15)",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: colors.subtext,
+                        fontFamily: fontConfig.bold,
+                        fontSize: 12,
+                        textTransform: "uppercase",
+                        marginBottom: 6,
+                      }}
+                    >
+                      {field}
+                    </Text>
                     <View style={styles.rowBetween}>
-                      <Text style={{ color: colors.text, flexShrink: 1, fontFamily: fontConfig.regular }}>
+                      <Text
+                        style={{
+                          color: colors.text,
+                          flexShrink: 1,
+                          fontFamily: fontConfig.regular,
+                        }}
+                      >
                         {isPassword ? (visiblePw[item.id] ? String(value) : "••••••••") : String(value)}
                       </Text>
                       <View style={styles.fieldActions}>
                         {isPassword ? (
-                          <TouchableOpacity onPress={() => setVisiblePw((p) => ({ ...p, [item.id]: !p[item.id] }))}>
-                            <Ionicons name={visiblePw[item.id] ? "eye-off-outline" : "eye-outline"} size={22} color={colors.accent} />
-                          </TouchableOpacity>
+                          <MotiPressable animate={{ scale: 1 }} transition={{ type: "spring" }} whileTap={{ scale: 0.9 }}>
+                            <TouchableOpacity
+                              onPress={() => setVisiblePw((p) => ({ ...p, [item.id]: !p[item.id] }))}
+                            >
+                              <Ionicons
+                                name={visiblePw[item.id] ? "eye-off-outline" : "eye-outline"}
+                                size={22}
+                                color={colors.accent}
+                              />
+                            </TouchableOpacity>
+                          </MotiPressable>
                         ) : null}
-                        <MotiView animate={{ scale: isCopied ? 1.15 : 1 }} transition={{ type: "spring" }}>
+                        <MotiPressable
+                          animate={{ scale: isCopied ? 1.15 : 1 }}
+                          transition={{ type: "spring" }}
+                          whileTap={{ scale: 0.9 }}
+                        >
                           <TouchableOpacity onPress={() => copyToClipboard(String(value), fieldKey)}>
                             <AnimatePresence>
                               {isCopied ? (
-                                <MotiView from={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }}>
-                                  <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
+                                <MotiView
+                                  from={{ scale: 0, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                >
+                                  <Ionicons name="checkmark-circle" size={20} color={colors.accent2} />
                                 </MotiView>
                               ) : (
                                 <Ionicons name="copy-outline" size={20} color={colors.muted} />
                               )}
                             </AnimatePresence>
                           </TouchableOpacity>
-                        </MotiView>
+                        </MotiPressable>
                       </View>
                     </View>
                   </View>
@@ -139,12 +232,21 @@ export default function AccountsScreen() {
             </View>
           </MotiView>
         )}
-        ListEmptyComponent={<Text style={{ color: colors.subtext, textAlign: "center", marginTop: 24, fontFamily: fontConfig.regular }}>No accounts yet</Text>}
+        ListEmptyComponent={
+          <Text
+            style={{
+              color: colors.subtext,
+              textAlign: "center",
+              marginTop: 24,
+              fontFamily: fontConfig.regular,
+            }}
+          >
+            No accounts yet
+          </Text>
+        }
       />
 
-      <FAB icon="options" onPress={() => setSchemaModal(true)} style={{ bottom: 100 }} color={colors.fab} />
       <FAB icon="add" onPress={openAdd} color={colors.fab} />
-
       <FormModal
         visible={accModal.visible}
         onClose={() => setAccModal({ visible: false })}
@@ -155,7 +257,6 @@ export default function AccountsScreen() {
           .map((f) => ({ name: f, label: f.charAt(0).toUpperCase() + f.slice(1), secure: f.toLowerCase() === "password" }))}
         initialData={accModal.editing || {}}
       />
-
       <SchemaModal
         visible={schemaModal}
         initialSchema={schema}
@@ -170,7 +271,7 @@ export default function AccountsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 18, paddingTop: 12 },
+  root: { flex: 1, paddingHorizontal: 18 },
   card: {
     borderRadius: 18,
     padding: 16,
@@ -186,6 +287,5 @@ const styles = StyleSheet.create({
   iconBtn: { padding: 8, borderRadius: 12 },
   cardTitle: { fontSize: 18 },
   fieldRow: { marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
-  fieldLabel: { fontSize: 12, textTransform: "uppercase", marginBottom: 6 },
   fieldActions: { flexDirection: "row", gap: 16 },
 });
