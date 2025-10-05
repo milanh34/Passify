@@ -47,7 +47,7 @@ export default function TabsLayout() {
         name="decoder" 
         options={{ 
           title: "Decoder", 
-          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? "lock-open" : "lock-open-outline"} size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? "key-outline" : "key-outline"} size={24} color={color} />, // Correct icon
         }} 
       />
       <Tabs.Screen name="accounts" options={{ href: null, title: "Accounts" }} />
