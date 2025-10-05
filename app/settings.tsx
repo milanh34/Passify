@@ -20,7 +20,9 @@ export default function Settings() {
         }}
       />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>Color Theme</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+          Color Theme
+        </Text>
         <Option
           label="System Default"
           active={mode === "system"}
