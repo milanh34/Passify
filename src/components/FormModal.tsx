@@ -16,21 +16,21 @@ export default function FormModal({ visible, onClose, onSubmit, title, fields, i
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.backdrop}>
+      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={[styles.backdrop, { backgroundColor: colors.modalBackdrop }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <MotiView from={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "timing", duration: 220 }}>
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>{title}</Text>
+          <View style={[styles.card, { backgroundColor: colors.modalCard, borderColor: colors.modalBorder }]}>
+            <Text style={[styles.title, { color: colors.modalText, fontFamily: fontConfig.bold }]}>{title}</Text>
             {fields.map((f) => (
               <View key={f.name} style={{ marginBottom: 12 }}>
-                <Text style={{ color: colors.subtext, fontFamily: fontConfig.bold, marginBottom: 6 }}>{f.label}</Text>
+                <Text style={{ color: colors.modalSubtext, fontFamily: fontConfig.bold, marginBottom: 6 }}>{f.label}</Text>
                 <TextInput
                   value={data[f.name] ?? ""}
                   onChangeText={(v) => setData((d) => ({ ...d, [f.name]: v }))}
                   placeholder={f.label}
                   placeholderTextColor={colors.muted}
                   secureTextEntry={f.secure}
-                  style={{ backgroundColor: "rgba(127,127,127,0.12)", color: colors.text, padding: 12, borderRadius: 10, fontFamily: fontConfig.regular }}
+                  style={{ backgroundColor: "rgba(127,127,127,0.12)", color: colors.modalText, padding: 12, borderRadius: 10, fontFamily: fontConfig.regular, borderWidth: 1, borderColor: colors.modalBorder }}
                 />
               </View>
             ))}
@@ -54,8 +54,8 @@ export default function FormModal({ visible, onClose, onSubmit, title, fields, i
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", alignItems: "center", justifyContent: "center", padding: 20 },
-  card: { width: "90%", maxWidth: 520, borderRadius: 20, padding: 24, gap: 8, overflow: "hidden" },
+  backdrop: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
+  card: { width: "90%", borderRadius: 20, padding: 24, gap: 8, overflow: "hidden", borderWidth: 1 },
   title: { fontSize: 20, marginBottom: 8, textAlign: "center" },
   buttonRow: { flexDirection: "row", justifyContent: "center", gap: 12, marginTop: 8 },
   btn: { paddingHorizontal: 18, paddingVertical: 12, borderRadius: 12 },

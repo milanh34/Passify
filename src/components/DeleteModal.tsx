@@ -17,12 +17,12 @@ export default function DeleteModal({ visible, onClose, onConfirm, title, descri
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.backdrop}>
+      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={[styles.backdrop, { backgroundColor: colors.modalBackdrop }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <MotiView from={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "timing", duration: 220 }}>
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <View style={[styles.card, { backgroundColor: colors.modalCard, borderColor: colors.modalBorder }]}>
             <Text style={[styles.title, { color: colors.danger, fontFamily: fontConfig.bold }]}>{title}</Text>
-            <Text style={[styles.description, { color: colors.subtext, fontFamily: fontConfig.regular }]}>{description}</Text>
+            <Text style={[styles.description, { color: colors.modalSubtext, fontFamily: fontConfig.regular }]}>{description}</Text>
             <View style={styles.buttonRow}>
               <MotiPressable animate={{ scale: 1 }} transition={{ type: "spring" }} whileTap={{ scale: 0.95 }}>
                 <TouchableOpacity onPress={onClose} style={[styles.btn, { backgroundColor: colors.muted }]}>
@@ -43,10 +43,10 @@ export default function DeleteModal({ visible, onClose, onConfirm, title, descri
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", alignItems: "center", justifyContent: "center", padding: 20 },
-  card: { width: "90%", maxWidth: 480, borderRadius: 20, padding: 24, gap: 12, overflow: "hidden" },
-  title: { fontSize: 22, textAlign: "center" },
-  description: { fontSize: 16, textAlign: "center", lineHeight: 22 },
+  backdrop: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
+  card: { width: "90%", borderRadius: 20, padding: 24, gap: 12, overflow: "hidden", borderWidth: 1 },
+  title: { fontSize: 22, textAlign: 'center' },
+  description: { fontSize: 16, textAlign: 'center', lineHeight: 22 },
   buttonRow: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 12 },
   btn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
   btnTxt: { color: "#fff", fontSize: 16 },
