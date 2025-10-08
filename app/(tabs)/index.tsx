@@ -49,7 +49,7 @@ export default function ManageScreen() {
         <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>Manage</Text>
         <MotiPressable whileTap={{ scale: 0.95 }}>
           <Pressable
-            onPress={() => router.push("/settings")}
+            onPress={() => router.push("/customize")}
             style={[styles.settingsBtn, { borderColor: colors.cardBorder }]}
             android_ripple={{ color: colors.accent + "33" }}
           >
