@@ -1,42 +1,59 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useTheme } from "../src/context/ThemeContext";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MotiView, AnimatePresence } from "moti";
+import { MotiView } from "moti";
 
 export default function Customize() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [renderKey, setRenderKey] = useState(0);
+
+  // Force re-render when theme or font changes
+  useEffect(() => {
+    setRenderKey(prev => prev + 1);
+  }, [colors, fontConfig]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
   if (!fontsLoaded) {
-    return <View style={[styles.root, { backgroundColor: colors.bg[0], paddingTop: insets.top + 20 }]} />;
+    return <LinearGradient colors={colors.bg} style={[styles.root, { paddingTop: insets.top }]} />;
   }
 
   return (
-    <LinearGradient colors={colors.bg} style={[styles.root, { paddingTop: insets.top + 20 }]}>
-      <Stack.Screen
-        options={{
-          title: "Customize",
-          headerStyle: { backgroundColor: colors.bg[0] },
-          headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold },
-        }}
-      />
+    <LinearGradient colors={colors.bg} style={styles.root}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      {/* Custom Header */}
+      <View key={`header-${renderKey}`} style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.cardBorder }]}>
+        <Pressable 
+          onPress={() => router.back()} 
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+          android_ripple={{ color: colors.accent + "22" }}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </Pressable>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+          Customize
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}>
         
         {/* Color Theme Section */}
-        <View style={[styles.section, { borderColor: colors.cardBorder }]}>
+        <View style={styles.section} key={`color-section-${renderKey}`}>
           <Pressable 
             onPress={() => toggleSection("theme")} 
-            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
+            style={[styles.sectionHeader, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             android_ripple={{ color: colors.accent + "22" }}
           >
             <View style={styles.headerLeft}>
@@ -52,40 +69,42 @@ export default function Customize() {
             />
           </Pressable>
           
-          <AnimatePresence exitBeforeEnter>
-            {expandedSection === "theme" && (
-              <MotiView
-                key="theme-content"
-                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-                animate={{ opacity: 1, translateY: 0, scale: 1 }}
-                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
-                transition={{ type: "timing", duration: 300 }}
-                exitTransition={{ type: "timing", duration: 250 }}
-              >
-                <View style={styles.grid}>
-                  <ThemeOption label="System" active={mode === "system"} onPress={() => changeTheme("system")} colors={colors} fontConfig={fontConfig} />
-                  {Object.entries(THEMES).map(([key, theme]) => (
-                    <ThemeOption 
-                      key={key} 
-                      label={theme.name} 
-                      active={mode === key} 
-                      onPress={() => changeTheme(key as any)} 
-                      colors={{ ...theme, accent: theme.accent }} 
-                      preview={[theme.accent, theme.accent2, theme.subtext]}
-                      fontConfig={fontConfig}
-                    />
-                  ))}
-                </View>
-              </MotiView>
-            )}
-          </AnimatePresence>
+          {expandedSection === "theme" && (
+            <MotiView
+              key={`theme-${renderKey}`}
+              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+              animate={{ opacity: 1, translateY: 0, scale: 1 }}
+              transition={{ type: "timing", duration: 300 }}
+            >
+              <View style={styles.grid}>
+                <ThemeOption 
+                  label="System" 
+                  active={mode === "system"} 
+                  onPress={() => changeTheme("system")} 
+                  colors={colors} 
+                  fontConfig={fontConfig} 
+                />
+                {Object.entries(THEMES).map(([key, theme]) => (
+                  <ThemeOption 
+                    key={key} 
+                    label={theme.name} 
+                    active={mode === key} 
+                    onPress={() => changeTheme(key as any)} 
+                    colors={colors}
+                    preview={[theme.accent, theme.accent2, theme.subtext]}
+                    fontConfig={fontConfig}
+                  />
+                ))}
+              </View>
+            </MotiView>
+          )}
         </View>
 
         {/* Font Family Section */}
-        <View style={[styles.section, { marginTop: 20, borderColor: colors.cardBorder }]}>
+        <View style={[styles.section, { marginTop: 20 }]} key={`font-section-${renderKey}`}>
           <Pressable 
             onPress={() => toggleSection("font")} 
-            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
+            style={[styles.sectionHeader, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             android_ripple={{ color: colors.accent + "22" }}
           >
             <View style={styles.headerLeft}>
@@ -101,32 +120,28 @@ export default function Customize() {
             />
           </Pressable>
           
-          <AnimatePresence exitBeforeEnter>
-            {expandedSection === "font" && (
-              <MotiView
-                key="font-content"
-                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-                animate={{ opacity: 1, translateY: 0, scale: 1 }}
-                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
-                transition={{ type: "timing", duration: 300 }}
-                exitTransition={{ type: "timing", duration: 250 }}
-              >
-                <View style={styles.grid}>
-                  {Object.entries(FONTS).map(([key, f]) => (
-                    <FontOption 
-                      key={key} 
-                      label={f.label} 
-                      active={font === key} 
-                      onPress={() => changeFont(key as any)} 
-                      colors={colors} 
-                      sampleFamily={f.bold} 
-                      fontConfig={fontConfig}
-                    />
-                  ))}
-                </View>
-              </MotiView>
-            )}
-          </AnimatePresence>
+          {expandedSection === "font" && (
+            <MotiView
+              key={`font-${renderKey}`}
+              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+              animate={{ opacity: 1, translateY: 0, scale: 1 }}
+              transition={{ type: "timing", duration: 300 }}
+            >
+              <View style={styles.grid}>
+                {Object.entries(FONTS).map(([key, f]) => (
+                  <FontOption 
+                    key={key} 
+                    label={f.label} 
+                    active={font === key} 
+                    onPress={() => changeFont(key as any)} 
+                    colors={colors} 
+                    sampleFamily={f.bold} 
+                    fontConfig={fontConfig}
+                  />
+                ))}
+              </View>
+            </MotiView>
+          )}
         </View>
 
       </ScrollView>
@@ -150,7 +165,7 @@ function ThemeOption({ label, active, onPress, colors, preview = [] as string[],
     >
       {preview.length > 0 && (
         <View style={{ flexDirection: "row", gap: 5, marginBottom: 10, width: "100%" }}>
-          {preview.map((c, i) => (
+          {preview.map((c: string, i: number) => (
             <View key={i} style={{ flex: 1, height: 12, backgroundColor: c, borderRadius: 6 }} />
           ))}
         </View>
@@ -208,11 +223,29 @@ function FontOption({ label, active, onPress, colors, sampleFamily, fontConfig }
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, padding: 16 },
+  root: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    flex: 1,
+    textAlign: "center",
+  },
   section: {
     borderRadius: 16,
     overflow: "hidden",
-    borderWidth: 1,
+    marginHorizontal: 16,
   },
   sectionHeader: { 
     flexDirection: "row", 
@@ -221,6 +254,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 18,
     borderRadius: 16,
+    borderWidth: 1,
   },
   headerLeft: {
     flexDirection: "row",

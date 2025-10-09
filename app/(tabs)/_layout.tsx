@@ -13,13 +13,21 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.bg[1] || colors.bg[0],
           borderTopColor: colors.cardBorder,
-          height: 60,
-          paddingBottom: 5,
+          height: 65,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
-        tabBarLabelStyle: { fontFamily: fontConfig.bold, fontSize: 10 },
+        tabBarLabelStyle: { 
+          fontFamily: fontConfig.bold, 
+          fontSize: 11,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
+        },
         headerStyle: { backgroundColor: colors.bg[0] },
         headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold },
         headerShadowVisible: false,
+        animation: "shift",
       }}
     >
       <Tabs.Screen
@@ -27,7 +35,7 @@ export default function TabsLayout() {
         options={{
           title: "Manage",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "grid" : "grid-outline"} size={24} color={color} />
+            <Ionicons name={focused ? "grid" : "grid-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -38,7 +46,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "swap-horizontal" : "swap-horizontal-outline"}
-              size={24}
+              size={22}
               color={color}
             />
           ),
@@ -51,7 +59,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "lock-closed" : "lock-closed-outline"}
-              size={24}
+              size={22}
               color={color}
             />
           ),
@@ -61,7 +69,7 @@ export default function TabsLayout() {
         name="decoder"
         options={{
           title: "Decoder",
-          tabBarIcon: ({ color }) => <Ionicons name="key-outline" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="key-outline" size={22} color={color} />,
         }}
       />
       <Tabs.Screen name="accounts" options={{ href: null, title: "Accounts" }} />
