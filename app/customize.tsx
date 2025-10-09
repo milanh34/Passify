@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MotiView } from "moti";
+import { MotiView, AnimatePresence } from "moti";
 
 export default function Customize() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } = useTheme();
@@ -33,132 +33,174 @@ export default function Customize() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}>
         
         {/* Color Theme Section */}
-        <Pressable 
-          onPress={() => toggleSection("theme")} 
-          style={[styles.sectionHeader, { borderColor: colors.cardBorder }]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
-            Color Theme
-          </Text>
-          <Ionicons 
-            name={expandedSection === "theme" ? "chevron-up" : "chevron-down"} 
-            size={24} 
-            color={colors.accent} 
-          />
-        </Pressable>
-        
-        {expandedSection === "theme" && (
-          <MotiView
-            from={{ opacity: 0, translateY: -10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            exit={{ opacity: 0, translateY: -10 }}
-            transition={{ type: "timing", duration: 200 }}
+        <View style={[styles.section, { borderColor: colors.cardBorder }]}>
+          <Pressable 
+            onPress={() => toggleSection("theme")} 
+            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
+            android_ripple={{ color: colors.accent + "22" }}
           >
-            <View style={styles.grid}>
-              <ThemeOption label="System" active={mode === "system"} onPress={() => changeTheme("system")} colors={colors} />
-              {Object.entries(THEMES).map(([key, theme]) => (
-                <ThemeOption 
-                  key={key} 
-                  label={theme.name} 
-                  active={mode === key} 
-                  onPress={() => changeTheme(key as any)} 
-                  colors={{ ...theme, accent: theme.accent }} 
-                  preview={[theme.accent, theme.accent2, theme.subtext]}
-                />
-              ))}
+            <View style={styles.headerLeft}>
+              <Ionicons name="color-palette" size={22} color={colors.accent} style={{ marginRight: 12 }} />
+              <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                Color Theme
+              </Text>
             </View>
-          </MotiView>
-        )}
+            <Ionicons 
+              name={expandedSection === "theme" ? "chevron-up" : "chevron-down"} 
+              size={24} 
+              color={colors.accent} 
+            />
+          </Pressable>
+          
+          <AnimatePresence exitBeforeEnter>
+            {expandedSection === "theme" && (
+              <MotiView
+                key="theme-content"
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 300 }}
+                exitTransition={{ type: "timing", duration: 250 }}
+              >
+                <View style={styles.grid}>
+                  <ThemeOption label="System" active={mode === "system"} onPress={() => changeTheme("system")} colors={colors} fontConfig={fontConfig} />
+                  {Object.entries(THEMES).map(([key, theme]) => (
+                    <ThemeOption 
+                      key={key} 
+                      label={theme.name} 
+                      active={mode === key} 
+                      onPress={() => changeTheme(key as any)} 
+                      colors={{ ...theme, accent: theme.accent }} 
+                      preview={[theme.accent, theme.accent2, theme.subtext]}
+                      fontConfig={fontConfig}
+                    />
+                  ))}
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
+        </View>
 
         {/* Font Family Section */}
-        <Pressable 
-          onPress={() => toggleSection("font")} 
-          style={[styles.sectionHeader, { marginTop: 20, borderColor: colors.cardBorder }]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
-            Font Family
-          </Text>
-          <Ionicons 
-            name={expandedSection === "font" ? "chevron-up" : "chevron-down"} 
-            size={24} 
-            color={colors.accent} 
-          />
-        </Pressable>
-        
-        {expandedSection === "font" && (
-          <MotiView
-            from={{ opacity: 0, translateY: -10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            exit={{ opacity: 0, translateY: -10 }}
-            transition={{ type: "timing", duration: 200 }}
+        <View style={[styles.section, { marginTop: 20, borderColor: colors.cardBorder }]}>
+          <Pressable 
+            onPress={() => toggleSection("font")} 
+            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
+            android_ripple={{ color: colors.accent + "22" }}
           >
-            <View style={styles.grid}>
-              {Object.entries(FONTS).map(([key, f]) => (
-                <FontOption 
-                  key={key} 
-                  label={f.label} 
-                  active={font === key} 
-                  onPress={() => changeFont(key as any)} 
-                  colors={colors} 
-                  sampleFamily={f.bold} 
-                />
-              ))}
+            <View style={styles.headerLeft}>
+              <Ionicons name="text" size={22} color={colors.accent} style={{ marginRight: 12 }} />
+              <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                Font Family
+              </Text>
             </View>
-          </MotiView>
-        )}
+            <Ionicons 
+              name={expandedSection === "font" ? "chevron-up" : "chevron-down"} 
+              size={24} 
+              color={colors.accent} 
+            />
+          </Pressable>
+          
+          <AnimatePresence exitBeforeEnter>
+            {expandedSection === "font" && (
+              <MotiView
+                key="font-content"
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 300 }}
+                exitTransition={{ type: "timing", duration: 250 }}
+              >
+                <View style={styles.grid}>
+                  {Object.entries(FONTS).map(([key, f]) => (
+                    <FontOption 
+                      key={key} 
+                      label={f.label} 
+                      active={font === key} 
+                      onPress={() => changeFont(key as any)} 
+                      colors={colors} 
+                      sampleFamily={f.bold} 
+                      fontConfig={fontConfig}
+                    />
+                  ))}
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
+        </View>
 
       </ScrollView>
     </LinearGradient>
   );
 }
 
-function ThemeOption({ label, active, onPress, colors, preview = [] as string[] }) {
+function ThemeOption({ label, active, onPress, colors, preview = [] as string[], fontConfig }: any) {
   return (
     <Pressable 
       onPress={onPress} 
       style={[
         styles.card, 
         { 
-          borderColor: active ? colors.accent : colors.cardBorder,
-          backgroundColor: colors.card,
+          backgroundColor: active ? colors.accent + "15" : colors.card,
+          borderWidth: active ? 2 : 0,
+          borderColor: active ? colors.accent : "transparent",
         }
       ]}
+      android_ripple={{ color: colors.accent + "33" }}
     >
       {preview.length > 0 && (
-        <View style={{ flexDirection: "row", gap: 6, marginBottom: 8, width: "100%" }}>
+        <View style={{ flexDirection: "row", gap: 5, marginBottom: 10, width: "100%" }}>
           {preview.map((c, i) => (
-            <View key={i} style={{ flex: 1, height: 10, backgroundColor: c, borderRadius: 6 }} />
+            <View key={i} style={{ flex: 1, height: 12, backgroundColor: c, borderRadius: 6 }} />
           ))}
         </View>
       )}
-      <Text style={{ color: active ? colors.accent : colors.subtext, fontWeight: active ? "bold" : "normal" }}>
+      <Text 
+        style={{ 
+          color: active ? colors.accent : colors.text, 
+          fontFamily: fontConfig.bold,
+          fontSize: 13,
+          textAlign: "center",
+        }}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </Pressable>
   );
 }
 
-function FontOption({ label, active, onPress, colors, sampleFamily }: any) {
+function FontOption({ label, active, onPress, colors, sampleFamily, fontConfig }: any) {
   return (
     <Pressable 
       onPress={onPress} 
       style={[
         styles.card, 
         { 
-          borderColor: active ? colors.accent : colors.cardBorder,
-          backgroundColor: colors.card,
+          backgroundColor: active ? colors.accent + "15" : colors.card,
+          borderWidth: active ? 2 : 0,
+          borderColor: active ? colors.accent : "transparent",
         }
       ]}
+      android_ripple={{ color: colors.accent + "33" }}
     >
       <Text style={{ 
         fontFamily: sampleFamily, 
-        fontSize: 18, 
-        marginBottom: 6, 
-        color: active ? colors.accent : colors.subtext 
+        fontSize: 28, 
+        marginBottom: 8, 
+        color: active ? colors.accent : colors.text 
       }}>
         Aa
       </Text>
-      <Text style={{ color: active ? colors.accent : colors.subtext, fontWeight: active ? "bold" : "normal" }}>
+      <Text 
+        style={{ 
+          color: active ? colors.accent : colors.text, 
+          fontSize: 11,
+          textAlign: "center",
+          fontFamily: fontConfig.regular,
+        }}
+        numberOfLines={2}
+      >
         {label}
       </Text>
     </Pressable>
@@ -167,30 +209,39 @@ function FontOption({ label, active, onPress, colors, sampleFamily }: any) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, padding: 16 },
+  section: {
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+  },
   sectionHeader: { 
     flexDirection: "row", 
     justifyContent: "space-between", 
     alignItems: "center", 
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderRadius: 12,
-    marginBottom: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   sectionTitle: { fontSize: 18 },
   grid: { 
     flexDirection: "row", 
     flexWrap: "wrap", 
     justifyContent: "space-between", 
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 12,
+    paddingHorizontal: 4,
+    paddingBottom: 8,
   },
   card: { 
     width: "48%", 
     padding: 14, 
-    borderRadius: 12, 
-    borderWidth: 2,
+    borderRadius: 14, 
     alignItems: "center", 
-    marginBottom: 10 
+    justifyContent: "center",
+    marginBottom: 12,
+    minHeight: 90,
   },
 });
