@@ -15,7 +15,6 @@ export default function Customize() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [renderKey, setRenderKey] = useState(0);
 
-  // Force re-render when theme or font changes
   useEffect(() => {
     setRenderKey(prev => prev + 1);
   }, [colors, fontConfig]);
@@ -32,7 +31,6 @@ export default function Customize() {
     <LinearGradient colors={colors.bg} style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* Custom Header */}
       <View key={`header-${renderKey}`} style={[styles.header, { paddingTop: insets.top + 12, borderBottomColor: colors.cardBorder }]}>
         <Pressable 
           onPress={() => router.back()} 
@@ -49,7 +47,6 @@ export default function Customize() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}>
         
-        {/* Color Theme Section */}
         <View style={styles.section} key={`color-section-${renderKey}`}>
           <Pressable 
             onPress={() => toggleSection("theme")} 
@@ -100,7 +97,6 @@ export default function Customize() {
           )}
         </View>
 
-        {/* Font Family Section */}
         <View style={[styles.section, { marginTop: 20 }]} key={`font-section-${renderKey}`}>
           <Pressable 
             onPress={() => toggleSection("font")} 

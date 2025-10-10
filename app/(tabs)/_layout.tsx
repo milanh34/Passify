@@ -24,10 +24,11 @@ export default function TabsLayout() {
         tabBarItemStyle: {
           paddingVertical: 4,
         },
-        headerStyle: { backgroundColor: colors.bg[0] },
-        headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold },
-        headerShadowVisible: false,
-        animation: "shift",
+        headerShown: false,
+        animation: "none", // Disabled - using custom animations in each screen
+        sceneStyle: {
+          backgroundColor: colors.bg[0],
+        },
       }}
     >
       <Tabs.Screen
@@ -69,7 +70,7 @@ export default function TabsLayout() {
         name="decoder"
         options={{
           title: "Decoder",
-          tabBarIcon: ({ color }) => <Ionicons name="key-outline" size={22} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="key-outline" size={22} color={color} />
         }}
       />
       <Tabs.Screen name="accounts" options={{ href: null, title: "Accounts" }} />

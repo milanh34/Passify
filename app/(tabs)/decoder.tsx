@@ -1,11 +1,41 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
+import { MotiView } from "moti";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Decoder() {
   const { colors, fontConfig } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // ========================================
+  // 🎨 CHANGE ANIMATION HERE:
+  // ========================================
+  const CUSTOM_ANIMATION = {
+    from: { opacity: 0, translateY: 30 }, // Slide from bottom
+    animate: { opacity: 1, translateY: 0 },
+    duration: 250,
+    type: "timing" as const,
+  };
+  // ========================================
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg[0] }]}>
-      <Text style={{ color: colors.text, fontFamily: fontConfig.bold }}>Decoder Screen</Text>
+    <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
+      <LinearGradient colors={colors.bg} style={{ flex: 1 }}>
+        <MotiView
+          from={CUSTOM_ANIMATION.from}
+          animate={CUSTOM_ANIMATION.animate}
+          transition={{
+            type: CUSTOM_ANIMATION.type,
+            duration: CUSTOM_ANIMATION.duration,
+          }}
+          style={[styles.root, { paddingTop: insets.top + 20 }]}
+        >
+          <Text style={{ color: colors.text, fontFamily: fontConfig.bold, fontSize: 24 }}>
+            Decoder Screen
+          </Text>
+        </MotiView>
+      </LinearGradient>
     </View>
   );
 }
