@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, FlatList } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
@@ -19,6 +19,16 @@ export default function ManageScreen() {
   const insets = useSafeAreaInsets();
   const [platformModal, setPlatformModal] = useState<{ visible: boolean; editing?: { key: string; name: string } }>({ visible: false });
   const [deleteModal, setDeleteModal] = useState<{ visible: boolean; item?: any }>({ visible: false });
+  
+  // Add animation key that changes on focus
+  const [animationKey, setAnimationKey] = useState(0);
+
+  // Trigger animation every time tab is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      setAnimationKey(prev => prev + 1);
+    }, [])
+  );
 
   // ========================================
   // 🎨 CHANGE ANIMATION HERE:
@@ -58,6 +68,7 @@ export default function ManageScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
       <LinearGradient colors={colors.bg} style={{ flex: 1 }}>
         <MotiView
+          key={animationKey} // Force re-animation on tab focus
           from={CUSTOM_ANIMATION.from}
           animate={CUSTOM_ANIMATION.animate}
           transition={{
