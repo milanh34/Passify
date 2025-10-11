@@ -5,6 +5,7 @@ import { useTheme } from "../../src/context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TAB_ANIMATION } from "../../src/config/animations"; // IMPORT ANIMATION
 
 export default function Decoder() {
   const { colors, fontConfig } = useTheme();
@@ -17,27 +18,16 @@ export default function Decoder() {
     }, [])
   );
 
-  // ========================================
-  // 🎨 CHANGE ANIMATION HERE:
-  // ========================================
-  const CUSTOM_ANIMATION = {
-    from: { opacity: 0, translateY: 30 }, // Slide from bottom
-    animate: { opacity: 1, translateY: 0 },
-    duration: 250,
-    type: "timing" as const,
-  };
-  // ========================================
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
       <LinearGradient colors={colors.bg} style={{ flex: 1 }}>
         <MotiView
           key={animationKey}
-          from={CUSTOM_ANIMATION.from}
-          animate={CUSTOM_ANIMATION.animate}
+          from={TAB_ANIMATION.from}
+          animate={TAB_ANIMATION.animate}
           transition={{
-            type: CUSTOM_ANIMATION.type,
-            duration: CUSTOM_ANIMATION.duration,
+            type: TAB_ANIMATION.type,
+            duration: TAB_ANIMATION.duration,
           }}
           style={[styles.root, { paddingTop: insets.top + 20 }]}
         >

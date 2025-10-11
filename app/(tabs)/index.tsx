@@ -11,6 +11,7 @@ import { useDb } from "../../src/context/DbContext";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal";
+import { TAB_ANIMATION } from "../../src/config/animations"; // IMPORT ANIMATION
 
 export default function ManageScreen() {
   const { colors, fontConfig, fontsLoaded } = useTheme();
@@ -19,27 +20,13 @@ export default function ManageScreen() {
   const insets = useSafeAreaInsets();
   const [platformModal, setPlatformModal] = useState<{ visible: boolean; editing?: { key: string; name: string } }>({ visible: false });
   const [deleteModal, setDeleteModal] = useState<{ visible: boolean; item?: any }>({ visible: false });
-  
-  // Add animation key that changes on focus
   const [animationKey, setAnimationKey] = useState(0);
 
-  // Trigger animation every time tab is focused
   useFocusEffect(
     React.useCallback(() => {
       setAnimationKey(prev => prev + 1);
     }, [])
   );
-
-  // ========================================
-  // 🎨 CHANGE ANIMATION HERE:
-  // ========================================
-  const CUSTOM_ANIMATION = {
-    from: { opacity: 0, translateX: 100 }, // Slide from right
-    animate: { opacity: 1, translateX: 0 },
-    duration: 250,
-    type: "timing" as const,
-  };
-  // ========================================
 
   const platforms = Object.keys(database).map((key) => ({
     key,
@@ -68,12 +55,12 @@ export default function ManageScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
       <LinearGradient colors={colors.bg} style={{ flex: 1 }}>
         <MotiView
-          key={animationKey} // Force re-animation on tab focus
-          from={CUSTOM_ANIMATION.from}
-          animate={CUSTOM_ANIMATION.animate}
+          key={animationKey}
+          from={TAB_ANIMATION.from}
+          animate={TAB_ANIMATION.animate}
           transition={{
-            type: CUSTOM_ANIMATION.type,
-            duration: CUSTOM_ANIMATION.duration,
+            type: TAB_ANIMATION.type,
+            duration: TAB_ANIMATION.duration,
           }}
           style={{ flex: 1 }}
         >
