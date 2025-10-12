@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useTheme } from "../src/context/ThemeContext";
+import { useAnimation } from "../src/context/AnimationContext";
 import { Stack, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState, useEffect } from "react";
@@ -9,6 +10,7 @@ import { MotiView } from "moti";
 
 export default function Customize() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } = useTheme();
+  const { currentAnimation, changeAnimation, ANIMATION_PRESETS } = useAnimation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   
@@ -47,6 +49,7 @@ export default function Customize() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}>
         
+        {/* Color Theme Section */}
         <View style={styles.section} key={`color-section-${renderKey}`}>
           <Pressable 
             onPress={() => toggleSection("theme")} 
@@ -97,6 +100,7 @@ export default function Customize() {
           )}
         </View>
 
+        {/* Font Family Section */}
         <View style={[styles.section, { marginTop: 20 }]} key={`font-section-${renderKey}`}>
           <Pressable 
             onPress={() => toggleSection("font")} 
@@ -140,9 +144,71 @@ export default function Customize() {
           )}
         </View>
 
+        {/* Animation Section */}
+        <View style={[styles.section, { marginTop: 20 }]} key={`animation-section-${renderKey}`}>
+          <Pressable 
+            onPress={() => toggleSection("animation")} 
+            style={[styles.sectionHeader, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            android_ripple={{ color: colors.accent + "22" }}
+          >
+            <View style={styles.headerLeft}>
+              <Ionicons name="flash" size={22} color={colors.accent} style={{ marginRight: 12 }} />
+              <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                Animation Style
+              </Text>
+            </View>
+            <Ionicons 
+              name={expandedSection === "animation" ? "chevron-up" : "chevron-down"} 
+              size={24} 
+              color={colors.accent} 
+            />
+          </Pressable>
+          
+          {expandedSection === "animation" && (
+            <MotiView
+              key={`animation-${renderKey}`}
+              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+              animate={{ opacity: 1, translateY: 0, scale: 1 }}
+              transition={{ type: "timing", duration: 300 }}
+            >
+              <View style={styles.grid}>
+                {ANIMATION_PRESETS.map((preset) => (
+                  <AnimationOption
+                    key={preset.id}
+                    label={preset.name}
+                    icon={getAnimationIcon(preset.id)}
+                    active={currentAnimation === preset.id}
+                    onPress={() => changeAnimation(preset.id)}
+                    colors={colors}
+                    fontConfig={fontConfig}
+                  />
+                ))}
+              </View>
+            </MotiView>
+          )}
+        </View>
+
       </ScrollView>
     </LinearGradient>
   );
+}
+
+// Helper function to get icons for different animation types
+function getAnimationIcon(id: string): string {
+  const iconMap: Record<string, string> = {
+    slide_right: "arrow-forward",
+    slide_left: "arrow-back",
+    slide_bottom: "arrow-up",
+    fade: "eye-off-outline",
+    scale_fade: "contract-outline",
+    scale_fade_out: "expand-outline",
+    slide_scale: "resize-outline",
+    rotate_slide: "sync-outline",
+    bounce: "ellipse-outline",
+    elastic: "radio-button-on-outline",
+    professional: "star-outline",
+  };
+  return iconMap[id] || "flash-outline";
 }
 
 function ThemeOption({ label, active, onPress, colors, preview = [] as string[], fontConfig }: any) {
@@ -209,6 +275,41 @@ function FontOption({ label, active, onPress, colors, sampleFamily, fontConfig }
           fontSize: 11,
           textAlign: "center",
           fontFamily: fontConfig.regular,
+        }}
+        numberOfLines={2}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function AnimationOption({ label, icon, active, onPress, colors, fontConfig }: any) {
+  return (
+    <Pressable 
+      onPress={onPress} 
+      style={[
+        styles.card, 
+        { 
+          backgroundColor: active ? colors.accent + "15" : colors.card,
+          borderWidth: active ? 2 : 0,
+          borderColor: active ? colors.accent : "transparent",
+        }
+      ]}
+      android_ripple={{ color: colors.accent + "33" }}
+    >
+      <Ionicons 
+        name={icon as any} 
+        size={32} 
+        color={active ? colors.accent : colors.text} 
+        style={{ marginBottom: 8 }}
+      />
+      <Text 
+        style={{ 
+          color: active ? colors.accent : colors.text, 
+          fontFamily: fontConfig.bold,
+          fontSize: 11,
+          textAlign: "center",
         }}
         numberOfLines={2}
       >

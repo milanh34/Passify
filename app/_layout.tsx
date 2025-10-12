@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import { AnimationProvider } from "../src/context/AnimationContext"; // ADD THIS
 import { DbProvider } from "../src/context/DbContext";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
@@ -12,15 +13,8 @@ function RootStack() {
       <Stack 
         screenOptions={{ 
           headerShown: false,
-          // ONLY USE ONE OF THESE (they all work):
-          animation: "default", // Native platform animation
-          // animation: "fade", // Fade in/out
-          // animation: "fade_from_bottom", // Slide up from bottom with fade
-          // animation: "slide_from_right", // Slide from right (iOS style)
-          // animation: "slide_from_left", // Slide from left
-          // animation: "slide_from_bottom", // Slide up from bottom
-          // animation: "none", // Instant (no animation)
-          animationDuration: 250,
+          animation: "fade",
+          animationDuration: 200,
         }} 
       >
         <Stack.Screen 
@@ -32,8 +26,8 @@ function RootStack() {
         <Stack.Screen 
           name="customize" 
           options={{ 
-            animation: "fade", // Change this to any working option above
-            animationDuration: 250,
+            animation: "fade",
+            animationDuration: 200,
           }} 
         />
       </Stack>
@@ -44,10 +38,12 @@ function RootStack() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <DbProvider>
-        <StatusBar style="auto" />
-        <RootStack />
-      </DbProvider>
+      <AnimationProvider> {/* ADD THIS */}
+        <DbProvider>
+          <StatusBar style="auto" />
+          <RootStack />
+        </DbProvider>
+      </AnimationProvider>
     </ThemeProvider>
   );
 }
