@@ -10,8 +10,8 @@ import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
-import DeleteModal from "../../src/components/DeleteModal";
-import { TAB_ANIMATION } from "../../src/config/animations"; // IMPORT ANIMATION
+import DeleteModal from "../../src/components/DeleteModal"; // IMPORT ANIMATION
+import { useAnimation } from "../../src/context/AnimationContext";
 
 export default function ManageScreen() {
   const { colors, fontConfig, fontsLoaded } = useTheme();
@@ -21,6 +21,7 @@ export default function ManageScreen() {
   const [platformModal, setPlatformModal] = useState<{ visible: boolean; editing?: { key: string; name: string } }>({ visible: false });
   const [deleteModal, setDeleteModal] = useState<{ visible: boolean; item?: any }>({ visible: false });
   const [animationKey, setAnimationKey] = useState(0);
+  const { TAB_ANIMATION } = useAnimation();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -87,53 +88,56 @@ export default function ManageScreen() {
               contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
               renderItem={({ item, index }) => (
                 <MotiView
-                  key={item.key}
-                  from={{ opacity: 0, translateY: 20 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{ type: "timing", duration: 300, delay: index * 50 }}
+                  from={{ opacity: 0, scale: 0.96, translateY: 16 }}
+                  animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                  transition={{ type: "timing", duration: 320, delay: index * 70 }}
                 >
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(tabs)/accounts",
-                        params: { platform: item.name, key: item.key },
-                      })
-                    }
-                    onLongPress={() => { }}
-                    android_ripple={{ color: colors.accent + "22" }}
-                    style={[
-                      styles.card,
-                      {
-                        backgroundColor: colors.card,
-                        borderColor: colors.cardBorder,
-                      },
-                    ]}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
-                        {item.name}
-                      </Text>
-                      <Text style={{ color: colors.subtext, fontFamily: fontConfig.regular, fontSize: 12, marginTop: 4 }}>
-                        {item.count} accounts
-                      </Text>
-                    </View>
-                    <View style={styles.actions}>
-                      <Pressable
-                        onPress={() => setPlatformModal({ visible: true, editing: item })}
-                        style={styles.iconBtn}
-                        android_ripple={{ color: colors.accent + "33" }}
-                      >
-                        <Ionicons name="create-outline" size={20} color={colors.accent} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => confirmDelete(item)}
-                        style={styles.iconBtn}
-                        android_ripple={{ color: colors.danger + "33" }}
-                      >
-                        <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                      </Pressable>
-                    </View>
-                  </Pressable>
+                  <MotiPressable whileTap={{ scale: 0.98 }}>
+                    <Pressable
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(tabs)/accounts",
+                          params: { platform: item.name, key: item.key },
+                        })
+                      }
+                      onLongPress={() => { }}
+                      android_ripple={{ color: colors.accent + "22" }}
+                      style={[
+                        styles.card,
+                        {
+                          backgroundColor: colors.card,
+                          borderColor: colors.cardBorder,
+                        },
+                      ]}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                          {item.name}
+                        </Text>
+                        <Text style={{ color: colors.subtext, fontFamily: fontConfig.regular }}>{item.count} accounts</Text>
+                      </View>
+                      <View style={styles.actions}>
+                        <MotiPressable whileTap={{ scale: 0.92 }}>
+                          <Pressable
+                            onPress={() => setPlatformModal({ visible: true, editing: item })}
+                            style={styles.iconBtn}
+                            android_ripple={{ color: colors.accent + "33" }}
+                          >
+                            <Ionicons name="pencil" size={18} color={colors.subtext} />
+                          </Pressable>
+                        </MotiPressable>
+                        <MotiPressable whileTap={{ scale: 0.92 }}>
+                          <Pressable
+                            onPress={() => confirmDelete(item)}
+                            style={styles.iconBtn}
+                            android_ripple={{ color: colors.danger + "33" }}
+                          >
+                            <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                          </Pressable>
+                        </MotiPressable>
+                      </View>
+                    </Pressable>
+                  </MotiPressable>
                 </MotiView>
               )}
               ListEmptyComponent={

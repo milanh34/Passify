@@ -26,7 +26,7 @@ function RootStack() {
         <Stack.Screen 
           name="customize" 
           options={{ 
-            animation: "fade",
+            animation: "flip",
             animationDuration: 200,
           }} 
         />
@@ -38,7 +38,7 @@ function RootStack() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <AnimationProvider> {/* ADD THIS */}
+      <AnimationProvider>
         <DbProvider>
           <StatusBar style="auto" />
           <RootStack />

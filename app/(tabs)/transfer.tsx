@@ -5,12 +5,13 @@ import { useTheme } from "../../src/context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TAB_ANIMATION } from "../../src/config/animations"; // IMPORT ANIMATION
+import { useAnimation } from "../../src/context/AnimationContext";
 
 export default function TransferScreen() {
   const { colors, fontConfig } = useTheme();
   const insets = useSafeAreaInsets();
   const [animationKey, setAnimationKey] = useState(0);
+  const { TAB_ANIMATION } = useAnimation();
 
   useFocusEffect(
     React.useCallback(() => {

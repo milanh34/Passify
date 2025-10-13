@@ -1,10 +1,11 @@
 import { Tabs, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Text } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 
 export default function TabsLayout() {
   const { colors, fontConfig } = useTheme();
-  const segments = useSegments(); // Get current route segments
+  const segments = useSegments();
 
   // Check if we're on the accounts screen
   const isOnAccounts = segments[segments.length - 1] === "accounts";
@@ -17,9 +18,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.bg[1] || colors.bg[0],
           borderTopColor: colors.cardBorder,
-          height: 65,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 75,
+          paddingBottom: 10,
         },
         tabBarLabelStyle: { 
           fontFamily: fontConfig.bold, 
@@ -39,12 +39,25 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Manage",
+          // Custom icon - highlighted when focused OR on accounts
           tabBarIcon: ({ color, focused }) => (
             <Ionicons 
               name={(focused || isOnAccounts) ? "grid" : "grid-outline"} 
               size={22} 
               color={(focused || isOnAccounts) ? colors.accent : color} 
             />
+          ),
+          // Custom label - highlighted when focused OR on accounts
+          tabBarLabel: ({ focused }) => (
+            <Text
+              style={{
+                fontFamily: fontConfig.bold,
+                fontSize: 11,
+                color: (focused || isOnAccounts) ? colors.accent : colors.subtext,
+              }}
+            >
+              Manage
+            </Text>
           ),
         }}
       />

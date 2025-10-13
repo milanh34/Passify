@@ -197,12 +197,11 @@ export default function AccountsScreen() {
                   {/* Animated card with scale effect */}
                   <MotiView
                     animate={{
-                      scale: isExpanded ? 1.02 : 1,
+                      scale: isExpanded ? 1 : 0.975,
                     }}
                     transition={{
-                      type: "spring",
-                      damping: 15,
-                      stiffness: 150,
+                      type: "timing",
+                      duration: 250,
                     }}
                   >
                     <Pressable
