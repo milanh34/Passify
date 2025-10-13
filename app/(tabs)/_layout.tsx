@@ -1,9 +1,13 @@
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../src/context/ThemeContext";
 
 export default function TabsLayout() {
   const { colors, fontConfig } = useTheme();
+  const segments = useSegments(); // Get current route segments
+
+  // Check if we're on the accounts screen
+  const isOnAccounts = segments[segments.length - 1] === "accounts";
 
   return (
     <Tabs
@@ -25,7 +29,7 @@ export default function TabsLayout() {
           paddingVertical: 4,
         },
         headerShown: false,
-        animation: "none", // Disabled - using custom animations in each screen
+        animation: "none",
         sceneStyle: {
           backgroundColor: colors.bg[0],
         },
@@ -36,7 +40,11 @@ export default function TabsLayout() {
         options={{
           title: "Manage",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "grid" : "grid-outline"} size={22} color={color} />
+            <Ionicons 
+              name={(focused || isOnAccounts) ? "grid" : "grid-outline"} 
+              size={22} 
+              color={(focused || isOnAccounts) ? colors.accent : color} 
+            />
           ),
         }}
       />

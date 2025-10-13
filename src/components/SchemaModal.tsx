@@ -10,16 +10,26 @@ type SchemaField = {
   value: string;
 };
 
-export default function SchemaModal({ visible, initialSchema, onClose, onSave }: { visible: boolean; initialSchema: string[]; onClose: () => void; onSave: (fields: string[]) => void; }) {
+export default function SchemaModal({ 
+  visible, 
+  currentSchema, // CHANGED: Accept currentSchema instead of initialSchema
+  onClose, 
+  onSave 
+}: { 
+  visible: boolean; 
+  currentSchema: string[]; // CHANGED: Renamed prop
+  onClose: () => void; 
+  onSave: (fields: string[]) => void; 
+}) {
   const { colors, fontConfig } = useTheme();
   const [fields, setFields] = useState<SchemaField[]>([]);
 
   useEffect(() => {
-    if (visible) {
+    if (visible && currentSchema) { // ADDED: Check if currentSchema exists
       // Convert the initial schema strings into objects with stable IDs
-      setFields(initialSchema.map((value, index) => ({ id: `${index}-${Date.now()}`, value })));
+      setFields(currentSchema.map((value, index) => ({ id: `${index}-${Date.now()}`, value })));
     }
-  }, [visible, initialSchema]);
+  }, [visible, currentSchema]); // CHANGED: Use currentSchema
 
   const update = (id: string, newValue: string) => {
     setFields((currentFields) =>
@@ -37,26 +47,44 @@ export default function SchemaModal({ visible, initialSchema, onClose, onSave }:
 
   const handleSave = () => {
     // Convert back to an array of strings before saving
-    onSave(fields.map(f => f.value).filter(Boolean));
+    const validFields = fields.map(f => f.value.trim()).filter(Boolean);
+    if (validFields.length > 0) {
+      onSave(validFields);
+    }
     onClose();
   };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={[styles.backdrop, { backgroundColor: colors.modalBackdrop }]}>
+      <MotiView 
+        from={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        style={[styles.backdrop, { backgroundColor: colors.modalBackdrop }]}
+      >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <MotiView from={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "timing", duration: 220 }}>
+        <MotiView 
+          from={{ scale: 0.9, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          exit={{ scale: 0.9, opacity: 0 }} 
+          transition={{ type: "timing", duration: 220 }}
+        >
           <View style={[styles.card, { backgroundColor: colors.modalCard, borderColor: colors.modalBorder }]}>
-            <Text style={[styles.title, { color: colors.modalText, fontFamily: fontConfig.bold }]}>Edit Schema</Text>
+            <Text style={[styles.title, { color: colors.modalText, fontFamily: fontConfig.bold }]}>
+              Edit Schema
+            </Text>
             {fields.map((field) => (
-              // THE FIX: Use the stable `field.id` as the key
               <View key={field.id} style={styles.row}>
-                <TextInput 
-                  value={field.value} 
-                  onChangeText={(v) => update(field.id, v)} 
-                  placeholder="field name (e.g., email)" 
-                  placeholderTextColor={colors.muted} 
-                  style={[styles.input, { color: colors.modalText, fontFamily: fontConfig.regular, borderColor: colors.modalBorder }]} 
+                <TextInput
+                  value={field.value}
+                  onChangeText={(v) => update(field.id, v)}
+                  placeholder="field name (e.g., email)"
+                  placeholderTextColor={colors.muted}
+                  style={[styles.input, { 
+                    color: colors.modalText, 
+                    fontFamily: fontConfig.regular, 
+                    borderColor: colors.modalBorder 
+                  }]}
                 />
                 <TouchableOpacity onPress={() => remove(field.id)} style={styles.del}>
                   <Ionicons name="trash-outline" size={20} color={colors.danger} />
@@ -83,7 +111,7 @@ export default function SchemaModal({ visible, initialSchema, onClose, onSave }:
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
-  card: { width: "95%", borderRadius: 20, padding: 24, gap: 12, overflow: "hidden", borderWidth: 1 }, // Wider, no maxWidth
+  card: { width: "95%", borderRadius: 20, padding: 24, gap: 12, overflow: "hidden", borderWidth: 1 },
   title: { fontSize: 20, textAlign: "center", marginBottom: 8 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
   input: { flex: 1, padding: 12, borderRadius: 10, backgroundColor: "rgba(127,127,127,0.12)", borderWidth: 1 },

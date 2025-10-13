@@ -5,7 +5,7 @@ const initialData = require("../../assets/database.json");
 const DB_KEY = "@PM:database";
 const SCHEMA_KEY = "@PM:schemas";
 
-type Account = { id: string; name: string; [k: string]: any };
+type Account = { id: string; name: string;[k: string]: any };
 type Database = Record<string, Account[]>;
 type Schemas = Record<string, string[]>;
 

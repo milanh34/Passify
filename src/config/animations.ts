@@ -1,19 +1,15 @@
-// ========================================
-// 🎨 CHANGE ANIMATION HERE - ONE PLACE FOR ALL TABS!
-// ========================================
-
 export const TAB_ANIMATION = {
   // === OPTION 1: Slide from Right (iOS Style) ===
-  from: { opacity: 0, translateX: 100 },
-  animate: { opacity: 1, translateX: 0 },
-  duration: 250,
-  type: "timing" as const,
+  //   from: { opacity: 0, translateX: 100 },
+  //   animate: { opacity: 1, translateX: 0 },
+  //   duration: 250,
+  //   type: "timing" as const,
 
   // === OPTION 2: Slide from Left ===
-  // from: { opacity: 0, translateX: -100 },
-  // animate: { opacity: 1, translateX: 0 },
-  // duration: 250,
-  // type: "timing" as const,
+  //   from: { opacity: 0, translateX: -100 },
+  //   animate: { opacity: 1, translateX: 0 },
+  //   duration: 250,
+  //   type: "timing" as const,
 
   // === OPTION 3: Slide from Bottom ===
   // from: { opacity: 0, translateY: 50 },
@@ -66,12 +62,12 @@ export const TAB_ANIMATION = {
   // stiffness: 100,
 
   // === OPTION 11: Elastic Zoom ===
-  // from: { opacity: 0, scale: 0.5 },
-  // animate: { opacity: 1, scale: 1 },
-  // duration: 400,
-  // type: "spring" as const,
-  // damping: 12,
-  // stiffness: 150,
+  from: { opacity: 0, scale: 0.5 },
+  animate: { opacity: 1, scale: 1 },
+  duration: 400,
+  type: "spring" as const,
+  damping: 12,
+  stiffness: 150,
 
   // === OPTION 12: Slide + Rotate + Scale (Complex) ===
   // from: { opacity: 0, translateX: 60, rotate: "-8deg", scale: 0.9 },
@@ -80,22 +76,37 @@ export const TAB_ANIMATION = {
   // type: "timing" as const,
 
   // === OPTION 13: Vertical Slide + Scale ===
-  // from: { opacity: 0, translateY: -40, scale: 0.92 },
-  // animate: { opacity: 1, translateY: 0, scale: 1 },
-  // duration: 260,
-  // type: "timing" as const,
+//   from: { opacity: 0, translateY: -40, scale: 0.92 },
+//   animate: { opacity: 1, translateY: 0, scale: 1 },
+//   duration: 260,
+//   type: "timing" as const,
 
   // === OPTION 14: Soft Bounce ===
-  // from: { opacity: 0, translateY: 30 },
-  // animate: { opacity: 1, translateY: 0 },
-  // duration: 300,
-  // type: "spring" as const,
-  // damping: 20,
-  // stiffness: 120,
+//   from: { opacity: 0, translateY: 30 },
+//   animate: { opacity: 1, translateY: 0 },
+//   duration: 300,
+//   type: "spring" as const,
+//   damping: 20,
+//   stiffness: 120,
 
   // === OPTION 15: Professional Fade-Scale ===
   // from: { opacity: 0, scale: 0.97 },
   // animate: { opacity: 1, scale: 1 },
   // duration: 180,
   // type: "timing" as const,
+};
+
+export const PAGE_ANIMATION = {
+  from: { opacity: 0, translateX: 100 },
+  animate: { opacity: 1, translateX: 0 },
+  duration: 250,
+  type: "timing" as const,
+};
+
+export const CARD_ANIMATION = {
+  from: { opacity: 0, translateY: 30, scale: 0.95 },
+  animate: { opacity: 1, translateY: 0, scale: 1 },
+  duration: 300,
+  staggerDelay: 80, 
+  type: "timing" as const,
 };
