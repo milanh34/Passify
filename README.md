@@ -1,50 +1,136 @@
-# Welcome to your Expo app 👋
+# 🔐 Passify
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **Version 1.0** - ***Your secure password manager***
 
-## Get started
+#### A feature-rich password and account manager built with React Native and Expo. More updates coming soon! 🚀
 
-1. Install dependencies
+## ✨ Features
 
-   ```bash
-   npm install
-   ```
+- 📱 **Multi-Platform Management** - Organize accounts across different platforms
+- 🎨 **Customizable Themes** - Multiple color schemes with system theme support
+- 🔤 **Custom Fonts** - Select your preferred font family
+- ⚡ **11 Animation Presets** - Personalize screen transitions
+- 📋 **Expandable Cards** - View account details with smooth expand/collapse
+- 👁️ **Password Visibility Toggle** - Securely hide/show passwords
+- 📋 **Copy to Clipboard** - Quick copy for any field
+- ⚙️ **Custom Schemas** - Define custom fields for each platform
+- 🔄 **Data Transfer** - Move accounts between platforms
+- 🔒 **Encode/Decode Tools** - Built-in data utilities
 
-2. Start the app
+## 🛠️ Tech Stack
 
-   ```bash
-   npx expo start
-   ```
+- React Native + Expo Router (v51+)
+- TypeScript
+- Moti (react-native-reanimated v3)
+- AsyncStorage for data persistence
+- Context API for state management
+- Expo Vector Icons (Ionicons)
 
-In the output, you'll find options to open the app in a
+## 📁 Project Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+```
+app/
+├── _layout.tsx                 # Root stack navigation
+├── customize.tsx               # Theme & animation settings
+└── (tabs)/
+    ├── _layout.tsx             # Bottom tab navigation
+    ├── index.tsx               # Manage platforms
+    ├── transfer.tsx            # Data transfer
+    ├── encoder.tsx             # Data encoder
+    ├── decoder.tsx             # Data decoder
+    └── accounts.tsx            # Account details
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+src/
+├── context/
+│   ├── ThemeContext.tsx        # Theme management
+│   ├── DbContext.tsx           # Database & storage
+│   └── AnimationContext.tsx    # Animation presets
+└── components/
+    ├── FAB.tsx                 # Floating action button
+    ├── FormModal.tsx           # Add/edit modal
+    ├── SchemaModal.tsx         # Field customization
+    └── DeleteModal.tsx         # Delete confirmation
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🚀 Getting Started
 
-## Learn more
+### Prerequisites
 
-To learn more about developing your project with Expo, look at the following resources:
+- Node.js 18+
+- Expo CLI
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Installation
 
-## Join the community
+```
+# Clone the repository
+git clone https://github.com/milanh34/Passify.git
+cd passify
 
-Join our community of developers creating universal apps.
+# Install dependencies
+npm install
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Start the development server
+npx expo start
+```
+
+### Run on Device
+
+```
+# Android
+npx expo run:android
+
+# iOS
+npx expo run:ios
+```
+
+## 🎨 Key Features Explained
+
+### Animation System
+- 11 preset animations (Slide, Fade, Scale, Bounce, etc.)
+- Centralized animation management
+- Persistent preferences
+- Smooth transitions across all screens
+
+### Account Cards
+- Multiple cards can be expanded simultaneously
+- Smooth animations with border highlights
+- Password masking with toggle
+- One-tap clipboard copy
+- Custom fields per platform
+
+### Customization
+- System-aware theme switching
+- Multiple color schemes
+- Font family selection
+- Animation style picker
+- All preferences persist across sessions
+
+## 📱 Screens
+
+1. 📊 **Manage** - View all platforms and account counts
+2. 🔑 **Accounts** - Detailed account view with expandable cards
+3. 🔄 **Transfer** - Move accounts between platforms
+4. 🔒 **Encoder** - Encode sensitive data
+5. 🔓 **Decoder** - Decode encoded data
+6. ⚙️ **Customize** - Personalize theme, font, and animations
+
+## 🔒 Security Note
+
+This is a local-only password manager. All data is stored on-device using AsyncStorage. For production use, consider implementing:
+- Secure storage (Expo SecureStore)
+
+## 🗺️ Roadmap
+
+Version 1.0 is just the beginning! More features and improvements are coming soon.
+
+## 📄 License
+
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+---
+
+**Built with ❤️ using React Native and Expo by Milan Haria**
