@@ -7,15 +7,15 @@ import {
   ScrollView,
   Pressable,
   Alert,
-  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../context/ThemeContext";
 import { useDb } from "../../context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
-import { parseTransferText } from "../../utils/transferParser";
+import { parseTransferText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
+import ConflictModal from "./ConflictModal";
 
 type ConflictResolution = "update" | "skip";
 
@@ -161,14 +161,15 @@ export default function ImportTab() {
 
       for (const platformName of platformNames) {
         const accounts = parsedData[platformName];
+        const titleCaseName = toTitleCase(platformName);
         const platformId = platformName.toLowerCase().replace(/\s+/g, "_");
 
         // Check if platform exists
         const platformExists = !!database[platformId];
 
         if (!platformExists) {
-          // Create new platform with title case name
-          await addPlatform(platformId, platformName);
+          // Create new platform
+          await addPlatform(platformId);
         }
 
         // Extract all unique fields from all accounts
@@ -203,7 +204,7 @@ export default function ImportTab() {
           }
 
           // Store the title case platform name in each account
-          accountData.platform = platformName;
+          accountData.platform = titleCaseName;
 
           // Check for existing account
           const existingData = findExistingAccount(platformId, accountData);
@@ -219,7 +220,7 @@ export default function ImportTab() {
             } else {
               // Ask user for this specific conflict
               action = await askUserForResolution(
-                platformName,
+                titleCaseName,
                 existingData.account,
                 accountData,
                 existingData.field
@@ -477,158 +478,11 @@ export default function ImportTab() {
       </ScrollView>
 
       {/* Conflict Resolution Modal */}
-      <Modal
+      <ConflictModal
         visible={conflictModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {}}
-      >
-        <View style={styles.modalBackdrop}>
-          <MotiView
-            from={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "timing", duration: 200 }}
-            style={[
-              styles.modalCard,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.accent,
-              },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Ionicons name="warning" size={32} color={colors.accent} />
-              <Text
-                style={[
-                  styles.modalTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
-              >
-                Account Already Exists
-              </Text>
-            </View>
-
-            {currentConflict && (
-              <View style={styles.modalContent}>
-                <Text
-                  style={[
-                    styles.modalText,
-                    { color: colors.subtext, fontFamily: fontConfig.regular },
-                  ]}
-                >
-                  An account with {currentConflict.identifierField}{" "}
-                  <Text style={{ color: colors.accent, fontFamily: fontConfig.bold }}>
-                    {currentConflict.newAccount[currentConflict.identifierField]}
-                  </Text>{" "}
-                  already exists in {currentConflict.platformName}.
-                </Text>
-
-                <View
-                  style={[
-                    styles.comparisonBox,
-                    {
-                      backgroundColor: colors.bg[0] + "40",
-                      borderColor: colors.accent + "20",
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.comparisonTitle,
-                      { color: colors.accent2, fontFamily: fontConfig.bold },
-                    ]}
-                  >
-                    Existing Account:
-                  </Text>
-                  <Text
-                    style={[
-                      styles.comparisonText,
-                      { color: colors.text, fontFamily: fontConfig.regular },
-                    ]}
-                  >
-                    Name: {currentConflict.existingAccount.name}
-                  </Text>
-                </View>
-
-                <Text
-                  style={[
-                    styles.modalQuestion,
-                    { color: colors.text, fontFamily: fontConfig.bold },
-                  ]}
-                >
-                  What would you like to do?
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.modalButtons}>
-              <Pressable
-                onPress={() => handleDecision("skip", false)}
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: colors.card, borderColor: colors.accent },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.modalButtonText,
-                    { color: colors.accent, fontFamily: fontConfig.bold },
-                  ]}
-                >
-                  Skip
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => handleDecision("update", false)}
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: colors.accent },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.modalButtonText,
-                    { color: "#fff", fontFamily: fontConfig.bold },
-                  ]}
-                >
-                  Update
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.modalFooter}>
-              <Pressable
-                onPress={() => handleDecision("skip", true)}
-                style={styles.applyAllButton}
-              >
-                <Text
-                  style={[
-                    styles.applyAllText,
-                    { color: colors.subtext, fontFamily: fontConfig.regular },
-                  ]}
-                >
-                  Skip All Remaining
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => handleDecision("update", true)}
-                style={styles.applyAllButton}
-              >
-                <Text
-                  style={[
-                    styles.applyAllText,
-                    { color: colors.accent, fontFamily: fontConfig.bold },
-                  ]}
-                >
-                  Update All Remaining
-                </Text>
-              </Pressable>
-            </View>
-          </MotiView>
-        </View>
-      </Modal>
+        conflict={currentConflict}
+        onDecision={handleDecision}
+      />
 
       <Toast message={toastMessage} visible={showToast} />
     </>
@@ -688,49 +542,4 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonText: { fontSize: 16 },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalCard: {
-    width: "100%",
-    maxWidth: 400,
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 2,
-  },
-  modalHeader: {
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
-  },
-  modalTitle: { fontSize: 20, textAlign: "center" },
-  modalContent: { gap: 16, marginBottom: 24 },
-  modalText: { fontSize: 15, lineHeight: 22, textAlign: "center" },
-  comparisonBox: {
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-  },
-  comparisonTitle: { fontSize: 14, marginBottom: 8 },
-  comparisonText: { fontSize: 13, lineHeight: 20 },
-  modalQuestion: { fontSize: 16, textAlign: "center", marginTop: 8 },
-  modalButtons: { flexDirection: "row", gap: 12, marginBottom: 16 },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  modalButtonText: { fontSize: 16 },
-  modalFooter: { gap: 8 },
-  applyAllButton: {
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  applyAllText: { fontSize: 14 },
 });
