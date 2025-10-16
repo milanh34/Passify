@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,28 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../context/ThemeContext";
 import { useDb } from "../../context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
-import { parseTransferText } from "../../utils/transferParser";
+import { parseTransferText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
+
+type ConflictResolution = "update" | "skip";
+
+interface ConflictDecision {
+  platformId: string;
+  accountId: string;
+  action: ConflictResolution;
+  newData: any;
+}
 
 export default function ImportTab() {
   const { colors, fontConfig } = useTheme();
-  const { addPlatform, addAccount, updatePlatformSchema } = useDb();
+  const { database, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
   const router = useRouter();
 
   const [inputText, setInputText] = useState("");
@@ -27,6 +37,102 @@ export default function ImportTab() {
   const [toastMessage, setToastMessage] = useState("");
   const [isGuideExpanded, setIsGuideExpanded] = useState(false);
 
+  // Conflict resolution state
+  const [conflictModalVisible, setConflictModalVisible] = useState(false);
+  const [currentConflict, setCurrentConflict] = useState<{
+    platformName: string;
+    existingAccount: any;
+    newAccount: any;
+    identifierField: string;
+  } | null>(null);
+  
+  // Use ref for immediate synchronous access
+  const globalResolutionRef = useRef<ConflictResolution | null>(null);
+  const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
+
+  // Extract email/username from account data
+  const getIdentifierField = (account: any): { field: string; value: string } | null => {
+    if (account.email) return { field: "email", value: account.email };
+    if (account.gmail) return { field: "gmail", value: account.gmail };
+    if (account.username) return { field: "username", value: account.username };
+    return null;
+  };
+
+  // Extract name from email
+  const getNameFromEmail = (account: any): string => {
+    const identifier = getIdentifierField(account);
+    if (!identifier) return "";
+
+    const email = identifier.value;
+    const atIndex = email.indexOf("@");
+    if (atIndex > 0) {
+      return email.substring(0, atIndex);
+    }
+    return email;
+  };
+
+  // Check if account exists
+  const findExistingAccount = (
+    platformId: string,
+    newAccount: any
+  ): { account: any; field: string } | null => {
+    const accounts = database[platformId] || [];
+    const identifier = getIdentifierField(newAccount);
+
+    if (!identifier) return null;
+
+    const existing = accounts.find((acc: any) => {
+      const existingIdentifier = getIdentifierField(acc);
+      return (
+        existingIdentifier &&
+        existingIdentifier.field === identifier.field &&
+        existingIdentifier.value.toLowerCase() === identifier.value.toLowerCase()
+      );
+    });
+
+    return existing ? { account: existing, field: identifier.field } : null;
+  };
+
+  // Show conflict modal and wait for resolution
+  const askUserForResolution = (
+    platformName: string,
+    existingAccount: any,
+    newAccount: any,
+    identifierField: string
+  ): Promise<ConflictResolution> => {
+    return new Promise((resolve) => {
+      setCurrentConflict({
+        platformName,
+        existingAccount,
+        newAccount,
+        identifierField,
+      });
+      setConflictModalVisible(true);
+      
+      // Store the resolve function in the ref
+      resolutionCallbackRef.current = (action: ConflictResolution) => {
+        resolve(action);
+        resolutionCallbackRef.current = null;
+      };
+    });
+  };
+
+  // Handle user's decision in modal
+  const handleDecision = (action: ConflictResolution, applyToAll: boolean) => {
+    // Set global resolution in ref for immediate access
+    if (applyToAll) {
+      globalResolutionRef.current = action;
+    }
+    
+    // Close modal
+    setConflictModalVisible(false);
+    
+    // Call the resolution callback
+    if (resolutionCallbackRef.current) {
+      resolutionCallbackRef.current(action);
+    }
+  };
+
   const handleImport = async () => {
     if (!inputText.trim()) {
       Alert.alert("Empty Input", "Please paste some text to import.");
@@ -34,6 +140,7 @@ export default function ImportTab() {
     }
 
     setIsProcessing(true);
+    globalResolutionRef.current = null; // Reset global resolution
 
     try {
       const parsedData = parseTransferText(inputText);
@@ -48,14 +155,24 @@ export default function ImportTab() {
         return;
       }
 
-      let totalAccounts = 0;
+      // Phase 1: Collect all operations and resolve conflicts
+      const newAccountsToAdd: Array<{ platformId: string; data: any }> = [];
+      const decisionsToApply: ConflictDecision[] = [];
 
       for (const platformName of platformNames) {
         const accounts = parsedData[platformName];
-
+        const titleCaseName = toTitleCase(platformName);
         const platformId = platformName.toLowerCase().replace(/\s+/g, "_");
-        await addPlatform(platformId, platformName);
 
+        // Check if platform exists
+        const platformExists = !!database[platformId];
+
+        if (!platformExists) {
+          // Create new platform with title case name
+          await addPlatform(platformId, titleCaseName);
+        }
+
+        // Extract all unique fields from all accounts
         const allFields = new Set<string>();
         accounts.forEach((acc) => {
           Object.keys(acc).forEach((field) => allFields.add(field));
@@ -68,40 +185,99 @@ export default function ImportTab() {
           schema.splice(nameIndex + 1, 0, "password");
         }
 
+        // Update schema for this platform
         await updatePlatformSchema(platformId, schema);
 
+        // Process each account
         for (let i = 0; i < accounts.length; i++) {
-          const accountData = accounts[i];
+          const accountData = { ...accounts[i] };
 
+          // Generate name from email if not provided
           if (!accountData.name) {
-            accountData.name = `Account ${i + 1}`;
+            const emailName = getNameFromEmail(accountData);
+            accountData.name = emailName || `Account ${i + 1}`;
           }
 
+          // Ensure password field exists
           if (!accountData.password) {
             accountData.password = "";
           }
 
-          await addAccount(platformId, accountData);
-          totalAccounts++;
+          // Check for existing account
+          const existingData = findExistingAccount(platformId, accountData);
+
+          if (existingData) {
+            // Conflict detected - decide what to do
+            let action: ConflictResolution;
+
+            // Check ref for immediate value
+            if (globalResolutionRef.current) {
+              // Use global resolution if set
+              action = globalResolutionRef.current;
+            } else {
+              // Ask user for this specific conflict
+              action = await askUserForResolution(
+                titleCaseName,
+                existingData.account,
+                accountData,
+                existingData.field
+              );
+            }
+
+            // Store the decision
+            decisionsToApply.push({
+              platformId,
+              accountId: existingData.account.id,
+              action,
+              newData: accountData,
+            });
+          } else {
+            // No conflict - mark for addition
+            newAccountsToAdd.push({ platformId, data: accountData });
+          }
         }
       }
 
+      // Phase 2: Apply all decisions
+      let totalAccounts = 0;
+      let updatedAccounts = 0;
+      let skippedAccounts = 0;
+
+      // Add new accounts
+      for (const item of newAccountsToAdd) {
+        await addAccount(item.platformId, item.data);
+        totalAccounts++;
+      }
+
+      // Apply conflict resolutions
+      for (const decision of decisionsToApply) {
+        if (decision.action === "update") {
+          await updateAccount(decision.platformId, decision.accountId, decision.newData);
+          updatedAccounts++;
+        } else {
+          skippedAccounts++;
+        }
+      }
+
+      // Show success message
+      const messages = [];
+      if (totalAccounts > 0) messages.push(`${totalAccounts} new`);
+      if (updatedAccounts > 0) messages.push(`${updatedAccounts} updated`);
+      if (skippedAccounts > 0) messages.push(`${skippedAccounts} skipped`);
+
       setToastMessage(
-        `Imported ${totalAccounts} accounts from ${platformNames.length} platform(s)`
+        `Import complete: ${messages.join(", ")} account(s) from ${platformNames.length} platform(s)`
       );
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 2500);
+      setTimeout(() => setShowToast(false), 3000);
 
       setInputText("");
-
-      setTimeout(() => {
-        router.push("/(tabs)");
-      }, 2000);
     } catch (error) {
       console.error("Import error:", error);
       Alert.alert("Import Failed", "An error occurred while importing data.");
     } finally {
       setIsProcessing(false);
+      globalResolutionRef.current = null;
     }
   };
 
@@ -211,7 +387,7 @@ export default function ImportTab() {
                       ]}
                     >
                       Google{"\n\n"}Email - user@gmail.com{"\n"}Password -
-                      pass123{"\n\n"}Email - user2@gmail.com{"\n"}Password -
+                      pass123{"\n"}DOB - 01/01/2000{"\n\n"}Email - user2@gmail.com{"\n"}Password -
                       pass456{"\n\n\n"}Instagram{"\n\n"}Username - myhandle
                       {"\n"}Password - instapass
                     </Text>
@@ -298,6 +474,160 @@ export default function ImportTab() {
         </View>
       </ScrollView>
 
+      {/* Conflict Resolution Modal */}
+      <Modal
+        visible={conflictModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalBackdrop}>
+          <MotiView
+            from={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "timing", duration: 200 }}
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.accent,
+              },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Ionicons name="warning" size={32} color={colors.accent} />
+              <Text
+                style={[
+                  styles.modalTitle,
+                  { color: colors.text, fontFamily: fontConfig.bold },
+                ]}
+              >
+                Account Already Exists
+              </Text>
+            </View>
+
+            {currentConflict && (
+              <View style={styles.modalContent}>
+                <Text
+                  style={[
+                    styles.modalText,
+                    { color: colors.subtext, fontFamily: fontConfig.regular },
+                  ]}
+                >
+                  An account with {currentConflict.identifierField}{" "}
+                  <Text style={{ color: colors.accent, fontFamily: fontConfig.bold }}>
+                    {currentConflict.newAccount[currentConflict.identifierField]}
+                  </Text>{" "}
+                  already exists in {currentConflict.platformName}.
+                </Text>
+
+                <View
+                  style={[
+                    styles.comparisonBox,
+                    {
+                      backgroundColor: colors.bg[0] + "40",
+                      borderColor: colors.accent + "20",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.comparisonTitle,
+                      { color: colors.accent2, fontFamily: fontConfig.bold },
+                    ]}
+                  >
+                    Existing Account:
+                  </Text>
+                  <Text
+                    style={[
+                      styles.comparisonText,
+                      { color: colors.text, fontFamily: fontConfig.regular },
+                    ]}
+                  >
+                    Name: {currentConflict.existingAccount.name}
+                  </Text>
+                </View>
+
+                <Text
+                  style={[
+                    styles.modalQuestion,
+                    { color: colors.text, fontFamily: fontConfig.bold },
+                  ]}
+                >
+                  What would you like to do?
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => handleDecision("skip", false)}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: colors.card, borderColor: colors.accent },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.modalButtonText,
+                    { color: colors.accent, fontFamily: fontConfig.bold },
+                  ]}
+                >
+                  Skip
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleDecision("update", false)}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: colors.accent },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.modalButtonText,
+                    { color: "#fff", fontFamily: fontConfig.bold },
+                  ]}
+                >
+                  Update
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <Pressable
+                onPress={() => handleDecision("skip", true)}
+                style={styles.applyAllButton}
+              >
+                <Text
+                  style={[
+                    styles.applyAllText,
+                    { color: colors.subtext, fontFamily: fontConfig.regular },
+                  ]}
+                >
+                  Skip All Remaining
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleDecision("update", true)}
+                style={styles.applyAllButton}
+              >
+                <Text
+                  style={[
+                    styles.applyAllText,
+                    { color: colors.accent, fontFamily: fontConfig.bold },
+                  ]}
+                >
+                  Update All Remaining
+                </Text>
+              </Pressable>
+            </View>
+          </MotiView>
+        </View>
+      </Modal>
+
       <Toast message={toastMessage} visible={showToast} />
     </>
   );
@@ -356,4 +686,49 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonText: { fontSize: 16 },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 2,
+  },
+  modalHeader: {
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
+  modalTitle: { fontSize: 20, textAlign: "center" },
+  modalContent: { gap: 16, marginBottom: 24 },
+  modalText: { fontSize: 15, lineHeight: 22, textAlign: "center" },
+  comparisonBox: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+  },
+  comparisonTitle: { fontSize: 14, marginBottom: 8 },
+  comparisonText: { fontSize: 13, lineHeight: 20 },
+  modalQuestion: { fontSize: 16, textAlign: "center", marginTop: 8 },
+  modalButtons: { flexDirection: "row", gap: 12, marginBottom: 16 },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  modalButtonText: { fontSize: 16 },
+  modalFooter: { gap: 8 },
+  applyAllButton: {
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  applyAllText: { fontSize: 14 },
 });
