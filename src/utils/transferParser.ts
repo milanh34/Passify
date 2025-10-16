@@ -1,3 +1,11 @@
+export const toTitleCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 export const parseTransferText = (text: string): Record<string, any[]> => {
   const platforms = text.trim().split("\n\n\n");
   const result: Record<string, any[]> = {};
@@ -8,7 +16,7 @@ export const parseTransferText = (text: string): Record<string, any[]> => {
     const parts = platformBlock.split("\n\n");
     if (parts.length < 2) continue;
 
-    const platformName = parts[0].trim();
+    const platformName = toTitleCase(parts[0].trim());
     const accounts: any[] = [];
 
     for (let i = 1; i < parts.length; i++) {
@@ -59,12 +67,7 @@ export const generateExportText = (
       for (const fieldName of schema) {
         const value = account[fieldName];
         if (value !== undefined && value !== null && value !== "") {
-          // Convert field name to title case for display
-          const displayName = fieldName
-            .split("_")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-
+          const displayName = toTitleCase(fieldName.replace(/_/g, " "));
           fieldLines.push(`${displayName} - ${value}`);
         }
       }
@@ -75,7 +78,8 @@ export const generateExportText = (
     }
 
     if (accountTexts.length > 0) {
-      platformTexts.push(`${platformName}\n\n${accountTexts.join("\n\n")}`);
+      const titleCasePlatformName = toTitleCase(platformName);
+      platformTexts.push(`${titleCasePlatformName}\n\n${accountTexts.join("\n\n")}`);
     }
   }
 

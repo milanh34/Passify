@@ -48,12 +48,12 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }
   }, [database, schemas, isDbLoading]);
 
-  const addPlatform = (name: string) => {
-    const key = name.toLowerCase().replace(/\s+/g, "_");
-    if (database[key]) return;
-    setDatabase((db) => ({ ...db, [key]: [] }));
-    setSchemas((s) => ({ ...s, [key]: ["name", "password"] }));
-  };
+const addPlatform = (key: string, displayName?: string) => {
+  const platformKey = key.toLowerCase().replace(/\s+/g, "_");
+  if (database[platformKey]) return;
+  setDatabase((db) => ({ ...db, [platformKey]: [] }));
+  setSchemas((s) => ({ ...s, [platformKey]: ["name", "password"] }));
+};
 
   const updatePlatformName = (oldKey: string, newName: string) => {
     const newKey = newName.toLowerCase().replace(/\s+/g, "_");
@@ -81,7 +81,10 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
 
   const addAccount = (platformKey: string, payload: Omit<Account, "id">) => {
     const id = `acc_${Date.now()}_${Math.floor(Math.random() * 9999)}`;
-    setDatabase((db) => ({ ...db, [platformKey]: [...(db[platformKey] || []), { id, ...payload }] }));
+    setDatabase((db) => ({
+      ...db,
+      [platformKey]: [...(db[platformKey] || []), { id, ...payload }],
+    }));
   };
 
   const updateAccount = (platformKey: string, id: string, updated: Account) => {
