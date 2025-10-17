@@ -14,7 +14,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useDb } from "../../context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
-import { parseTransferText, toTitleCase } from "../../utils/transferParser";
+import { parseTransferText } from "../../utils/transferParser";
 import Toast from "../Toast";
 
 type ConflictResolution = "update" | "skip";
@@ -161,7 +161,6 @@ export default function ImportTab() {
 
       for (const platformName of platformNames) {
         const accounts = parsedData[platformName];
-        const titleCaseName = toTitleCase(platformName);
         const platformId = platformName.toLowerCase().replace(/\s+/g, "_");
 
         // Check if platform exists
@@ -169,7 +168,7 @@ export default function ImportTab() {
 
         if (!platformExists) {
           // Create new platform with title case name
-          await addPlatform(platformId, titleCaseName);
+          await addPlatform(platformId, platformName);
         }
 
         // Extract all unique fields from all accounts
@@ -203,6 +202,9 @@ export default function ImportTab() {
             accountData.password = "";
           }
 
+          // Store the title case platform name in each account
+          accountData.platform = platformName;
+
           // Check for existing account
           const existingData = findExistingAccount(platformId, accountData);
 
@@ -217,7 +219,7 @@ export default function ImportTab() {
             } else {
               // Ask user for this specific conflict
               action = await askUserForResolution(
-                titleCaseName,
+                platformName,
                 existingData.account,
                 accountData,
                 existingData.field

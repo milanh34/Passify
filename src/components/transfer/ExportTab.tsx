@@ -13,7 +13,7 @@ import { useDb } from "../../context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import { MotiPressable } from "moti/interactions";
-import { generateExportText } from "../../utils/transferParser";
+import { generateExportText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 
 type Selection = {
@@ -254,7 +254,7 @@ export default function ExportTab() {
         ) : (
           platformIds.map((platformId) => {
             const accounts = database[platformId] || [];
-            const platformName = accounts[0]?.platform || platformId.replace(/_/g, " ");
+            const platformName = accounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
             const isExpanded = expandedPlatforms.has(platformId);
             const isPlatformSelected = selection[platformId]?.selected || false;
 

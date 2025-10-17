@@ -12,6 +12,7 @@ import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal"; // IMPORT ANIMATION
 import { useAnimation } from "../../src/context/AnimationContext";
+import { toTitleCase } from "@/src/utils/transferParser";
 
 export default function ManageScreen() {
   const { colors, fontConfig, fontsLoaded } = useTheme();
@@ -29,11 +30,18 @@ export default function ManageScreen() {
     }, [])
   );
 
-  const platforms = Object.keys(database).map((key) => ({
+  const platforms = Object.keys(database).map((key) => {
+  const accounts = database[key];
+  const platformName = accounts.length > 0 && accounts[0].platform 
+    ? accounts[0].platform 
+    : toTitleCase(key.replace(/_/g, " "));
+  
+  return {
     key,
-    name: key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()),
-    count: database[key].length,
-  }));
+    name: platformName,
+    count: accounts.length,
+  };
+});
 
   const savePlatform = (data: Record<string, any>) => {
     const name = data.name?.trim();
