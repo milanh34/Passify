@@ -311,7 +311,7 @@ export default function ImportTab() {
               { color: colors.subtext, fontFamily: fontConfig.regular },
             ]}
           >
-            Paste your formatted text below to import platforms and accounts
+            Paste your formatted text below
           </Text>
         </View>
 
@@ -490,14 +490,14 @@ export default function ImportTab() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 40 },
-  header: { alignItems: "center", marginVertical: 20, gap: 8 },
-  title: { fontSize: 28, marginTop: 8 },
-  subtitle: { fontSize: 14, textAlign: "center", paddingHorizontal: 20 },
+  scrollContent: { paddingBottom: 30 },
+  header: { alignItems: "center", marginVertical: 12, gap: 6 },
+  title: { fontSize: 24, marginTop: 6 },
+  subtitle: { fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
   guideCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
   },
   guideHeader: {
@@ -505,33 +505,37 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  guideTitle: { fontSize: 16 },
-  guideContent: { marginTop: 16 },
-  guideText: { fontSize: 13, lineHeight: 22, marginBottom: 16 },
+  guideTitle: { fontSize: 15 },
+  guideContent: { marginTop: 12 },
+  guideText: { fontSize: 12, lineHeight: 20, marginBottom: 12 },
   exampleBox: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     borderWidth: 1,
   },
-  exampleTitle: { fontSize: 14, marginBottom: 8 },
-  exampleText: { fontSize: 12, lineHeight: 18 },
+  exampleTitle: { fontSize: 13, marginBottom: 6 },
+  exampleText: { fontSize: 11, lineHeight: 16 },
   inputCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
     borderWidth: 1,
-    minHeight: 250,
   },
-  textInput: { fontSize: 14, lineHeight: 20, minHeight: 220 },
-  buttonRow: { flexDirection: "row", gap: 12 },
+  textInput: { 
+    fontSize: 13, 
+    lineHeight: 19,
+    height: 300,
+    textAlignVertical: "top",
+  },
+  buttonRow: { flexDirection: "row", gap: 10 },
   button: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 6,
   },
   clearButton: { borderWidth: 1 },
   importButton: {
@@ -541,5 +545,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  buttonText: { fontSize: 16 },
+  buttonText: { fontSize: 14 },
 });
