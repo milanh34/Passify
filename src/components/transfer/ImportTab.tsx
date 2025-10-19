@@ -6,7 +6,6 @@ import {
   TextInput,
   ScrollView,
   Pressable,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../context/ThemeContext";
@@ -49,6 +48,13 @@ export default function ImportTab() {
   // Use ref for immediate synchronous access
   const globalResolutionRef = useRef<ConflictResolution | null>(null);
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
+
+  // Helper to show toast
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
 
   // Extract email/username from account data
   const getIdentifierField = (account: any): { field: string; value: string } | null => {
@@ -135,7 +141,7 @@ export default function ImportTab() {
 
   const handleImport = async () => {
     if (!inputText.trim()) {
-      Alert.alert("Empty Input", "Please paste some text to import.");
+      showToastMessage("Please paste some text to import");
       return;
     }
 
@@ -147,10 +153,7 @@ export default function ImportTab() {
       const platformNames = Object.keys(parsedData);
 
       if (platformNames.length === 0) {
-        Alert.alert(
-          "Parse Error",
-          "Could not parse the text. Please check the format."
-        );
+        showToastMessage("Could not parse the text. Please check the format");
         setIsProcessing(false);
         return;
       }
@@ -268,16 +271,14 @@ export default function ImportTab() {
       if (updatedAccounts > 0) messages.push(`${updatedAccounts} updated`);
       if (skippedAccounts > 0) messages.push(`${skippedAccounts} skipped`);
 
-      setToastMessage(
+      showToastMessage(
         `Import complete: ${messages.join(", ")} account(s) from ${platformNames.length} platform(s)`
       );
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
 
       setInputText("");
     } catch (error) {
       console.error("Import error:", error);
-      Alert.alert("Import Failed", "An error occurred while importing data.");
+      showToastMessage("Import failed. Please try again");
     } finally {
       setIsProcessing(false);
       globalResolutionRef.current = null;
@@ -296,7 +297,7 @@ export default function ImportTab() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Ionicons name="cloud-upload" size={40} color={colors.accent} />
+          <Ionicons name="cloud-upload" size={36} color={colors.accent} />
           <Text
             style={[
               styles.title,
@@ -339,7 +340,7 @@ export default function ImportTab() {
             </Text>
             <Ionicons
               name={isGuideExpanded ? "chevron-up" : "chevron-down"}
-              size={24}
+              size={20}
               color={colors.accent}
             />
           </View>
@@ -439,7 +440,7 @@ export default function ImportTab() {
               { backgroundColor: colors.card, borderColor: colors.accent },
             ]}
           >
-            <Ionicons name="trash-outline" size={20} color={colors.accent} />
+            <Ionicons name="trash-outline" size={18} color={colors.accent} />
             <Text
               style={[
                 styles.buttonText,
@@ -462,7 +463,7 @@ export default function ImportTab() {
           >
             <Ionicons
               name={isProcessing ? "hourglass-outline" : "download-outline"}
-              size={20}
+              size={18}
               color="#fff"
             />
             <Text

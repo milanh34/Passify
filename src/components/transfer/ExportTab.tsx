@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
   Share,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
@@ -35,6 +34,13 @@ export default function ExportTab() {
   const [toastMessage, setToastMessage] = useState("");
 
   const platformIds = Object.keys(database);
+
+  // Helper to show toast
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
 
   // Toggle platform selection
   const togglePlatform = (platformId: string) => {
@@ -130,15 +136,14 @@ export default function ExportTab() {
       );
 
       if (selectedAccounts.length > 0) {
-        // Get platform name from first account or use ID
         const platformName =
-          database[platformId][0]?.platform || platformId.replace(/_/g, " ");
+          selectedAccounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
         selectedData[platformName] = selectedAccounts;
       }
     }
 
     if (Object.keys(selectedData).length === 0) {
-      Alert.alert("No Selection", "Please select at least one account to export.");
+      showToastMessage("Please select at least one account to export");
       return;
     }
 
@@ -151,13 +156,11 @@ export default function ExportTab() {
       });
 
       if (result.action === Share.sharedAction) {
-        setToastMessage("Data exported successfully!");
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 2500);
+        showToastMessage("Data exported successfully!");
       }
     } catch (error) {
       console.error("Export error:", error);
-      Alert.alert("Export Failed", "An error occurred while exporting data.");
+      showToastMessage("Export failed. Please try again");
     }
   };
 
@@ -180,7 +183,7 @@ export default function ExportTab() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Ionicons name="cloud-download" size={40} color={colors.accent} />
+          <Ionicons name="cloud-upload" size={36} color={colors.accent} />
           <Text
             style={[
               styles.title,
@@ -208,7 +211,7 @@ export default function ExportTab() {
               { backgroundColor: colors.card, borderColor: colors.accent },
             ]}
           >
-            <Ionicons name="checkmark-done" size={20} color={colors.accent} />
+            <Ionicons name="checkmark-done" size={16} color={colors.accent} />
             <Text
               style={[
                 styles.selectButtonText,
@@ -226,7 +229,7 @@ export default function ExportTab() {
               { backgroundColor: colors.card, borderColor: colors.accent },
             ]}
           >
-            <Ionicons name="close-circle" size={20} color={colors.accent} />
+            <Ionicons name="close-circle" size={16} color={colors.accent} />
             <Text
               style={[
                 styles.selectButtonText,
@@ -319,7 +322,7 @@ export default function ExportTab() {
 
                   <Ionicons
                     name={isExpanded ? "chevron-up" : "chevron-down"}
-                    size={24}
+                    size={20}
                     color={colors.accent}
                   />
                 </Pressable>
@@ -419,7 +422,7 @@ export default function ExportTab() {
               { backgroundColor: colors.accent },
             ]}
           >
-            <Ionicons name="share-outline" size={24} color="#fff" />
+            <Ionicons name="share-outline" size={20} color="#fff" />
             <Text
               style={[
                 styles.exportButtonText,
@@ -508,4 +511,3 @@ const styles = StyleSheet.create({
   },
   exportButtonText: { fontSize: 16 },
 });
-
