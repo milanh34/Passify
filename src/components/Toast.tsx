@@ -7,12 +7,18 @@ import { useTheme } from "../context/ThemeContext";
 interface ToastProps {
   message: string;
   visible: boolean;
+  type?: "success" | "error";
 }
 
-export default function Toast({ message, visible }: ToastProps) {
+export default function Toast({ message, visible, type = "success" }: ToastProps) {
   const { colors, fontConfig } = useTheme();
 
   if (!visible) return null;
+
+  const isError = type === "error";
+  const bgColor = isError ? "#EF4444" : colors.accent;
+  const borderColor = isError ? "#DC2626" : colors.accent2;
+  const icon = isError ? "alert-circle" : "checkmark-circle";
 
   return (
     <MotiView
@@ -22,10 +28,13 @@ export default function Toast({ message, visible }: ToastProps) {
       transition={{ type: "timing", duration: 300 }}
       style={[
         styles.toast,
-        { backgroundColor: colors.accent, borderColor: colors.accent2 },
+        { 
+          backgroundColor: bgColor, 
+          borderColor: borderColor 
+        },
       ]}
     >
-      <Ionicons name="checkmark-circle" size={24} color="#fff" />
+      <Ionicons name={icon} size={24} color="#fff" />
       <Text style={[styles.toastText, { fontFamily: fontConfig.regular }]}>
         {message}
       </Text>
