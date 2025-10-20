@@ -1,11 +1,17 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const initialData = require("../../assets/database.json");
 const DB_KEY = "@PM:database";
 const SCHEMA_KEY = "@PM:schemas";
 
-type Account = { id: string; name: string;[k: string]: any };
+type Account = { id: string; name: string; [k: string]: any };
 type Database = Record<string, Account[]>;
 type Schemas = Record<string, string[]>;
 
@@ -31,7 +37,8 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
         setDatabase(dbVal);
         setSchemas(scVal);
         if (!db[1]) await AsyncStorage.setItem(DB_KEY, JSON.stringify(dbVal));
-        if (!sc[1]) await AsyncStorage.setItem(SCHEMA_KEY, JSON.stringify(scVal));
+        if (!sc[1])
+          await AsyncStorage.setItem(SCHEMA_KEY, JSON.stringify(scVal));
       } finally {
         setIsDbLoading(false);
       }
@@ -48,20 +55,28 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }
   }, [database, schemas, isDbLoading]);
 
-const addPlatform = (key: string, displayName?: string) => {
-  const platformKey = key.toLowerCase().replace(/\s+/g, "_");
-  if (database[platformKey]) return;
-  setDatabase((db) => ({ ...db, [platformKey]: [] }));
-  setSchemas((s) => ({ ...s, [platformKey]: ["name", "password"] }));
-};
+  const addPlatform = (key: string, displayName?: string) => {
+    const platformKey = key.toLowerCase().replace(/\s+/g, "_");
+    if (database[platformKey]) return;
+    setDatabase((db) => ({ ...db, [platformKey]: [] }));
+    setSchemas((s) => ({ ...s, [platformKey]: ["name", "password"] }));
+  };
 
   const updatePlatformName = (oldKey: string, newName: string) => {
     const newKey = newName.toLowerCase().replace(/\s+/g, "_");
     if (database[newKey] || oldKey === newKey) return;
+
     setDatabase((db) => {
-      const { [oldKey]: arr, ...rest } = db;
-      return { ...rest, [newKey]: arr || [] };
+      const { [oldKey]: accounts, ...rest } = db;
+
+      const updatedAccounts = (accounts || []).map((acc: any) => ({
+        ...acc,
+        platform: newName,
+      }));
+
+      return { ...rest, [newKey]: updatedAccounts };
     });
+
     setSchemas((s) => {
       const { [oldKey]: sch, ...rest } = s;
       return { ...rest, [newKey]: sch || ["name", "password"] };
@@ -90,7 +105,9 @@ const addPlatform = (key: string, displayName?: string) => {
   const updateAccount = (platformKey: string, id: string, updated: Account) => {
     setDatabase((db) => ({
       ...db,
-      [platformKey]: (db[platformKey] || []).map((a) => (a.id === id ? { ...a, ...updated, id } : a)),
+      [platformKey]: (db[platformKey] || []).map((a) =>
+        a.id === id ? { ...a, ...updated, id } : a
+      ),
     }));
   };
 
@@ -102,8 +119,13 @@ const addPlatform = (key: string, displayName?: string) => {
   };
 
   const updatePlatformSchema = (platformKey: string, newSchema: string[]) => {
-    const filtered = Array.from(new Set(newSchema.map((s) => s.trim()).filter(Boolean)));
-    setSchemas((s) => ({ ...s, [platformKey]: filtered.length ? filtered : ["name", "password"] }));
+    const filtered = Array.from(
+      new Set(newSchema.map((s) => s.trim()).filter(Boolean))
+    );
+    setSchemas((s) => ({
+      ...s,
+      [platformKey]: filtered.length ? filtered : ["name", "password"],
+    }));
     setDatabase((db) => {
       const updated = (db[platformKey] || []).map((acc) => {
         const next = { ...acc };
