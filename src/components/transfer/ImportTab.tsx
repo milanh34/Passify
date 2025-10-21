@@ -35,6 +35,7 @@ export default function ImportTab() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isGuideExpanded, setIsGuideExpanded] = useState(false);
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   // Conflict resolution state
   const [conflictModalVisible, setConflictModalVisible] = useState(false);
@@ -50,8 +51,9 @@ export default function ImportTab() {
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
 
   // Helper to show toast
-  const showToastMessage = (message: string) => {
+  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -141,7 +143,7 @@ export default function ImportTab() {
 
   const handleImport = async () => {
     if (!inputText.trim()) {
-      showToastMessage("Please paste some text to import");
+      showToastMessage("Please paste some text to import", "error");
       return;
     }
 
@@ -153,7 +155,7 @@ export default function ImportTab() {
       const platformNames = Object.keys(parsedData);
 
       if (platformNames.length === 0) {
-        showToastMessage("Could not parse the text. Please check the format");
+        showToastMessage("Could not parse the text. Please check the format", "error");
         setIsProcessing(false);
         return;
       }
@@ -272,13 +274,14 @@ export default function ImportTab() {
       if (skippedAccounts > 0) messages.push(`${skippedAccounts} skipped`);
 
       showToastMessage(
-        `Import complete: ${messages.join(", ")} account(s) from ${platformNames.length} platform(s)`
+        `Import complete: ${messages.join(", ")} account(s) from ${platformNames.length} platform(s)`,
+        "success"
       );
 
       setInputText("");
     } catch (error) {
       console.error("Import error:", error);
-      showToastMessage("Import failed. Please try again");
+      showToastMessage("Import failed. Please try again", "error");
     } finally {
       setIsProcessing(false);
       globalResolutionRef.current = null;
@@ -485,7 +488,7 @@ export default function ImportTab() {
         onDecision={handleDecision}
       />
 
-      <Toast message={toastMessage} visible={showToast} />
+      <Toast message={toastMessage} visible={showToast} type={toastType} />
     </>
   );
 }

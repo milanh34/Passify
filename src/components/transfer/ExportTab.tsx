@@ -5,15 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Share,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useDb } from "../../context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
-import { MotiPressable } from "moti/interactions";
 import { generateExportText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
+import * as Clipboard from "expo-clipboard";
 
 type Selection = {
   [platformId: string]: {
@@ -32,12 +31,15 @@ export default function ExportTab() {
   );
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [exportedText, setExportedText] = useState("");
 
   const platformIds = Object.keys(database);
 
   // Helper to show toast
-  const showToastMessage = (message: string) => {
+  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -120,6 +122,7 @@ export default function ExportTab() {
   // Deselect all
   const deselectAll = () => {
     setSelection({});
+    setExportedText(""); // Clear preview when deselecting
   };
 
   // Handle export
@@ -136,6 +139,7 @@ export default function ExportTab() {
       );
 
       if (selectedAccounts.length > 0) {
+        // Get platform name from first account or use toTitleCase
         const platformName =
           selectedAccounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
         selectedData[platformName] = selectedAccounts;
@@ -143,24 +147,30 @@ export default function ExportTab() {
     }
 
     if (Object.keys(selectedData).length === 0) {
-      showToastMessage("Please select at least one account to export");
+      showToastMessage("Please select at least one account to export", "error");
       return;
     }
 
     try {
       const exportText = generateExportText(selectedData, schemas);
+      
+      setExportedText(exportText);
 
-      const result = await Share.share({
-        message: exportText,
-        title: "Export Password Data",
-      });
+      showToastMessage("Data exported successfully!", "success");
 
-      if (result.action === Share.sharedAction) {
-        showToastMessage("Data exported successfully!");
-      }
+      setSelection({});
+
     } catch (error) {
       console.error("Export error:", error);
-      showToastMessage("Export failed. Please try again");
+      showToastMessage("Export failed. Please try again", "error");
+    }
+  };
+
+  // Copy to clipboard
+  const handleCopyExport = async () => {
+    if (exportedText) {
+      await Clipboard.setStringAsync(exportedText);
+      showToastMessage("Copied to clipboard!", "success");
     }
   };
 
@@ -405,6 +415,63 @@ export default function ExportTab() {
             );
           })
         )}
+
+        {/* Export Preview - Show after export */}
+        {exportedText && (
+          <MotiView
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "timing", duration: 200 }}
+            style={[
+              styles.previewCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.accent + "40",
+              },
+            ]}
+          >
+            <View style={styles.previewHeader}>
+              <Text
+                style={[
+                  styles.previewTitle,
+                  { color: colors.text, fontFamily: fontConfig.bold },
+                ]}
+              >
+                Exported Data
+              </Text>
+              <Pressable
+                onPress={handleCopyExport}
+                style={[
+                  styles.copyButton,
+                  { backgroundColor: colors.accent },
+                ]}
+              >
+                <Ionicons name="copy-outline" size={16} color="#fff" />
+                <Text
+                  style={[
+                    styles.copyButtonText,
+                    { color: "#fff", fontFamily: fontConfig.bold },
+                  ]}
+                >
+                  Copy
+                </Text>
+              </Pressable>
+            </View>
+            <ScrollView 
+              style={styles.previewScroll}
+              nestedScrollEnabled
+            >
+              <Text
+                style={[
+                  styles.previewText,
+                  { color: colors.text, fontFamily: fontConfig.regular },
+                ]}
+              >
+                {exportedText}
+              </Text>
+            </ScrollView>
+          </MotiView>
+        )}
       </ScrollView>
 
       {/* Export Button */}
@@ -435,13 +502,13 @@ export default function ExportTab() {
         </MotiView>
       )}
 
-      <Toast message={toastMessage} visible={showToast} />
+      <Toast message={toastMessage} visible={showToast} type={toastType} type={toastType} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { paddingBottom: 30 }, // Reduced from 100
   header: { alignItems: "center", marginVertical: 12, gap: 6 },
   title: { fontSize: 24, marginTop: 6 },
   subtitle: { fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
@@ -490,6 +557,36 @@ const styles = StyleSheet.create({
   },
   accountCheckbox: { width: 20, height: 20 },
   accountName: { fontSize: 14 },
+  previewCard: {
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 16,
+    borderWidth: 1,
+    maxHeight: 300,
+  },
+  previewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  previewTitle: { fontSize: 16 },
+  copyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  copyButtonText: { fontSize: 13 },
+  previewScroll: {
+    maxHeight: 220,
+  },
+  previewText: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
   exportButtonContainer: {
     position: "absolute",
     bottom: 20,
