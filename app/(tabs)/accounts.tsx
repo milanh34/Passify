@@ -14,6 +14,7 @@ import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import SchemaModal from "../../src/components/SchemaModal";
 import DeleteModal from "../../src/components/DeleteModal";
+import Toast from "../../src/components/Toast";
 
 type Account = { id: string; name: string; [k: string]: any };
 
@@ -44,6 +45,7 @@ export default function AccountsScreen() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   useFocusEffect(
     React.useCallback(() => {
@@ -102,8 +104,12 @@ export default function AccountsScreen() {
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: colors.bg[0] }} />;
 
   // Show toast notification (NO vibrations)
-  const displayToast = (message: string) => {
+  const displayToast = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
     setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -133,7 +139,7 @@ export default function AccountsScreen() {
   const executeDelete = () => {
     if (deleteModal.item && platformKey) {
       deleteAccount(String(platformKey), deleteModal.item.id);
-      displayToast("Account deleted successfully");
+      displayToast("Account deleted successfully", "success");
     }
   };
 
@@ -142,14 +148,14 @@ export default function AccountsScreen() {
     
     if (accModal.editing) {
       updateAccount(String(platformKey), accModal.editing.id, { ...accModal.editing, ...data });
-      displayToast("Changes saved successfully");
+      displayToast("Changes saved successfully", "success");
     } else {
       const payload: any = {};
       schema.forEach((f) => {
         if (f !== "id") payload[f] = data[f] || "";
       });
       addAccount(String(platformKey), payload);
-      displayToast("Account added successfully");
+      displayToast("Account added successfully", "success");
     }
     
     setAccModal({ visible: false });
@@ -158,7 +164,7 @@ export default function AccountsScreen() {
   const handleSaveSchema = (fields: string[]) => {
     if (platformKey && fields && fields.length > 0) {
       updatePlatformSchema(String(platformKey), fields);
-      displayToast("Schema updated successfully");
+      displayToast("Schema updated successfully", "success");
     }
     setSchemaModal(false);
   };
@@ -366,27 +372,8 @@ export default function AccountsScreen() {
             }
           />
           
-          {/* Toast Notification */}
-          <AnimatePresence>
-            {showToast && (
-              <MotiView
-                from={{ opacity: 0, translateY: 20 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                exit={{ opacity: 0, translateY: 20 }}
-                transition={{ type: "timing", duration: 300 }}
-                style={[styles.toast, { 
-                  backgroundColor: colors.success || colors.accent,
-                  bottom: insets.bottom + 90,
-                }]}
-              >
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                <Text style={[styles.toastText, { fontFamily: fontConfig.bold }]}>
-                  {toastMessage}
-                </Text>
-              </MotiView>
-            )}
-          </AnimatePresence>
-
+          <Toast message={toastMessage} visible={showToast} type={toastType} />
+          
           <FAB onPress={() => setAccModal({ visible: true })} icon="add" color={colors.fab} />
           <FormModal
             visible={accModal.visible}
@@ -457,25 +444,5 @@ const styles = StyleSheet.create({
   fieldActions: { 
     flexDirection: "row", 
     gap: 12 
-  },
-  toast: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  toastText: {
-    color: "#fff",
-    fontSize: 15,
   },
 });
