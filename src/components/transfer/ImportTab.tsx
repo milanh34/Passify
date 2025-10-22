@@ -27,7 +27,7 @@ interface ConflictDecision {
 
 export default function ImportTab() {
   const { colors, fontConfig } = useTheme();
-  const { database, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
+  const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
   const router = useRouter();
 
   const [inputText, setInputText] = useState("");
@@ -177,21 +177,57 @@ export default function ImportTab() {
           await addPlatform(platformId);
         }
 
-        // Extract all unique fields from all accounts
-        const allFields = new Set<string>();
+        const newFields = new Set<string>();
         accounts.forEach((acc) => {
-          Object.keys(acc).forEach((field) => allFields.add(field));
+          Object.keys(acc).forEach((field) => newFields.add(field));
         });
 
-        const schema = Array.from(allFields);
-        if (!schema.includes("name")) schema.unshift("name");
-        if (!schema.includes("password")) {
-          const nameIndex = schema.indexOf("name");
-          schema.splice(nameIndex + 1, 0, "password");
+        // Get existing schema or create default
+        const existingSchema = schemas[platformId] || [];
+        const mergedFields = new Set([
+          ...existingSchema,
+          ...Array.from(newFields),
+        ]);
+
+        // Build final schema with proper ordering
+        const finalSchema: string[] = [];
+
+        // Ensure 'name' is first
+        if (mergedFields.has("name")) {
+          finalSchema.push("name");
+          mergedFields.delete("name");
         }
 
-        // Update schema for this platform
-        await updatePlatformSchema(platformId, schema);
+        // Ensure 'password' is second
+        if (mergedFields.has("password")) {
+          finalSchema.push("password");
+          mergedFields.delete("password");
+        }
+
+        // Add all other fields from existing schema first (preserve order)
+        existingSchema.forEach((field) => {
+          if (
+            field !== "name" &&
+            field !== "password" &&
+            mergedFields.has(field)
+          ) {
+            finalSchema.push(field);
+            mergedFields.delete(field);
+          }
+        });
+
+        // Add any new fields from import at the end
+        mergedFields.forEach((field) => {
+          if (field !== "id") {
+            // Never add 'id' to schema
+            finalSchema.push(field);
+          }
+        });
+
+        // Only update schema if there are new fields or it's a new platform
+        if (!platformExists || finalSchema.length !== existingSchema.length) {
+          await updatePlatformSchema(platformId, finalSchema);
+        }
 
         // Process each account
         for (let i = 0; i < accounts.length; i++) {
