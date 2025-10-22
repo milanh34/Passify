@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  FlatList,
+} from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,16 +25,30 @@ import { toTitleCase } from "@/src/utils/transferParser";
 export default function ManageScreen() {
   const { colors, fontConfig, fontsLoaded } = useTheme();
   const router = useRouter();
-  const { database, isDbLoading, addPlatform, updatePlatformName, deletePlatform } = useDb();
+  const {
+    database,
+    isDbLoading,
+    addPlatform,
+    updatePlatformName,
+    deletePlatform,
+  } = useDb();
   const insets = useSafeAreaInsets();
-  
-  const [platformModal, setPlatformModal] = useState<{ visible: boolean; editing?: { key: string; name: string } }>({ visible: false });
-  const [deleteModal, setDeleteModal] = useState<{ visible: boolean; item?: any }>({ visible: false });
+
+  const [platformModal, setPlatformModal] = useState<{
+    visible: boolean;
+    editing?: { key: string; name: string };
+  }>({ visible: false });
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    item?: any;
+  }>({ visible: false });
   const [animationKey, setAnimationKey] = useState(0);
   const { TAB_ANIMATION } = useAnimation();
 
   // Multi-select state
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(new Set());
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(
+    new Set()
+  );
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Toast state
@@ -37,12 +58,17 @@ export default function ManageScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      setAnimationKey(prev => prev + 1);
+      setAnimationKey((prev) => prev + 1);
+      setIsSelectionMode(false);
+      setSelectedPlatforms(new Set());
     }, [])
   );
 
   // Helper to show toast
-  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
@@ -51,10 +77,11 @@ export default function ManageScreen() {
 
   const platforms = Object.keys(database).map((key) => {
     const accounts = database[key];
-    const platformName = accounts.length > 0 && accounts[0].platform 
-      ? accounts[0].platform 
-      : toTitleCase(key.replace(/_/g, " "));
-    
+    const platformName =
+      accounts.length > 0 && accounts[0].platform
+        ? accounts[0].platform
+        : toTitleCase(key.replace(/_/g, " "));
+
     return {
       key,
       name: platformName,
@@ -63,17 +90,17 @@ export default function ManageScreen() {
   });
 
   const savePlatform = (data: Record<string, any>) => {
-  const name = data.name?.trim();
-  if (!name) return;
-  
-  if (platformModal.editing) {
-    updatePlatformName(platformModal.editing.key, name);
-  } else {
-    addPlatform(name);
-  }
-  
-  setPlatformModal({ visible: false });
-};
+    const name = data.name?.trim();
+    if (!name) return;
+
+    if (platformModal.editing) {
+      updatePlatformName(platformModal.editing.key, name);
+    } else {
+      addPlatform(name);
+    }
+
+    setPlatformModal({ visible: false });
+  };
 
   // Long press handler to enter selection mode
   const handleLongPress = (platformKey: string) => {
@@ -91,19 +118,19 @@ export default function ManageScreen() {
       });
     } else {
       // Selection mode - toggle selection
-      setSelectedPlatforms(prev => {
+      setSelectedPlatforms((prev) => {
         const newSet = new Set(prev);
         if (newSet.has(platformKey)) {
           newSet.delete(platformKey);
         } else {
           newSet.add(platformKey);
         }
-        
+
         // Exit selection mode if no items selected
         if (newSet.size === 0) {
           setIsSelectionMode(false);
         }
-        
+
         return newSet;
       });
     }
@@ -111,7 +138,7 @@ export default function ManageScreen() {
 
   // Select all platforms
   const selectAllPlatforms = () => {
-    const allKeys = platforms.map(p => p.key);
+    const allKeys = platforms.map((p) => p.key);
     setSelectedPlatforms(new Set(allKeys));
   };
 
@@ -354,7 +381,7 @@ export default function ManageScreen() {
                                   visible: true,
                                   editing: item,
                                 })
-                              } 
+                              }
                               style={styles.iconBtn}
                               android_ripple={{ color: colors.accent + "33" }}
                             >
@@ -461,13 +488,49 @@ export default function ManageScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 18 },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingVertical: 10 },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingVertical: 10,
+  },
   title: { fontSize: 30 },
-  settingsBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  selectAllBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  card: { borderRadius: 16, padding: 16, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 12, overflow: "hidden", position: "relative" },
+  settingsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  selectAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    overflow: "hidden",
+    position: "relative",
+  },
   cardTitle: { fontSize: 18 },
-  actions: { flexDirection: "row", alignItems: "center", paddingRight: 6, gap: 6 },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 6,
+    gap: 6,
+  },
   iconBtn: { padding: 8, borderRadius: 10 },
   selectionIndicator: {
     position: "absolute",

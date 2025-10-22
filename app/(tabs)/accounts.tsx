@@ -83,10 +83,11 @@ export default function AccountsScreen() {
       setAnimationKey((prev) => prev + 1);
       setExpandedCards(new Set());
       setVisiblePw({});
+      setIsSelectionMode(false);
+      setSelectedAccounts(new Set());
     }, [])
   );
 
-  // Updated toast helper with type support
   const displayToast = (
     message: string,
     type: "success" | "error" = "success"
@@ -405,11 +406,7 @@ export default function AccountsScreen() {
                       {isSelectionMode && (
                         <View style={styles.selectionIndicator}>
                           <Ionicons
-                            name={
-                              isSelected
-                                ? "checkmark-circle"
-                                : "pencil"
-                            }
+                            name={isSelected ? "checkmark-circle" : "pencil"}
                             size={24}
                             color={isSelected ? colors.accent : colors.subtext}
                           />
