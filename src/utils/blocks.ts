@@ -1,17 +1,22 @@
-// Header structure in first blocks
+export type ProgressCallback = (stage: string, percent: number) => void;
+
+// Header structure
 export interface ImageHeader {
   magic: number; // 0x504D4947 ("PMIG")
-  version: number; // 1
+  version: number; // 2 (updated for 1x1 RGBA)
+  mode: number; // 1 = 1x1 encoding
   width: number;
   height: number;
   dataLength: number;
   checksum: number;
+  reserved: number; // For future use
 }
 
-const MAGIC_NUMBER = 0x504D4947; // "PMIG" - Password Manager Image
-const VERSION = 1;
-const HEADER_SIZE = 24; // 6 fields × 4 bytes
-const BLOCK_SIZE = 3; // 3×3 pixels per byte
+const MAGIC_NUMBER = 0x504D4947;
+const VERSION = 2;
+const MODE_1X1 = 1;
+const HEADER_SIZE = 32; // 8 fields × 4 bytes
+const BYTES_PER_PIXEL = 4; // RGBA
 
 /**
  * Pack header into bytes
@@ -20,12 +25,14 @@ export function packHeader(header: ImageHeader): Uint8Array {
   const buffer = new Uint8Array(HEADER_SIZE);
   const view = new DataView(buffer.buffer);
   
-  view.setUint32(0, header.magic, false); // Big-endian
+  view.setUint32(0, header.magic, false);
   view.setUint32(4, header.version, false);
-  view.setUint32(8, header.width, false);
-  view.setUint32(12, header.height, false);
-  view.setUint32(16, header.dataLength, false);
-  view.setUint32(20, header.checksum, false);
+  view.setUint32(8, header.mode, false);
+  view.setUint32(12, header.width, false);
+  view.setUint32(16, header.height, false);
+  view.setUint32(20, header.dataLength, false);
+  view.setUint32(24, header.checksum, false);
+  view.setUint32(28, header.reserved, false);
   
   return buffer;
 }
@@ -43,10 +50,12 @@ export function unpackHeader(bytes: Uint8Array): ImageHeader {
   const header: ImageHeader = {
     magic: view.getUint32(0, false),
     version: view.getUint32(4, false),
-    width: view.getUint32(8, false),
-    height: view.getUint32(12, false),
-    dataLength: view.getUint32(16, false),
-    checksum: view.getUint32(20, false),
+    mode: view.getUint32(8, false),
+    width: view.getUint32(12, false),
+    height: view.getUint32(16, false),
+    dataLength: view.getUint32(20, false),
+    checksum: view.getUint32(24, false),
+    reserved: view.getUint32(28, false),
   };
   
   // Validate
@@ -54,7 +63,10 @@ export function unpackHeader(bytes: Uint8Array): ImageHeader {
     throw new Error(`Invalid magic number: expected ${MAGIC_NUMBER}, got ${header.magic}`);
   }
   if (header.version !== VERSION) {
-    throw new Error(`Unsupported version: ${header.version}`);
+    throw new Error(`Unsupported version: ${header.version} (expected ${VERSION})`);
+  }
+  if (header.mode !== MODE_1X1) {
+    throw new Error(`Unsupported encoding mode: ${header.mode}`);
   }
   
   return header;
@@ -72,77 +84,104 @@ export function calculateChecksum(data: Uint8Array): number {
 }
 
 /**
- * Calculate required image dimensions for data
+ * Calculate required image dimensions for data (1x1 encoding)
+ * Each pixel stores 4 bytes (RGBA)
  */
 export function calculateDimensions(dataLength: number): { width: number; height: number } {
-  // Each byte needs a 3×3 block
   const totalBytes = HEADER_SIZE + dataLength;
-  const blocksNeeded = totalBytes;
+  const pixelsNeeded = Math.ceil(totalBytes / BYTES_PER_PIXEL);
   
   // Calculate square-ish dimensions
-  const blocksPerRow = Math.ceil(Math.sqrt(blocksNeeded));
-  const width = blocksPerRow * BLOCK_SIZE;
-  const height = Math.ceil(blocksNeeded / blocksPerRow) * BLOCK_SIZE;
+  const width = Math.ceil(Math.sqrt(pixelsNeeded));
+  const height = Math.ceil(pixelsNeeded / width);
   
   return { width, height };
 }
 
 /**
- * Encode bytes into 3×3 pixel blocks (RGBA format)
- * Each byte is stored in the center pixel's RGB channels (all same value)
- * Surrounding pixels are black for visual separation
+ * Encode bytes into RGBA pixels (1x1 mode - colored output)
+ * Each pixel stores 4 bytes: R=byte[0], G=byte[1], B=byte[2], A=byte[3]
  */
-export function encodeToBlocks(data: Uint8Array, width: number, height: number): Uint8Array {
+export function encodeToPixels(
+  data: Uint8Array,
+  width: number,
+  height: number,
+  onProgress?: ProgressCallback
+): Uint8Array {
   const pixelBuffer = new Uint8Array(width * height * 4); // RGBA
   
-  // Fill with black
-  for (let i = 3; i < pixelBuffer.length; i += 4) {
-    pixelBuffer[i] = 255; // Alpha
+  // Fill remaining pixels with random noise (makes image colorful)
+  for (let i = 0; i < pixelBuffer.length; i++) {
+    pixelBuffer[i] = Math.floor(Math.random() * 256);
   }
   
+  // Encode data bytes into pixels
   let byteIndex = 0;
-  const blocksPerRow = Math.floor(width / BLOCK_SIZE);
+  const totalPixels = Math.ceil(data.length / 4);
+  const progressInterval = Math.max(1, Math.floor(totalPixels / 50));
   
-  for (let blockY = 0; blockY < Math.floor(height / BLOCK_SIZE) && byteIndex < data.length; blockY++) {
-    for (let blockX = 0; blockX < blocksPerRow && byteIndex < data.length; blockX++) {
-      const byte = data[byteIndex++];
-      
-      // Center pixel of the 3×3 block
-      const centerX = blockX * BLOCK_SIZE + 1;
-      const centerY = blockY * BLOCK_SIZE + 1;
-      const pixelIndex = (centerY * width + centerX) * 4;
-      
-      // Store byte in RGB channels (grayscale)
-      pixelBuffer[pixelIndex] = byte;     // R
-      pixelBuffer[pixelIndex + 1] = byte; // G
-      pixelBuffer[pixelIndex + 2] = byte; // B
-      pixelBuffer[pixelIndex + 3] = 255;  // A
+  for (let pixelIndex = 0; pixelIndex < totalPixels && byteIndex < data.length; pixelIndex++) {
+    const offset = pixelIndex * 4;
+    
+    // Pack 4 bytes into RGBA channels
+    for (let channel = 0; channel < 4 && byteIndex < data.length; channel++) {
+      pixelBuffer[offset + channel] = data[byteIndex++];
+    }
+    
+    // Report progress
+    if (onProgress && pixelIndex % progressInterval === 0) {
+      const percent = (pixelIndex / totalPixels) * 100;
+      onProgress('Encoding to pixels', percent);
     }
   }
+  
+  onProgress?.('Encoding to pixels', 100);
   
   return pixelBuffer;
 }
 
 /**
- * Decode bytes from 3×3 pixel blocks
+ * Decode bytes from RGBA pixels (1x1 mode)
  */
-export function decodeFromBlocks(pixelBuffer: Uint8Array, width: number, height: number, dataLength: number): Uint8Array {
+export function decodeFromPixels(
+  pixelBuffer: Uint8Array,
+  dataLength: number,
+  onProgress?: ProgressCallback
+): Uint8Array {
   const data = new Uint8Array(dataLength);
+  
+  const totalPixels = Math.ceil(dataLength / 4);
+  const progressInterval = Math.max(1, Math.floor(totalPixels / 50));
+  
   let byteIndex = 0;
   
-  const blocksPerRow = Math.floor(width / BLOCK_SIZE);
-  
-  for (let blockY = 0; blockY < Math.floor(height / BLOCK_SIZE) && byteIndex < dataLength; blockY++) {
-    for (let blockX = 0; blockX < blocksPerRow && byteIndex < dataLength; blockX++) {
-      // Center pixel of the 3×3 block
-      const centerX = blockX * BLOCK_SIZE + 1;
-      const centerY = blockY * BLOCK_SIZE + 1;
-      const pixelIndex = (centerY * width + centerX) * 4;
-      
-      // Read byte from R channel (all RGB should be same)
-      data[byteIndex++] = pixelBuffer[pixelIndex];
+  for (let pixelIndex = 0; pixelIndex < totalPixels && byteIndex < dataLength; pixelIndex++) {
+    const offset = pixelIndex * 4;
+    
+    // Unpack 4 bytes from RGBA channels
+    for (let channel = 0; channel < 4 && byteIndex < dataLength; channel++) {
+      data[byteIndex++] = pixelBuffer[offset + channel];
+    }
+    
+    // Report progress
+    if (onProgress && pixelIndex % progressInterval === 0) {
+      const percent = (pixelIndex / totalPixels) * 100;
+      onProgress('Decoding from pixels', percent);
     }
   }
   
+  onProgress?.('Decoding from pixels', 100);
+  
   return data;
 }
+
+/**
+ * Get header constants for external use
+ */
+export const BLOCK_CONSTANTS = {
+  HEADER_SIZE,
+  BYTES_PER_PIXEL,
+  MODE_1X1,
+  VERSION,
+  MAGIC_NUMBER,
+};
