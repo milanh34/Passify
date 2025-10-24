@@ -1,19 +1,31 @@
-import * as Crypto from 'expo-crypto';
+export type ProgressCallback = (stage: string, percent: number) => void;
 
 /**
- * Encode RGBA pixel buffer to PNG format (simplified, lossless)
- * This is a minimal PNG encoder for our use case
+ * Encode RGBA pixel buffer to PNG format with progress
  */
-export async function encodePNG(pixels: Uint8Array, width: number, height: number): Promise<Uint8Array> {
+export async function encodePNG(
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+  onProgress?: ProgressCallback
+): Promise<Uint8Array> {
+  onProgress?.('Creating PNG structure', 0);
+  
   // PNG signature
   const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  
+  onProgress?.('Creating PNG structure', 20);
   
   // IHDR chunk
   const ihdr = createChunk('IHDR', createIHDR(width, height));
   
+  onProgress?.('Compressing image data', 0);
+  
   // IDAT chunk (image data)
-  const imageData = await createImageData(pixels, width, height);
+  const imageData = await createImageData(pixels, width, height, onProgress);
   const idat = createChunk('IDAT', imageData);
+  
+  onProgress?.('Finalizing PNG', 0);
   
   // IEND chunk
   const iend = createChunk('IEND', new Uint8Array(0));
@@ -31,6 +43,8 @@ export async function encodePNG(pixels: Uint8Array, width: number, height: numbe
   offset += idat.length;
   png.set(iend, offset);
   
+  onProgress?.('Finalizing PNG', 100);
+  
   return png;
 }
 
@@ -41,7 +55,7 @@ function createIHDR(width: number, height: number): Uint8Array {
   view.setUint32(0, width, false);
   view.setUint32(4, height, false);
   data[8] = 8;  // Bit depth
-  data[9] = 6;  // Color type: RGBA
+  data[9] = 6;  // Color type: RGBA (truecolor with alpha)
   data[10] = 0; // Compression
   data[11] = 0; // Filter
   data[12] = 0; // Interlace
@@ -49,7 +63,12 @@ function createIHDR(width: number, height: number): Uint8Array {
   return data;
 }
 
-async function createImageData(pixels: Uint8Array, width: number, height: number): Promise<Uint8Array> {
+async function createImageData(
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+  onProgress?: ProgressCallback
+): Promise<Uint8Array> {
   // Add filter byte (0 = no filter) to each scanline
   const bytesPerRow = width * 4;
   const filteredData = new Uint8Array(height * (bytesPerRow + 1));
@@ -60,29 +79,34 @@ async function createImageData(pixels: Uint8Array, width: number, height: number
       pixels.slice(y * bytesPerRow, (y + 1) * bytesPerRow),
       y * (bytesPerRow + 1) + 1
     );
+    
+    if (onProgress && y % Math.max(1, Math.floor(height / 20)) === 0) {
+      const percent = (y / height) * 100;
+      onProgress('Compressing image data', percent);
+    }
   }
   
-  // Compress with simplified deflate (store uncompressed for simplicity)
+  onProgress?.('Compressing image data', 100);
+  
+  // Compress with simplified deflate
   return deflateStore(filteredData);
 }
 
 function deflateStore(data: Uint8Array): Uint8Array {
-  // Simplified: store uncompressed blocks
   const maxBlockSize = 65535;
   const numBlocks = Math.ceil(data.length / maxBlockSize);
   
   let totalSize = 0;
   for (let i = 0; i < numBlocks; i++) {
-    totalSize += 5; // Block header
+    totalSize += 5;
     const blockSize = Math.min(maxBlockSize, data.length - i * maxBlockSize);
     totalSize += blockSize;
   }
   
-  const compressed = new Uint8Array(totalSize + 6); // +6 for zlib header and checksum
+  const compressed = new Uint8Array(totalSize + 6);
   
-  // Zlib header
-  compressed[0] = 0x78; // CMF
-  compressed[1] = 0x01; // FLG (no compression)
+  compressed[0] = 0x78;
+  compressed[1] = 0x01;
   
   let offset = 2;
   for (let i = 0; i < numBlocks; i++) {
@@ -90,7 +114,7 @@ function deflateStore(data: Uint8Array): Uint8Array {
     const blockStart = i * maxBlockSize;
     const blockSize = Math.min(maxBlockSize, data.length - blockStart);
     
-    compressed[offset++] = isLast ? 0x01 : 0x00; // BFINAL and BTYPE
+    compressed[offset++] = isLast ? 0x01 : 0x00;
     compressed[offset++] = blockSize & 0xFF;
     compressed[offset++] = (blockSize >> 8) & 0xFF;
     compressed[offset++] = (~blockSize) & 0xFF;
@@ -100,7 +124,6 @@ function deflateStore(data: Uint8Array): Uint8Array {
     offset += blockSize;
   }
   
-  // Adler-32 checksum
   const adler = adler32(data);
   compressed[offset++] = (adler >> 24) & 0xFF;
   compressed[offset++] = (adler >> 16) & 0xFF;
@@ -134,16 +157,10 @@ function createChunk(type: string, data: Uint8Array): Uint8Array {
   const chunk = new Uint8Array(12 + data.length);
   const view = new DataView(chunk.buffer);
   
-  // Length
   view.setUint32(0, data.length, false);
-  
-  // Type
   chunk.set(typeBytes, 4);
-  
-  // Data
   chunk.set(data, 8);
   
-  // CRC
   const crcData = new Uint8Array(4 + data.length);
   crcData.set(typeBytes);
   crcData.set(data, 4);
@@ -167,9 +184,14 @@ function crc32(data: Uint8Array): number {
 }
 
 /**
- * Decode PNG to RGBA pixel buffer
+ * Decode PNG to RGBA pixel buffer with progress
  */
-export function decodePNG(pngData: Uint8Array): { pixels: Uint8Array; width: number; height: number } {
+export function decodePNG(
+  pngData: Uint8Array,
+  onProgress?: ProgressCallback
+): { pixels: Uint8Array; width: number; height: number } {
+  onProgress?.('Parsing PNG structure', 0);
+  
   // Verify PNG signature
   const signature = pngData.slice(0, 8);
   const expectedSig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -179,6 +201,8 @@ export function decodePNG(pngData: Uint8Array): { pixels: Uint8Array; width: num
       throw new Error('Invalid PNG signature');
     }
   }
+  
+  onProgress?.('Parsing PNG structure', 30);
   
   let offset = 8;
   let width = 0;
@@ -202,17 +226,21 @@ export function decodePNG(pngData: Uint8Array): { pixels: Uint8Array; width: num
       width = ihdrView.getUint32(0, false);
       height = ihdrView.getUint32(4, false);
     } else if (type === 'IDAT') {
+      onProgress?.('Decompressing image data', 0);
       imageData = inflateData(data);
+      onProgress?.('Decompressing image data', 100);
     } else if (type === 'IEND') {
       break;
     }
     
-    offset += 12 + length; // length + type + data + crc
+    offset += 12 + length;
   }
   
   if (!imageData || width === 0 || height === 0) {
     throw new Error('Invalid PNG: missing required chunks');
   }
+  
+  onProgress?.('Extracting pixel data', 0);
   
   // Remove filter bytes
   const pixels = new Uint8Array(width * height * 4);
@@ -225,24 +253,28 @@ export function decodePNG(pngData: Uint8Array): { pixels: Uint8Array; width: num
       (y + 1) * (bytesPerRow + 1)
     );
     
-    // For simplicity, assume filter type 0 (no filter)
     if (filterByte !== 0) {
       throw new Error('Unsupported PNG filter type');
     }
     
     pixels.set(scanline, y * bytesPerRow);
+    
+    if (onProgress && y % Math.max(1, Math.floor(height / 20)) === 0) {
+      const percent = (y / height) * 100;
+      onProgress?.('Extracting pixel data', percent);
+    }
   }
+  
+  onProgress?.('Extracting pixel data', 100);
   
   return { pixels, width, height };
 }
 
 function inflateData(compressed: Uint8Array): Uint8Array {
-  // Skip zlib header (2 bytes)
   let offset = 2;
-  
   const blocks: Uint8Array[] = [];
   
-  while (offset < compressed.length - 4) { // -4 for Adler checksum
+  while (offset < compressed.length - 4) {
     const bfinalAndType = compressed[offset++];
     const isLast = (bfinalAndType & 0x01) !== 0;
     const btype = (bfinalAndType >> 1) & 0x03;
@@ -252,7 +284,7 @@ function inflateData(compressed: Uint8Array): Uint8Array {
     }
     
     const len = compressed[offset] | (compressed[offset + 1] << 8);
-    offset += 4; // len + nlen
+    offset += 4;
     
     const block = compressed.slice(offset, offset + len);
     blocks.push(block);
@@ -261,7 +293,6 @@ function inflateData(compressed: Uint8Array): Uint8Array {
     if (isLast) break;
   }
   
-  // Concatenate blocks
   const totalLength = blocks.reduce((sum, block) => sum + block.length, 0);
   const result = new Uint8Array(totalLength);
   let resultOffset = 0;
