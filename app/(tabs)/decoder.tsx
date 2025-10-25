@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "../../src/components/Toast";
+import ProgressBar from "../../src/components/ProgressBar";
 import * as DocumentPicker from "expo-document-picker";
 import * as Clipboard from "expo-clipboard";
 import { decryptData } from "../../src/utils/crypto";
-import { unpackHeader, calculateChecksum, decodeFromBlocks } from "../../src/utils/blocks";
+import { unpackHeader, calculateChecksum, decodeFromPixels, BLOCK_CONSTANTS } from "../../src/utils/blocks";
 import { loadPNGAsPixels } from "../../src/utils/image";
-import { TextInput } from "react-native";
 
 export default function DecoderScreen() {
   const { colors, fontConfig } = useTheme();
@@ -23,12 +23,22 @@ export default function DecoderScreen() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  
+  // Progress tracking
+  const [progress, setProgress] = useState(0);
+  const [currentStage, setCurrentStage] = useState("");
+  const [showProgress, setShowProgress] = useState(false);
 
   const showToastMessage = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+  };
+  
+  const updateProgress = (stage: string, percent: number) => {
+    setCurrentStage(stage);
+    setProgress(percent);
   };
 
   const handlePickImage = async () => {
@@ -59,37 +69,61 @@ export default function DecoderScreen() {
     }
 
     setLoading(true);
+    setShowProgress(true);
+    setProgress(0);
+    
     try {
-      // 1. Load PNG and extract pixels
-      const { pixels, width, height } = await loadPNGAsPixels(imageUri);
+      // Stage 1: Load PNG (10%)
+      const { pixels, width, height } = await loadPNGAsPixels(imageUri, (stage, percent) => {
+        updateProgress(stage, percent);
+      });
       
-      // 2. Decode header first (24 bytes)
-      const headerBytes = decodeFromBlocks(pixels, width, height, 24);
+      // Stage 2: Decode header (5%)
+      updateProgress('Validating header', 0);
+      const headerBytes = decodeFromPixels(pixels, BLOCK_CONSTANTS.HEADER_SIZE);
       const header = unpackHeader(headerBytes);
+      updateProgress('Validating header', 100);
       
-      // 3. Validate dimensions
+      // Stage 3: Validate dimensions
+      updateProgress('Validating image', 0);
       if (header.width !== width || header.height !== height) {
         throw new Error("Image dimensions mismatch");
       }
+      updateProgress('Validating image', 100);
       
-      // 4. Decode full data (header + encrypted)
-      const fullDataLength = 24 + header.dataLength;
-      const fullData = decodeFromBlocks(pixels, width, height, fullDataLength);
-      const encryptedData = fullData.slice(24);
+      // Stage 4: Decode full data (20%)
+      const fullDataLength = BLOCK_CONSTANTS.HEADER_SIZE + header.dataLength;
+      const fullData = decodeFromPixels(pixels, fullDataLength, (stage, percent) => {
+        updateProgress(stage, percent);
+      });
+      const encryptedData = fullData.slice(BLOCK_CONSTANTS.HEADER_SIZE);
       
-      // 5. Verify checksum
+      // Stage 5: Verify checksum (5%)
+      updateProgress('Verifying integrity', 0);
       const checksum = calculateChecksum(encryptedData);
       if (checksum !== header.checksum) {
         throw new Error("Data integrity check failed: corrupted image");
       }
+      updateProgress('Verifying integrity', 100);
       
-      // 6. Decrypt
-      const decryptedJson = await decryptData(encryptedData, password);
+      // Stage 6-8: Decrypt (60% total: 15% key + 5% verify + 40% decrypt)
+      const decryptedJson = await decryptData(encryptedData, password, (stage, percent) => {
+        if (stage.includes('key')) {
+          updateProgress(stage, percent * 0.25);
+        } else if (stage.includes('auth')) {
+          updateProgress(stage, 25 + (percent * 0.0833));
+        } else if (stage.includes('Decrypt')) {
+          updateProgress(stage, 30 + (percent * 0.6667));
+        }
+      });
       
-      // 7. Parse and validate JSON
+      // Stage 9: Parse JSON
+      updateProgress('Parsing data', 0);
       const parsed = JSON.parse(decryptedJson);
+      updateProgress('Parsing data', 100);
       
       setDecodedText(JSON.stringify(parsed, null, 2));
+      updateProgress('Complete', 100);
       showToastMessage("Successfully decoded!");
       
     } catch (error: any) {
@@ -99,6 +133,8 @@ export default function DecoderScreen() {
         showToastMessage("Wrong password", "error");
       } else if (error.message.includes("Invalid magic number")) {
         showToastMessage("Not a valid Passify backup image", "error");
+      } else if (error.message.includes("Unsupported version")) {
+        showToastMessage("Incompatible image version", "error");
       } else {
         showToastMessage(`Decoding failed: ${error.message}`, "error");
       }
@@ -106,6 +142,7 @@ export default function DecoderScreen() {
       setDecodedText("");
     } finally {
       setLoading(false);
+      setTimeout(() => setShowProgress(false), 1000);
     }
   };
 
@@ -127,11 +164,15 @@ export default function DecoderScreen() {
         </Text>
         
         <Text style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-          Recover your account data from an encrypted image file.
+          Recover your account data from a colored encrypted image.
         </Text>
 
         {/* Pick Image Button */}
-        <Pressable onPress={handlePickImage} style={[styles.button, { backgroundColor: colors.accent2 }]}>
+        <Pressable
+          onPress={handlePickImage}
+          disabled={loading}
+          style={[styles.button, { backgroundColor: colors.accent2, opacity: loading ? 0.7 : 1 }]}
+        >
           <Ionicons name="folder-open" size={20} color="#fff" />
           <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
             {imageUri ? "Change Image" : "Select Image"}
@@ -157,12 +198,18 @@ export default function DecoderScreen() {
               placeholder="Enter decryption password"
               placeholderTextColor={colors.muted}
               secureTextEntry={!showPassword}
+              editable={!loading}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
               <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
             </Pressable>
           </View>
         </View>
+
+        {/* Progress Bar */}
+        {showProgress && (
+          <ProgressBar progress={progress} stage={currentStage} visible={showProgress} />
+        )}
 
         {/* Decode Button */}
         <Pressable
@@ -183,7 +230,7 @@ export default function DecoderScreen() {
         </Pressable>
 
         {/* Decoded Output */}
-        {decodedText && (
+        {decodedText && !loading && (
           <View style={styles.section}>
             <View style={styles.labelRow}>
               <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>

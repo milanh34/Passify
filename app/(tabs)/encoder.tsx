@@ -5,9 +5,10 @@ import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "../../src/components/Toast";
+import ProgressBar from "../../src/components/ProgressBar";
 import * as Sharing from "expo-sharing";
 import { encryptData } from "../../src/utils/crypto";
-import { calculateDimensions, packHeader, calculateChecksum, encodeToBlocks } from "../../src/utils/blocks";
+import { calculateDimensions, packHeader, calculateChecksum, encodeToPixels, BLOCK_CONSTANTS } from "../../src/utils/blocks";
 import { savePixelsAsPNG } from "../../src/utils/image";
 
 export default function EncoderScreen() {
@@ -22,12 +23,22 @@ export default function EncoderScreen() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  
+  // Progress tracking
+  const [progress, setProgress] = useState(0);
+  const [currentStage, setCurrentStage] = useState("");
+  const [showProgress, setShowProgress] = useState(false);
 
   const showToastMessage = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+  };
+  
+  const updateProgress = (stage: string, percent: number) => {
+    setCurrentStage(stage);
+    setProgress(percent);
   };
 
   const handleEncode = async () => {
@@ -37,42 +48,65 @@ export default function EncoderScreen() {
     }
 
     setLoading(true);
+    setShowProgress(true);
+    setProgress(0);
+    
     try {
-      // 1. Serialize data
+      // Stage 1: Stringify (5%)
+      updateProgress('Serializing data', 0);
       const dataToEncrypt = JSON.stringify({ database, schemas });
+      updateProgress('Serializing data', 100);
       
-      // 2. Encrypt
-      const encryptedBytes = await encryptData(dataToEncrypt, password);
+      // Stage 2-4: Encrypt (40% total: 15% key + 25% encrypt)
+      const encryptedBytes = await encryptData(dataToEncrypt, password, (stage, percent) => {
+        if (stage.includes('key')) {
+          updateProgress(stage, percent * 0.375); // Map to 0-15%
+        } else if (stage.includes('Encrypt')) {
+          updateProgress(stage, 15 + (percent * 0.625)); // Map to 15-40%
+        } else {
+          updateProgress(stage, 40);
+        }
+      });
       
-      // 3. Calculate dimensions
+      // Stage 5: Calculate dimensions
+      updateProgress('Calculating image size', 0);
       const { width, height } = calculateDimensions(encryptedBytes.length);
+      updateProgress('Calculating image size', 100);
       
-      // 4. Create header
+      // Stage 6: Create header
+      updateProgress('Creating header', 0);
       const header = {
-        magic: 0x504D4947,
-        version: 1,
+        magic: BLOCK_CONSTANTS.MAGIC_NUMBER,
+        version: BLOCK_CONSTANTS.VERSION,
+        mode: BLOCK_CONSTANTS.MODE_1X1,
         width,
         height,
         dataLength: encryptedBytes.length,
         checksum: calculateChecksum(encryptedBytes),
+        reserved: 0,
       };
-      
       const headerBytes = packHeader(header);
+      updateProgress('Creating header', 100);
       
-      // 5. Combine header + encrypted data
+      // Stage 7: Combine data
       const fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
       fullData.set(headerBytes);
       fullData.set(encryptedBytes, headerBytes.length);
       
-      // 6. Encode to pixel blocks
-      const pixels = encodeToBlocks(fullData, width, height);
+      // Stage 8: Encode to pixels (20%)
+      const pixels = encodeToPixels(fullData, width, height, (stage, percent) => {
+        updateProgress(stage, percent);
+      });
       
-      // 7. Save as PNG
+      // Stage 9: Save as PNG (30%: 20% encode + 10% write)
       const timestamp = Date.now();
       const filename = `passify_backup_${timestamp}.png`;
-      const uri = await savePixelsAsPNG(pixels, width, height, filename);
+      const uri = await savePixelsAsPNG(pixels, width, height, filename, (stage, percent) => {
+        updateProgress(stage, percent);
+      });
       
       setImageUri(uri);
+      updateProgress('Complete', 100);
       showToastMessage("Image generated successfully!");
       
     } catch (error: any) {
@@ -80,6 +114,7 @@ export default function EncoderScreen() {
       showToastMessage(`Encoding failed: ${error.message}`, "error");
     } finally {
       setLoading(false);
+      setTimeout(() => setShowProgress(false), 1000);
     }
   };
 
@@ -112,7 +147,7 @@ export default function EncoderScreen() {
         </Text>
         
         <Text style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-          Convert your account data into an encrypted image file.
+          Convert your account data into a colorful encrypted image using 1×1 RGBA encoding.
         </Text>
 
         {/* Password Input */}
@@ -128,6 +163,7 @@ export default function EncoderScreen() {
               placeholder="Enter encryption password"
               placeholderTextColor={colors.muted}
               secureTextEntry={!showPassword}
+              editable={!loading}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
               <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
@@ -135,11 +171,16 @@ export default function EncoderScreen() {
           </View>
         </View>
 
+        {/* Progress Bar */}
+        {showProgress && (
+          <ProgressBar progress={progress} stage={currentStage} visible={showProgress} />
+        )}
+
         {/* Encode Button */}
         <Pressable
           onPress={handleEncode}
           disabled={loading}
-          style={[styles.button, { backgroundColor: colors.accent }]}
+          style={[styles.button, { backgroundColor: colors.accent, opacity: loading ? 0.7 : 1 }]}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -154,10 +195,10 @@ export default function EncoderScreen() {
         </Pressable>
 
         {/* Image Preview */}
-        {imageUri && (
+        {imageUri && !loading && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-              Generated Image
+              Generated Colored Image
             </Text>
             <View style={[styles.imagePreview, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Image
@@ -166,6 +207,10 @@ export default function EncoderScreen() {
                 resizeMode="contain"
               />
             </View>
+            
+            <Text style={[styles.info, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+              This colorful image contains your encrypted data using RGBA channel encoding (4 bytes per pixel).
+            </Text>
             
             <Pressable
               onPress={handleShare}
@@ -244,5 +289,10 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: 300,
+  },
+  info: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
 });
