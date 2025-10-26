@@ -1,36 +1,28 @@
-export type ProgressCallback = (stage: string, percent: number) => void;
+export type PNGProgressCallback = (phase: string, percent: number) => void;
 
-/**
- * Encode RGBA pixel buffer to PNG format with progress
- */
 export async function encodePNG(
   pixels: Uint8Array,
   width: number,
   height: number,
-  onProgress?: ProgressCallback
+  onProgress?: PNGProgressCallback
 ): Promise<Uint8Array> {
   onProgress?.('Creating PNG structure', 0);
   
-  // PNG signature
   const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
   
   onProgress?.('Creating PNG structure', 20);
   
-  // IHDR chunk
   const ihdr = createChunk('IHDR', createIHDR(width, height));
   
   onProgress?.('Compressing image data', 0);
   
-  // IDAT chunk (image data)
   const imageData = await createImageData(pixels, width, height, onProgress);
   const idat = createChunk('IDAT', imageData);
   
   onProgress?.('Finalizing PNG', 0);
   
-  // IEND chunk
   const iend = createChunk('IEND', new Uint8Array(0));
   
-  // Combine all parts
   const totalLength = signature.length + ihdr.length + idat.length + iend.length;
   const png = new Uint8Array(totalLength);
   let offset = 0;
@@ -54,11 +46,11 @@ function createIHDR(width: number, height: number): Uint8Array {
   
   view.setUint32(0, width, false);
   view.setUint32(4, height, false);
-  data[8] = 8;  // Bit depth
-  data[9] = 6;  // Color type: RGBA (truecolor with alpha)
-  data[10] = 0; // Compression
-  data[11] = 0; // Filter
-  data[12] = 0; // Interlace
+  data[8] = 8;
+  data[9] = 6;
+  data[10] = 0;
+  data[11] = 0;
+  data[12] = 0;
   
   return data;
 }
@@ -67,14 +59,13 @@ async function createImageData(
   pixels: Uint8Array,
   width: number,
   height: number,
-  onProgress?: ProgressCallback
+  onProgress?: PNGProgressCallback
 ): Promise<Uint8Array> {
-  // Add filter byte (0 = no filter) to each scanline
   const bytesPerRow = width * 4;
   const filteredData = new Uint8Array(height * (bytesPerRow + 1));
   
   for (let y = 0; y < height; y++) {
-    filteredData[y * (bytesPerRow + 1)] = 0; // Filter type
+    filteredData[y * (bytesPerRow + 1)] = 0;
     filteredData.set(
       pixels.slice(y * bytesPerRow, (y + 1) * bytesPerRow),
       y * (bytesPerRow + 1) + 1
@@ -88,7 +79,6 @@ async function createImageData(
   
   onProgress?.('Compressing image data', 100);
   
-  // Compress with simplified deflate
   return deflateStore(filteredData);
 }
 
@@ -183,16 +173,12 @@ function crc32(data: Uint8Array): number {
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
 
-/**
- * Decode PNG to RGBA pixel buffer with progress
- */
 export function decodePNG(
   pngData: Uint8Array,
-  onProgress?: ProgressCallback
+  onProgress?: PNGProgressCallback
 ): { pixels: Uint8Array; width: number; height: number } {
   onProgress?.('Parsing PNG structure', 0);
   
-  // Verify PNG signature
   const signature = pngData.slice(0, 8);
   const expectedSig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
   
@@ -209,7 +195,6 @@ export function decodePNG(
   let height = 0;
   let imageData: Uint8Array | null = null;
   
-  // Parse chunks
   while (offset < pngData.length) {
     const view = new DataView(pngData.buffer, pngData.byteOffset + offset);
     const length = view.getUint32(0, false);
@@ -242,7 +227,6 @@ export function decodePNG(
   
   onProgress?.('Extracting pixel data', 0);
   
-  // Remove filter bytes
   const pixels = new Uint8Array(width * height * 4);
   const bytesPerRow = width * 4;
   

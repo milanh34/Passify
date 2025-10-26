@@ -1,26 +1,22 @@
-export type ProgressCallback = (stage: string, percent: number) => void;
+import { ThrottledProgress } from '../types/progress';
 
-// Header structure
 export interface ImageHeader {
-  magic: number; // 0x504D4947 ("PMIG")
-  version: number; // 2 (updated for 1x1 RGBA)
-  mode: number; // 1 = 1x1 encoding
+  magic: number;
+  version: number;
+  mode: number;
   width: number;
   height: number;
   dataLength: number;
   checksum: number;
-  reserved: number; // For future use
+  reserved: number;
 }
 
 const MAGIC_NUMBER = 0x504D4947;
 const VERSION = 2;
 const MODE_1X1 = 1;
-const HEADER_SIZE = 32; // 8 fields × 4 bytes
-const BYTES_PER_PIXEL = 4; // RGBA
+const HEADER_SIZE = 32;
+const BYTES_PER_PIXEL = 4;
 
-/**
- * Pack header into bytes
- */
 export function packHeader(header: ImageHeader): Uint8Array {
   const buffer = new Uint8Array(HEADER_SIZE);
   const view = new DataView(buffer.buffer);
@@ -37,9 +33,6 @@ export function packHeader(header: ImageHeader): Uint8Array {
   return buffer;
 }
 
-/**
- * Unpack header from bytes
- */
 export function unpackHeader(bytes: Uint8Array): ImageHeader {
   if (bytes.length < HEADER_SIZE) {
     throw new Error('Invalid header: too short');
@@ -58,12 +51,11 @@ export function unpackHeader(bytes: Uint8Array): ImageHeader {
     reserved: view.getUint32(28, false),
   };
   
-  // Validate
   if (header.magic !== MAGIC_NUMBER) {
-    throw new Error(`Invalid magic number: expected ${MAGIC_NUMBER}, got ${header.magic}`);
+    throw new Error(`Invalid magic number`);
   }
   if (header.version !== VERSION) {
-    throw new Error(`Unsupported version: ${header.version} (expected ${VERSION})`);
+    throw new Error(`Unsupported version: ${header.version}`);
   }
   if (header.mode !== MODE_1X1) {
     throw new Error(`Unsupported encoding mode: ${header.mode}`);
@@ -72,9 +64,6 @@ export function unpackHeader(bytes: Uint8Array): ImageHeader {
   return header;
 }
 
-/**
- * Calculate simple checksum
- */
 export function calculateChecksum(data: Uint8Array): number {
   let sum = 0;
   for (let i = 0; i < data.length; i++) {
@@ -83,101 +72,70 @@ export function calculateChecksum(data: Uint8Array): number {
   return sum;
 }
 
-/**
- * Calculate required image dimensions for data (1x1 encoding)
- * Each pixel stores 4 bytes (RGBA)
- */
 export function calculateDimensions(dataLength: number): { width: number; height: number } {
   const totalBytes = HEADER_SIZE + dataLength;
   const pixelsNeeded = Math.ceil(totalBytes / BYTES_PER_PIXEL);
-  
-  // Calculate square-ish dimensions
   const width = Math.ceil(Math.sqrt(pixelsNeeded));
   const height = Math.ceil(pixelsNeeded / width);
-  
   return { width, height };
 }
 
-/**
- * Encode bytes into RGBA pixels (1x1 mode - colored output)
- * Each pixel stores 4 bytes: R=byte[0], G=byte[1], B=byte[2], A=byte[3]
- */
 export function encodeToPixels(
   data: Uint8Array,
   width: number,
   height: number,
-  onProgress?: ProgressCallback
+  progress?: ThrottledProgress
 ): Uint8Array {
-  const pixelBuffer = new Uint8Array(width * height * 4); // RGBA
+  const pixelBuffer = new Uint8Array(width * height * 4);
+  const totalBytes = data.length;
   
-  // Fill remaining pixels with random noise (makes image colorful)
+  // Fill with random noise
   for (let i = 0; i < pixelBuffer.length; i++) {
     pixelBuffer[i] = Math.floor(Math.random() * 256);
   }
   
-  // Encode data bytes into pixels
+  // Encode data
   let byteIndex = 0;
-  const totalPixels = Math.ceil(data.length / 4);
-  const progressInterval = Math.max(1, Math.floor(totalPixels / 50));
-  
-  for (let pixelIndex = 0; pixelIndex < totalPixels && byteIndex < data.length; pixelIndex++) {
+  for (let pixelIndex = 0; pixelIndex < Math.ceil(totalBytes / 4); pixelIndex++) {
     const offset = pixelIndex * 4;
     
-    // Pack 4 bytes into RGBA channels
-    for (let channel = 0; channel < 4 && byteIndex < data.length; channel++) {
+    for (let channel = 0; channel < 4 && byteIndex < totalBytes; channel++) {
       pixelBuffer[offset + channel] = data[byteIndex++];
     }
     
-    // Report progress
-    if (onProgress && pixelIndex % progressInterval === 0) {
-      const percent = (pixelIndex / totalPixels) * 100;
-      onProgress('Encoding to pixels', percent);
+    if (progress && byteIndex % 1024 === 0) {
+      progress.update('pack', byteIndex, totalBytes);
     }
   }
   
-  onProgress?.('Encoding to pixels', 100);
-  
+  progress?.update('pack', totalBytes, totalBytes);
   return pixelBuffer;
 }
 
-/**
- * Decode bytes from RGBA pixels (1x1 mode)
- */
 export function decodeFromPixels(
   pixelBuffer: Uint8Array,
   dataLength: number,
-  onProgress?: ProgressCallback
+  progress?: ThrottledProgress
 ): Uint8Array {
   const data = new Uint8Array(dataLength);
-  
-  const totalPixels = Math.ceil(dataLength / 4);
-  const progressInterval = Math.max(1, Math.floor(totalPixels / 50));
-  
   let byteIndex = 0;
   
-  for (let pixelIndex = 0; pixelIndex < totalPixels && byteIndex < dataLength; pixelIndex++) {
+  for (let pixelIndex = 0; pixelIndex < Math.ceil(dataLength / 4); pixelIndex++) {
     const offset = pixelIndex * 4;
     
-    // Unpack 4 bytes from RGBA channels
     for (let channel = 0; channel < 4 && byteIndex < dataLength; channel++) {
       data[byteIndex++] = pixelBuffer[offset + channel];
     }
     
-    // Report progress
-    if (onProgress && pixelIndex % progressInterval === 0) {
-      const percent = (pixelIndex / totalPixels) * 100;
-      onProgress('Decoding from pixels', percent);
+    if (progress && byteIndex % 1024 === 0) {
+      progress.update('unpack', byteIndex, dataLength);
     }
   }
   
-  onProgress?.('Decoding from pixels', 100);
-  
+  progress?.update('unpack', dataLength, dataLength);
   return data;
 }
 
-/**
- * Get header constants for external use
- */
 export const BLOCK_CONSTANTS = {
   HEADER_SIZE,
   BYTES_PER_PIXEL,
