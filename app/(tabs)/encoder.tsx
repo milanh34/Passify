@@ -1,15 +1,27 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, ActivityIndicator, Image } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "../../src/components/Toast";
 import ProgressBar from "../../src/components/ProgressBar";
-import * as Sharing from "expo-sharing";
+import { shareImage, downloadImage } from "../../src/utils/fileSharing";
 import { encryptData } from "../../src/utils/crypto";
 import { calculateDimensions, packHeader, calculateChecksum, encodeToPixels, BLOCK_CONSTANTS } from "../../src/utils/blocks";
 import { savePixelsAsPNG } from "../../src/utils/image";
+import { encodePNG } from "../../src/utils/pngEncoder";
+import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
@@ -20,25 +32,90 @@ export default function EncoderScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [imageUri, setImageUri] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   
-  // Progress tracking
-  const [progress, setProgress] = useState(0);
-  const [currentStage, setCurrentStage] = useState("");
+  // Byte-accurate progress
+  const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
+    phase: 'stringify',
+    processedBytes: 0,
+    totalBytes: 0,
+    percent: 0,
+  });
   const [showProgress, setShowProgress] = useState(false);
+  
+  // FIX: Use ref to track if component is mounted and processing
+  const isMountedRef = useRef(true);
+  const isProcessingRef = useRef(false);
+  const progressCallbacksRef = useRef<Set<Function>>(new Set());
+
+  // FIX: Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      isProcessingRef.current = false;
+      progressCallbacksRef.current.clear();
+    };
+  }, []);
 
   const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+    if (!isMountedRef.current) return;
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        setShowToast(false);
+      }
+    }, 3000);
   };
-  
-  const updateProgress = (stage: string, percent: number) => {
-    setCurrentStage(stage);
-    setProgress(percent);
+
+  // FIX: Proper cleanup function
+  const cleanup = () => {
+    isProcessingRef.current = false;
+    progressCallbacksRef.current.clear();
+    
+    if (isMountedRef.current) {
+      setLoading(false);
+      setShowProgress(false);
+      setProgressUpdate({
+        phase: 'stringify',
+        processedBytes: 0,
+        totalBytes: 0,
+        percent: 0,
+      });
+    }
+  };
+
+  const handleRefresh = async () => {
+    // FIX: Stop all ongoing processes
+    if (isProcessingRef.current) {
+      console.log('🛑 Cancelling ongoing process...');
+      cleanup();
+    }
+    
+    setRefreshing(true);
+    
+    // Reset all state
+    setPassword("");
+    setImageUri("");
+    setLoading(false);
+    setShowProgress(false);
+    setProgressUpdate({
+      phase: 'stringify',
+      processedBytes: 0,
+      totalBytes: 0,
+      percent: 0,
+    });
+    
+    // Give time for state to settle
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    if (isMountedRef.current) {
+      setRefreshing(false);
+    }
   };
 
   const handleEncode = async () => {
@@ -47,34 +124,58 @@ export default function EncoderScreen() {
       return;
     }
 
+    // FIX: Prevent multiple simultaneous processes
+    if (isProcessingRef.current) {
+      showToastMessage("A process is already running", "error");
+      return;
+    }
+
+    isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
-    setProgress(0);
+    
+    // FIX: Create safe progress callback that checks if still processing
+    const safeProgressUpdate = (update: ProgressUpdate) => {
+      if (isMountedRef.current && isProcessingRef.current) {
+        setProgressUpdate(update);
+      }
+    };
+    
+    progressCallbacksRef.current.add(safeProgressUpdate);
     
     try {
-      // Stage 1: Stringify (5%)
-      updateProgress('Serializing data', 0);
+      // Check if still processing before each stage
+      if (!isProcessingRef.current) {
+        console.log('Process cancelled at start');
+        return;
+      }
+
+      // Stage 1: Stringify
       const dataToEncrypt = JSON.stringify({ database, schemas });
-      updateProgress('Serializing data', 100);
+      const stringifyBytes = new TextEncoder().encode(dataToEncrypt).length;
       
-      // Stage 2-4: Encrypt (40% total: 15% key + 25% encrypt)
-      const encryptedBytes = await encryptData(dataToEncrypt, password, (stage, percent) => {
-        if (stage.includes('key')) {
-          updateProgress(stage, percent * 0.375); // Map to 0-15%
-        } else if (stage.includes('Encrypt')) {
-          updateProgress(stage, 15 + (percent * 0.625)); // Map to 15-40%
-        } else {
-          updateProgress(stage, 40);
+      if (!isProcessingRef.current) return;
+      safeProgressUpdate({
+        phase: 'stringify',
+        processedBytes: stringifyBytes,
+        totalBytes: stringifyBytes,
+        percent: 100,
+      });
+      
+      // Stage 2: Encrypt
+      if (!isProcessingRef.current) return;
+      const encryptedBytes = await encryptData(dataToEncrypt, password, (update) => {
+        if (isProcessingRef.current) {
+          safeProgressUpdate(update);
         }
       });
       
-      // Stage 5: Calculate dimensions
-      updateProgress('Calculating image size', 0);
+      // Stage 3: Calculate dimensions
+      if (!isProcessingRef.current) return;
       const { width, height } = calculateDimensions(encryptedBytes.length);
-      updateProgress('Calculating image size', 100);
       
-      // Stage 6: Create header
-      updateProgress('Creating header', 0);
+      // Stage 4: Create header
+      if (!isProcessingRef.current) return;
       const header = {
         magic: BLOCK_CONSTANTS.MAGIC_NUMBER,
         version: BLOCK_CONSTANTS.VERSION,
@@ -86,61 +187,123 @@ export default function EncoderScreen() {
         reserved: 0,
       };
       const headerBytes = packHeader(header);
-      updateProgress('Creating header', 100);
       
-      // Stage 7: Combine data
+      // Stage 5: Combine data
+      if (!isProcessingRef.current) return;
       const fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
       fullData.set(headerBytes);
       fullData.set(encryptedBytes, headerBytes.length);
       
-      // Stage 8: Encode to pixels (20%)
-      const pixels = encodeToPixels(fullData, width, height, (stage, percent) => {
-        updateProgress(stage, percent);
+      // Stage 6: Encode to pixels
+      if (!isProcessingRef.current) return;
+      const progress = new ThrottledProgress((update) => {
+        if (isProcessingRef.current) {
+          safeProgressUpdate(update);
+        }
+      });
+      const pixels = encodeToPixels(fullData, width, height, progress);
+      
+      // Stage 7: Encode PNG
+      if (!isProcessingRef.current) return;
+      const pngBytes = await encodePNG(pixels, width, height, (phase, percent) => {
+        if (isProcessingRef.current) {
+          safeProgressUpdate({
+            phase: 'encodePNG',
+            processedBytes: Math.round((percent / 100) * pixels.length),
+            totalBytes: pixels.length,
+            percent,
+          });
+        }
       });
       
-      // Stage 9: Save as PNG (30%: 20% encode + 10% write)
+      // Stage 8: Write file
+      if (!isProcessingRef.current) return;
       const timestamp = Date.now();
       const filename = `passify_backup_${timestamp}.png`;
-      const uri = await savePixelsAsPNG(pixels, width, height, filename, (stage, percent) => {
-        updateProgress(stage, percent);
+      
+      safeProgressUpdate({
+        phase: 'writeFile',
+        processedBytes: 0,
+        totalBytes: pngBytes.length,
+        percent: 0,
       });
       
-      setImageUri(uri);
-      updateProgress('Complete', 100);
-      showToastMessage("Image generated successfully!");
+      const uri = await savePixelsAsPNG(pixels, width, height, filename, (phase, percent) => {
+        if (isProcessingRef.current) {
+          safeProgressUpdate({
+            phase: 'writeFile',
+            processedBytes: Math.round((percent / 100) * pngBytes.length),
+            totalBytes: pngBytes.length,
+            percent,
+          });
+        }
+      });
+      
+      // Only update UI if still processing
+      if (!isProcessingRef.current) return;
+      
+      if (isMountedRef.current) {
+        setImageUri(uri);
+        safeProgressUpdate({
+          phase: 'done',
+          processedBytes: pngBytes.length,
+          totalBytes: pngBytes.length,
+          percent: 100,
+        });
+        showToastMessage("Image generated successfully!");
+      }
       
     } catch (error: any) {
-      console.error("Encoding error:", error);
-      showToastMessage(`Encoding failed: ${error.message}`, "error");
+      if (isMountedRef.current && isProcessingRef.current) {
+        console.error("Encoding error:", error);
+        showToastMessage(`Encoding failed: ${error.message}`, "error");
+      }
     } finally {
-      setLoading(false);
-      setTimeout(() => setShowProgress(false), 1000);
+      cleanup();
+      
+      // Hide progress after delay
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          setShowProgress(false);
+        }
+      }, 1000);
     }
   };
 
   const handleShare = async () => {
     if (!imageUri) return;
-    
-    try {
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(imageUri, {
-          mimeType: "image/png",
-          dialogTitle: "Share Encrypted Backup",
-        });
-      } else {
-        showToastMessage("Sharing not available", "error");
-      }
-    } catch (error: any) {
-      showToastMessage(`Share failed: ${error.message}`, "error");
+    const success = await shareImage(imageUri);
+    if (success) {
+      showToastMessage("Shared successfully!");
+    } else {
+      showToastMessage("Share failed", "error");
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!imageUri) return;
+    const filename = imageUri.split('/').pop() || 'passify_backup.png';
+    const success = await downloadImage(imageUri, filename);
+    if (success) {
+      showToastMessage("Download started");
+    } else {
+      showToastMessage("Download failed", "error");
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+          />
+        }
       >
         <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
           Encode to Image
@@ -150,12 +313,11 @@ export default function EncoderScreen() {
           Convert your account data into a colorful encrypted image using 1×1 RGBA encoding.
         </Text>
 
-        {/* Password Input */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
             Password
           </Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <TextInput
               style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
               value={password}
@@ -171,12 +333,16 @@ export default function EncoderScreen() {
           </View>
         </View>
 
-        {/* Progress Bar */}
         {showProgress && (
-          <ProgressBar progress={progress} stage={currentStage} visible={showProgress} />
+          <ProgressBar
+            percent={progressUpdate.percent}
+            phase={progressUpdate.phase}
+            processedBytes={progressUpdate.processedBytes}
+            totalBytes={progressUpdate.totalBytes}
+            visible={showProgress}
+          />
         )}
 
-        {/* Encode Button */}
         <Pressable
           onPress={handleEncode}
           disabled={loading}
@@ -194,13 +360,12 @@ export default function EncoderScreen() {
           )}
         </Pressable>
 
-        {/* Image Preview */}
         {imageUri && !loading && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
               Generated Colored Image
             </Text>
-            <View style={[styles.imagePreview, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.imagePreview, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <Image
                 source={{ uri: imageUri }}
                 style={styles.image}
@@ -212,15 +377,27 @@ export default function EncoderScreen() {
               This colorful image contains your encrypted data using RGBA channel encoding (4 bytes per pixel).
             </Text>
             
-            <Pressable
-              onPress={handleShare}
-              style={[styles.button, { backgroundColor: colors.accent2 }]}
-            >
-              <Ionicons name="share-outline" size={20} color="#fff" />
-              <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-                Share Image
-              </Text>
-            </Pressable>
+            <View style={styles.buttonRow}>
+              <Pressable
+                onPress={handleShare}
+                style={[styles.button, styles.halfButton, { backgroundColor: colors.accent2 }]}
+              >
+                <Ionicons name="share-outline" size={20} color="#fff" />
+                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                  Share
+                </Text>
+              </Pressable>
+              
+              <Pressable
+                onPress={handleDownload}
+                style={[styles.button, styles.halfButton, { backgroundColor: colors.accent }]}
+              >
+                <Ionicons name="download-outline" size={20} color="#fff" />
+                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                  Download
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -279,6 +456,13 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  halfButton: {
+    flex: 1,
   },
   imagePreview: {
     borderRadius: 12,
