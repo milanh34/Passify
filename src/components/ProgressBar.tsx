@@ -1,24 +1,53 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { ProgressPhase } from '../types/progress';
 
 interface ProgressBarProps {
-  progress: number; // 0-100
-  stage: string;
+  percent: number; // 0-100
+  phase: ProgressPhase;
+  processedBytes?: number;
+  totalBytes?: number;
   visible: boolean;
 }
 
-export default function ProgressBar({ progress, stage, visible }: ProgressBarProps) {
+const PHASE_LABELS: Record<ProgressPhase, string> = {
+  stringify: 'Serializing data',
+  encrypt: 'Encrypting',
+  pack: 'Packing into pixels',
+  encodePNG: 'Encoding image',
+  writeFile: 'Writing file',
+  readFile: 'Reading file',
+  decodePNG: 'Decoding image',
+  unpack: 'Extracting data',
+  decrypt: 'Decrypting',
+  parseJSON: 'Parsing data',
+  done: 'Complete',
+};
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+export default function ProgressBar({
+  percent,
+  phase,
+  processedBytes,
+  totalBytes,
+  visible,
+}: ProgressBarProps) {
   const { colors, fontConfig } = useTheme();
   const progressAnim = useRef(new Animated.Value(0)).current;
   
   useEffect(() => {
     Animated.timing(progressAnim, {
-      toValue: progress,
-      duration: 200,
+      toValue: percent,
+      duration: 150,
       useNativeDriver: false,
     }).start();
-  }, [progress]);
+  }, [percent]);
   
   if (!visible) return null;
   
@@ -27,13 +56,27 @@ export default function ProgressBar({ progress, stage, visible }: ProgressBarPro
     outputRange: ['0%', '100%'],
   });
   
+  const phaseLabel = PHASE_LABELS[phase] || 'Processing';
+  const showBytes = processedBytes !== undefined && totalBytes !== undefined && totalBytes > 0;
+  
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.stage, { color: colors.text, fontFamily: fontConfig.regular }]}>
-        {stage}
-      </Text>
+    <View
+      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(percent) }}
+      accessibilityLabel={`${phaseLabel}: ${Math.round(percent)}%`}
+    >
+      <View style={styles.header}>
+        <Text style={[styles.phase, { color: colors.text, fontFamily: fontConfig.regular }]}>
+          {phaseLabel}
+        </Text>
+        <Text style={[styles.percentage, { color: colors.accent, fontFamily: fontConfig.bold }]}>
+          {Math.round(percent)}%
+        </Text>
+      </View>
       
-      <View style={[styles.progressTrack, { backgroundColor: colors.background }]}>
+      <View style={[styles.progressTrack, { backgroundColor: colors.bg[0] }]}>
         <Animated.View
           style={[
             styles.progressFill,
@@ -42,9 +85,11 @@ export default function ProgressBar({ progress, stage, visible }: ProgressBarPro
         />
       </View>
       
-      <Text style={[styles.percentage, { color: colors.muted, fontFamily: fontConfig.bold }]}>
-        {Math.round(progress)}%
-      </Text>
+      {showBytes && (
+        <Text style={[styles.bytes, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+          {formatBytes(processedBytes!)} / {formatBytes(totalBytes!)}
+        </Text>
+      )}
     </View>
   );
 }
@@ -56,8 +101,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 8,
   },
-  stage: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  phase: {
     fontSize: 14,
+    flex: 1,
+  },
+  percentage: {
+    fontSize: 16,
+    marginLeft: 8,
   },
   progressTrack: {
     height: 8,
@@ -68,7 +123,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
-  percentage: {
+  bytes: {
     fontSize: 12,
     textAlign: 'right',
   },
