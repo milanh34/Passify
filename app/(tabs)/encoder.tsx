@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,35 +9,43 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../../src/context/ThemeContext";
-import { useDb } from "../../src/context/DbContext";
-import { Ionicons } from "@expo/vector-icons";
-import Toast from "../../src/components/Toast";
-import ProgressBar from "../../src/components/ProgressBar";
-import { shareImage, downloadImage } from "../../src/utils/fileSharing";
-import { encryptData } from "../../src/utils/crypto";
-import { calculateDimensions, packHeader, calculateChecksum, encodeToPixels, BLOCK_CONSTANTS } from "../../src/utils/blocks";
-import { savePixelsAsPNG } from "../../src/utils/image";
-import { encodePNG } from "../../src/utils/pngEncoder";
-import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
+  Modal,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../src/context/ThemeContext';
+import { useDb } from '../../src/context/DbContext';
+import ProgressBar from '../../src/components/ProgressBar';
+import Toast from '../../src/components/Toast';
+import { Ionicons } from '@expo/vector-icons';
+
+import { encryptData } from '../../src/utils/crypto';
+import { 
+  calculateDimensions, 
+  packHeader, 
+  calculateChecksum, 
+  encodeToPixels,
+  BLOCK_CONSTANTS 
+} from '../../src/utils/blocks';
+import { savePixelsAsPNG } from '../../src/utils/image';
+import { downloadImage, shareFile, isExpoGo } from '../../src/utils/fileSharing';
+import { ThrottledProgress, ProgressUpdate } from '../../src/types/progress';
 
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
-  
-  const [password, setPassword] = useState("");
+
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [imageUri, setImageUri] = useState("");
+  const [imageUri, setImageUri] = useState('');
+  const [filename, setFilename] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
-  
-  // Byte-accurate progress
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [downloadModalVisible, setDownloadModalVisible] = useState(false);
+
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
     phase: 'stringify',
     processedBytes: 0,
@@ -45,38 +53,29 @@ export default function EncoderScreen() {
     percent: 0,
   });
   const [showProgress, setShowProgress] = useState(false);
-  
-  // FIX: Use ref to track if component is mounted and processing
+
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
-  const progressCallbacksRef = useRef<Set<Function>>(new Set());
 
-  // FIX: Cleanup on unmount
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
       isProcessingRef.current = false;
-      progressCallbacksRef.current.clear();
     };
   }, []);
 
-  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+  const showToastMessage = (msg: string, type: 'success' | 'error' = 'success') => {
     if (!isMountedRef.current) return;
-    setToastMessage(message);
+    setToastMessage(msg);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => {
-      if (isMountedRef.current) {
-        setShowToast(false);
-      }
+      if (isMountedRef.current) setShowToast(false);
     }, 3000);
   };
 
-  // FIX: Proper cleanup function
   const cleanup = () => {
     isProcessingRef.current = false;
-    progressCallbacksRef.current.clear();
-    
     if (isMountedRef.current) {
       setLoading(false);
       setShowProgress(false);
@@ -90,17 +89,15 @@ export default function EncoderScreen() {
   };
 
   const handleRefresh = async () => {
-    // FIX: Stop all ongoing processes
     if (isProcessingRef.current) {
-      console.log('🛑 Cancelling ongoing process...');
+      console.log('🛑 Cancelling ongoing encode...');
       cleanup();
     }
-    
+
     setRefreshing(true);
-    
-    // Reset all state
-    setPassword("");
-    setImageUri("");
+    setPassword('');
+    setImageUri('');
+    setFilename('');
     setLoading(false);
     setShowProgress(false);
     setProgressUpdate({
@@ -109,73 +106,55 @@ export default function EncoderScreen() {
       totalBytes: 0,
       percent: 0,
     });
-    
-    // Give time for state to settle
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    if (isMountedRef.current) {
-      setRefreshing(false);
+
+    await new Promise((r) => setTimeout(r, 300));
+    if (isMountedRef.current) setRefreshing(false);
+  };
+
+  const onProgress = (update: ProgressUpdate) => {
+    if (isMountedRef.current && isProcessingRef.current) {
+      setProgressUpdate(update);
     }
   };
 
   const handleEncode = async () => {
     if (!password.trim()) {
-      showToastMessage("Please enter a password", "error");
+      showToastMessage('Please enter a password', 'error');
       return;
     }
 
-    // FIX: Prevent multiple simultaneous processes
     if (isProcessingRef.current) {
-      showToastMessage("A process is already running", "error");
+      showToastMessage('Encoding already in progress', 'error');
       return;
     }
 
     isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
-    
-    // FIX: Create safe progress callback that checks if still processing
-    const safeProgressUpdate = (update: ProgressUpdate) => {
-      if (isMountedRef.current && isProcessingRef.current) {
-        setProgressUpdate(update);
-      }
-    };
-    
-    progressCallbacksRef.current.add(safeProgressUpdate);
-    
-    try {
-      // Check if still processing before each stage
-      if (!isProcessingRef.current) {
-        console.log('Process cancelled at start');
-        return;
-      }
 
-      // Stage 1: Stringify
+    try {
+      // Stringify
       const dataToEncrypt = JSON.stringify({ database, schemas });
-      const stringifyBytes = new TextEncoder().encode(dataToEncrypt).length;
-      
-      if (!isProcessingRef.current) return;
-      safeProgressUpdate({
-        phase: 'stringify',
-        processedBytes: stringifyBytes,
-        totalBytes: stringifyBytes,
-        percent: 100,
+      const encoder = new TextEncoder();
+      const dataBytes = encoder.encode(dataToEncrypt);
+      onProgress({ 
+        phase: 'stringify', 
+        processedBytes: dataBytes.length, 
+        totalBytes: dataBytes.length, 
+        percent: 100 
       });
-      
-      // Stage 2: Encrypt
+
       if (!isProcessingRef.current) return;
-      const encryptedBytes = await encryptData(dataToEncrypt, password, (update) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate(update);
-        }
-      });
-      
-      // Stage 3: Calculate dimensions
+
+      // Encrypt
+      const encryptedBytes = await encryptData(dataToEncrypt, password, onProgress);
+
       if (!isProcessingRef.current) return;
+
+      // Calculate dimensions
       const { width, height } = calculateDimensions(encryptedBytes.length);
-      
-      // Stage 4: Create header
-      if (!isProcessingRef.current) return;
+
+      // Pack header
       const header = {
         magic: BLOCK_CONSTANTS.MAGIC_NUMBER,
         version: BLOCK_CONSTANTS.VERSION,
@@ -186,149 +165,130 @@ export default function EncoderScreen() {
         checksum: calculateChecksum(encryptedBytes),
         reserved: 0,
       };
+
       const headerBytes = packHeader(header);
-      
-      // Stage 5: Combine data
-      if (!isProcessingRef.current) return;
       const fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
       fullData.set(headerBytes);
       fullData.set(encryptedBytes, headerBytes.length);
-      
-      // Stage 6: Encode to pixels
+
       if (!isProcessingRef.current) return;
-      const progress = new ThrottledProgress((update) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate(update);
-        }
-      });
+
+      // Encode to pixels
+      const progress = new ThrottledProgress(onProgress);
       const pixels = encodeToPixels(fullData, width, height, progress);
-      
-      // Stage 7: Encode PNG
+      progress.done();
+
       if (!isProcessingRef.current) return;
-      const pngBytes = await encodePNG(pixels, width, height, (phase, percent) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate({
-            phase: 'encodePNG',
-            processedBytes: Math.round((percent / 100) * pixels.length),
-            totalBytes: pixels.length,
-            percent,
+
+      // Save as PNG
+      const generatedFilename = `passify_backup_${Date.now()}.png`;
+      const pngUri = await savePixelsAsPNG(
+        pixels, 
+        width, 
+        height, 
+        generatedFilename,
+        (phase, percent) => {
+          onProgress({ 
+            phase: 'writeFile', 
+            processedBytes: percent, 
+            totalBytes: 100, 
+            percent 
           });
         }
-      });
-      
-      // Stage 8: Write file
+      );
+
       if (!isProcessingRef.current) return;
-      const timestamp = Date.now();
-      const filename = `passify_backup_${timestamp}.png`;
-      
-      safeProgressUpdate({
-        phase: 'writeFile',
-        processedBytes: 0,
-        totalBytes: pngBytes.length,
-        percent: 0,
-      });
-      
-      const uri = await savePixelsAsPNG(pixels, width, height, filename, (phase, percent) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate({
-            phase: 'writeFile',
-            processedBytes: Math.round((percent / 100) * pngBytes.length),
-            totalBytes: pngBytes.length,
-            percent,
-          });
-        }
-      });
-      
-      // Only update UI if still processing
-      if (!isProcessingRef.current) return;
-      
+
       if (isMountedRef.current) {
-        setImageUri(uri);
-        safeProgressUpdate({
-          phase: 'done',
-          processedBytes: pngBytes.length,
-          totalBytes: pngBytes.length,
-          percent: 100,
-        });
-        showToastMessage("Image generated successfully!");
+        setImageUri(pngUri);
+        setFilename(generatedFilename);
+        onProgress({ phase: 'done', processedBytes: 100, totalBytes: 100, percent: 100 });
+        showToastMessage('Image generated successfully!');
       }
-      
-    } catch (error: any) {
+    } catch (e: any) {
+      console.error('Encoding error:', e);
       if (isMountedRef.current && isProcessingRef.current) {
-        console.error("Encoding error:", error);
-        showToastMessage(`Encoding failed: ${error.message}`, "error");
+        showToastMessage(`Encoding failed: ${e.message}`, 'error');
       }
     } finally {
       cleanup();
-      
-      // Hide progress after delay
       setTimeout(() => {
-        if (isMountedRef.current) {
-          setShowProgress(false);
-        }
+        if (isMountedRef.current) setShowProgress(false);
       }, 1000);
     }
   };
 
-  const handleShare = async () => {
+  const handleSharePress = async () => {
     if (!imageUri) return;
-    const success = await shareImage(imageUri);
-    if (success) {
-      showToastMessage("Shared successfully!");
+    setLoading(true);
+    await shareFile(imageUri, 'image/png');
+    setLoading(false);
+  };
+
+  const handleDownloadPress = () => {
+    if (!imageUri) return;
+    
+    // Show info if in Expo Go
+    if (isExpoGo()) {
+      setDownloadModalVisible(true);
     } else {
-      showToastMessage("Share failed", "error");
+      // Production build - direct download
+      handleDownloadConfirm();
     }
   };
 
-  const handleDownload = async () => {
-    if (!imageUri) return;
-    const filename = imageUri.split('/').pop() || 'passify_backup.png';
+  const handleDownloadConfirm = async () => {
+    setDownloadModalVisible(false);
+    if (!imageUri || !filename) return;
+    
+    setLoading(true);
     const success = await downloadImage(imageUri, filename);
+    setLoading(false);
+    
     if (success) {
-      showToastMessage("Download started");
-    } else {
-      showToastMessage("Download failed", "error");
+      showToastMessage('Download successful!');
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content, 
+          { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }
+        ]}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={handleRefresh} 
+            tintColor={colors.accent} 
+            colors={[colors.accent]} 
           />
         }
       >
         <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
           Encode to Image
         </Text>
-        
-        <Text style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-          Convert your account data into a colorful encrypted image using 1×1 RGBA encoding.
+        <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+          Create an encrypted backup image from your account data
         </Text>
 
         <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-            Password
+          <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.medium }]}>
+            Encryption Password
           </Text>
           <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <TextInput
               style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
               value={password}
               onChangeText={setPassword}
-              placeholder="Enter encryption password"
-              placeholderTextColor={colors.muted}
               secureTextEntry={!showPassword}
               editable={!loading}
+              placeholder="Enter a strong password"
+              placeholderTextColor={colors.muted}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
+              <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color={colors.muted} />
             </Pressable>
           </View>
         </View>
@@ -345,62 +305,104 @@ export default function EncoderScreen() {
 
         <Pressable
           onPress={handleEncode}
-          disabled={loading}
-          style={[styles.button, { backgroundColor: colors.accent, opacity: loading ? 0.7 : 1 }]}
+          disabled={loading || !password.trim()}
+          style={[
+            styles.button, 
+            { 
+              backgroundColor: colors.accent, 
+              opacity: (loading || !password.trim()) ? 0.5 : 1 
+            }
+          ]}
         >
-          {loading ? (
+          {loading && !imageUri ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <>
-              <Ionicons name="image" size={20} color="#fff" />
-              <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-                Generate Image
-              </Text>
-            </>
+            <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+              Generate Encrypted Image
+            </Text>
           )}
         </Pressable>
 
         {imageUri && !loading && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-              Generated Colored Image
-            </Text>
-            <View style={[styles.imagePreview, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <Image
-                source={{ uri: imageUri }}
-                style={styles.image}
-                resizeMode="contain"
-              />
+          <>
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.medium }]}>
+                Generated Backup Image
+              </Text>
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
+              <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                {filename}
+              </Text>
             </View>
-            
-            <Text style={[styles.info, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-              This colorful image contains your encrypted data using RGBA channel encoding (4 bytes per pixel).
-            </Text>
-            
+
             <View style={styles.buttonRow}>
-              <Pressable
-                onPress={handleShare}
-                style={[styles.button, styles.halfButton, { backgroundColor: colors.accent2 }]}
+              <Pressable 
+                onPress={handleSharePress} 
+                style={[styles.buttonHalf, { backgroundColor: colors.accent2 }]}
               >
                 <Ionicons name="share-outline" size={20} color="#fff" />
-                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
                   Share
                 </Text>
               </Pressable>
-              
-              <Pressable
-                onPress={handleDownload}
-                style={[styles.button, styles.halfButton, { backgroundColor: colors.accent }]}
+
+              <Pressable 
+                onPress={handleDownloadPress} 
+                style={[styles.buttonHalf, { backgroundColor: colors.accent }]}
               >
                 <Ionicons name="download-outline" size={20} color="#fff" />
-                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
                   Download
                 </Text>
               </Pressable>
             </View>
-          </View>
+
+            {isExpoGo() && (
+              <Text style={[styles.infoText, { color: colors.warning, fontFamily: fontConfig.regular }]}>
+                ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
+              </Text>
+            )}
+          </>
         )}
       </ScrollView>
+
+      {/* Download Info Modal for Expo Go */}
+      <Modal visible={downloadModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Ionicons name="information-circle" size={48} color={colors.accent} />
+            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+              Development Mode
+            </Text>
+            <Text style={[styles.modalMessage, { color: colors.text, fontFamily: fontConfig.regular }]}>
+              Download to device storage is only available in production builds.
+              {'\n\n'}
+              File saved to app directory. Use the Share button to export this file.
+            </Text>
+            <View style={styles.modalButtons}>
+              <Pressable 
+                onPress={() => setDownloadModalVisible(false)} 
+                style={[styles.modalButton, { backgroundColor: colors.cardBorder }]}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text, fontFamily: fontConfig.medium }]}>
+                  OK
+                </Text>
+              </Pressable>
+              <Pressable 
+                onPress={() => {
+                  setDownloadModalVisible(false);
+                  handleSharePress();
+                }} 
+                style={[styles.modalButton, { backgroundColor: colors.accent }]}
+              >
+                <Text style={[styles.modalButtonText, { color: '#fff', fontFamily: fontConfig.medium }]}>
+                  Share Now
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
@@ -408,75 +410,100 @@ export default function EncoderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    gap: 24,
-  },
-  title: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  section: {
-    gap: 12,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
+  container: { flex: 1 },
+  content: { padding: 20 },
+  title: { fontSize: 28, marginBottom: 8 },
+  subtitle: { fontSize: 16, marginBottom: 24 },
+  section: { marginVertical: 12 },
+  label: { fontSize: 16, marginBottom: 8 },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
+    borderRadius: 12,
     paddingHorizontal: 16,
   },
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 8,
-  },
+  input: { flex: 1, paddingVertical: 14, fontSize: 16 },
+  eyeIcon: { paddingLeft: 12 },
   button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
     paddingVertical: 16,
     borderRadius: 12,
+    alignItems: 'center',
+    marginVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
+  buttonText: { color: '#fff', fontSize: 16 },
   buttonRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
+    marginVertical: 12,
   },
-  halfButton: {
+  buttonHalf: {
     flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   imagePreview: {
+    width: '100%',
+    height: 300,
     borderRadius: 12,
     borderWidth: 1,
-    padding: 16,
-    alignItems: "center",
+    borderColor: '#ddd',
+    marginTop: 8,
   },
-  image: {
-    width: "100%",
-    height: 300,
-  },
-  info: {
-    fontSize: 14,
-    lineHeight: 20,
+  fileInfo: {
+    fontSize: 12,
+    marginTop: 8,
     fontStyle: 'italic',
+  },
+  infoText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
+    paddingHorizontal: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
   },
 });
