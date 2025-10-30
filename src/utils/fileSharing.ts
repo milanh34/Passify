@@ -22,7 +22,7 @@ export async function shareFile(fileUri: string, mimeType: string = 'image/png')
       Alert.alert('Share Unavailable', 'Sharing is not available on this device.');
       return false;
     }
-    
+
     await Sharing.shareAsync(fileUri, {
       mimeType,
       dialogTitle: 'Share Encrypted Backup',
@@ -43,23 +43,26 @@ async function requestMediaLibraryPermissions(): Promise<boolean> {
   try {
     const { status, canAskAgain } = await MediaLibrary.requestPermissionsAsync();
     if (status === 'granted') return true;
-    
+
     if (!canAskAgain) {
       Alert.alert(
         'Permission Required',
         'Media library access is disabled. Please enable it in your device settings to save images to Photos/Gallery.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => {
-            // Note: Opening settings requires expo-linking or react-native Linking
-            console.log('Open device settings');
-          }}
+          { 
+            text: 'Open Settings', 
+            onPress: () => {
+              console.log('User should open device settings manually');
+            }
+          }
         ]
       );
     }
+
     return false;
   } catch (error: any) {
-    console.error('Permission request error:', error);
+    console.error('❌ Permission request error:', error);
     return false;
   }
 }
@@ -69,20 +72,38 @@ async function requestMediaLibraryPermissions(): Promise<boolean> {
  */
 async function saveToMediaLibrary(fileUri: string): Promise<boolean> {
   try {
+    console.log('📸 Attempting to save to media library...');
     const granted = await requestMediaLibraryPermissions();
-    if (!granted) return false;
+    if (!granted) {
+      console.log('❌ Media library permission not granted');
+      return false;
+    }
 
     const asset = await MediaLibrary.createAssetAsync(fileUri);
-    
+    console.log('✅ Asset created:', asset.id);
+
     if (Platform.OS === 'android') {
-      await MediaLibrary.createAlbumAsync('Passify Backups', asset, false);
+      try {
+        await MediaLibrary.createAlbumAsync('Passify Backups', asset, false);
+        console.log('✅ Album created/updated');
+      } catch (albumError) {
+        console.log('⚠️ Album creation failed (asset still saved):', albumError);
+      }
     }
-    
+
     Alert.alert('Saved', 'File saved to your device gallery.');
     return true;
   } catch (error: any) {
-    console.error('Save to media library error:', error);
-    Alert.alert('Save Failed', `Could not save to gallery: ${error.message}`);
+    console.error('❌ Save to media library error:', error);
+    
+    // Provide specific error messages
+    if (error.message?.includes('permission')) {
+      Alert.alert('Permission Denied', 'Storage permission is required to save files to gallery.');
+    } else if (error.message?.includes('not found') || error.message?.includes('ENOENT')) {
+      Alert.alert('File Error', 'The backup file could not be found. Please try generating it again.');
+    } else {
+      Alert.alert('Save Failed', `Could not save to gallery: ${error.message}`);
+    }
     return false;
   }
 }
@@ -92,6 +113,7 @@ async function saveToMediaLibrary(fileUri: string): Promise<boolean> {
  */
 async function saveWithSAF(sourceUri: string, filename: string): Promise<boolean> {
   try {
+    console.log('📂 Attempting SAF download...');
     const contentUri = await FileSystem.getContentUriAsync(sourceUri);
     
     await IntentLauncher.startActivityAsync('android.intent.action.CREATE_DOCUMENT', {
@@ -100,20 +122,26 @@ async function saveWithSAF(sourceUri: string, filename: string): Promise<boolean
       category: 'android.intent.category.OPENABLE',
       extra: { 'android.intent.extra.TITLE': filename },
     });
-    
+
+    console.log('✅ SAF intent launched successfully');
     return true;
   } catch (error: any) {
-    console.error('SAF error:', error);
+    console.error('❌ SAF error:', error);
     
     // Specific error messages
     if (error.message?.includes('Activity not found')) {
-      Alert.alert('Feature Unavailable', 'File picker is not available on this device.');
-    } else if (error.message?.includes('Permission')) {
+      console.log('⚠️ SAF not available on this device');
+      Alert.alert('Feature Unavailable', 'File picker is not available on this device. Trying alternative method...');
+    } else if (error.message?.includes('Permission') || error.message?.includes('denied')) {
       Alert.alert('Permission Denied', 'Storage permission is required to save files.');
+    } else if (error.message?.includes('cancelled') || error.message?.includes('cancel')) {
+      console.log('ℹ️ User cancelled SAF picker');
+      // Don't show alert for user cancellation
+      return false;
     } else {
-      Alert.alert('Save Failed', 'Could not save using system file picker.');
+      Alert.alert('Save Failed', 'Could not save using system file picker. Trying alternative method...');
     }
-    
+
     return false;
   }
 }
@@ -122,10 +150,11 @@ async function saveWithSAF(sourceUri: string, filename: string): Promise<boolean
  * Main download function with Expo Go detection and fallbacks
  */
 export async function downloadImage(fileUri: string, filename: string): Promise<boolean> {
+  console.log('📥 Download initiated:', { fileUri, filename, isExpoGo: isExpoGo() });
+
   // Check if running in Expo Go
   if (isExpoGo()) {
-    console.log('Running in Expo Go - download to device storage not available');
-    
+    console.log('⚠️ Running in Expo Go - download to device storage not available');
     Alert.alert(
       'Development Mode',
       `Download to device storage is only available in production builds.\n\nFile saved to app directory:\n${fileUri}\n\nUse the Share button to export this file.`,
@@ -134,24 +163,43 @@ export async function downloadImage(fileUri: string, filename: string): Promise<
         { text: 'Share Now', onPress: () => shareFile(fileUri) }
       ]
     );
-    
     return false;
   }
 
   // Production build - platform-specific download
   try {
+    // Verify file exists before attempting download
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (!fileInfo.exists) {
+        throw new Error('Backup file not found. Please regenerate the backup.');
+      }
+      console.log('✅ File exists, size:', fileInfo.size);
+    } catch (checkError: any) {
+      console.error('❌ File check failed:', checkError);
+      Alert.alert('File Error', 'The backup file could not be found. Please try generating it again.');
+      return false;
+    }
+
     if (Platform.OS === 'android') {
-      // Try SAF first
+      // Android: Try SAF first
+      console.log('🤖 Android detected - trying SAF first');
       const safSuccess = await saveWithSAF(fileUri, filename);
-      if (safSuccess) return true;
-      
+      if (safSuccess) {
+        console.log('✅ SAF download successful');
+        return true;
+      }
+
       // Fallback to media library
-      console.log('SAF failed, trying media library...');
+      console.log('📸 SAF failed, trying media library...');
       const mediaSuccess = await saveToMediaLibrary(fileUri);
-      if (mediaSuccess) return true;
-      
+      if (mediaSuccess) {
+        console.log('✅ Media library save successful');
+        return true;
+      }
+
       // Final fallback to share
-      console.log('Media library failed, falling back to share...');
+      console.log('📤 Media library failed, offering share option...');
       Alert.alert(
         'Save Failed',
         'Could not save to device storage. Would you like to share the file instead?',
@@ -161,19 +209,27 @@ export async function downloadImage(fileUri: string, filename: string): Promise<
         ]
       );
       return false;
-      
+
     } else {
-      // iOS - try media library first
+      // iOS: Try media library first
+      console.log('🍎 iOS detected - trying media library');
       const mediaSuccess = await saveToMediaLibrary(fileUri);
-      if (mediaSuccess) return true;
-      
+      if (mediaSuccess) {
+        console.log('✅ Media library save successful');
+        return true;
+      }
+
       // Fallback to share sheet
-      console.log('Media library failed, falling back to share...');
+      console.log('📤 Media library failed, falling back to share...');
       return await shareFile(fileUri);
     }
+
   } catch (error: any) {
-    console.error('Download error:', error);
-    Alert.alert('Download Failed', `An unexpected error occurred: ${error.message}`);
+    console.error('❌ Unexpected download error:', error);
+    Alert.alert(
+      'Download Failed', 
+      `An unexpected error occurred: ${error.message}\n\nPlease try again or use the Share button instead.`
+    );
     return false;
   }
 }
