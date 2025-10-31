@@ -17,14 +17,13 @@ import { useDb } from '../../src/context/DbContext';
 import ProgressBar from '../../src/components/ProgressBar';
 import Toast from '../../src/components/Toast';
 import { Ionicons } from '@expo/vector-icons';
-
 import { encryptData } from '../../src/utils/crypto';
-import { 
-  calculateDimensions, 
-  packHeader, 
-  calculateChecksum, 
+import {
+  calculateDimensions,
+  packHeader,
+  calculateChecksum,
   encodeToPixels,
-  BLOCK_CONSTANTS 
+  BLOCK_CONSTANTS,
 } from '../../src/utils/blocks';
 import { savePixelsAsPNG } from '../../src/utils/image';
 import { downloadImage, shareFile, isExpoGo } from '../../src/utils/fileSharing';
@@ -137,18 +136,17 @@ export default function EncoderScreen() {
       const dataToEncrypt = JSON.stringify({ database, schemas });
       const encoder = new TextEncoder();
       const dataBytes = encoder.encode(dataToEncrypt);
-      onProgress({ 
-        phase: 'stringify', 
-        processedBytes: dataBytes.length, 
-        totalBytes: dataBytes.length, 
-        percent: 100 
+      onProgress({
+        phase: 'stringify',
+        processedBytes: dataBytes.length,
+        totalBytes: dataBytes.length,
+        percent: 100,
       });
 
       if (!isProcessingRef.current) return;
 
       // Encrypt
       const encryptedBytes = await encryptData(dataToEncrypt, password, onProgress);
-
       if (!isProcessingRef.current) return;
 
       // Calculate dimensions
@@ -183,16 +181,16 @@ export default function EncoderScreen() {
       // Save as PNG
       const generatedFilename = `passify_backup_${Date.now()}.png`;
       const pngUri = await savePixelsAsPNG(
-        pixels, 
-        width, 
-        height, 
+        pixels,
+        width,
+        height,
         generatedFilename,
         (phase, percent) => {
-          onProgress({ 
-            phase: 'writeFile', 
-            processedBytes: percent, 
-            totalBytes: 100, 
-            percent 
+          onProgress({
+            phase: 'writeFile',
+            processedBytes: percent,
+            totalBytes: 100,
+            percent,
           });
         }
       );
@@ -227,7 +225,6 @@ export default function EncoderScreen() {
 
   const handleDownloadPress = () => {
     if (!imageUri) return;
-    
     // Show info if in Expo Go
     if (isExpoGo()) {
       setDownloadModalVisible(true);
@@ -240,11 +237,9 @@ export default function EncoderScreen() {
   const handleDownloadConfirm = async () => {
     setDownloadModalVisible(false);
     if (!imageUri || !filename) return;
-    
     setLoading(true);
     const success = await downloadImage(imageUri, filename);
     setLoading(false);
-    
     if (success) {
       showToastMessage('Download successful!');
     }
@@ -254,15 +249,16 @@ export default function EncoderScreen() {
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
       <ScrollView
         contentContainerStyle={[
-          styles.content, 
-          { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }
+          styles.content,
+          { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 },
         ]}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={handleRefresh} 
-            tintColor={colors.accent} 
-            colors={[colors.accent]} 
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
       >
@@ -273,11 +269,17 @@ export default function EncoderScreen() {
           Create an encrypted backup image from your account data
         </Text>
 
+        {/* Password Input */}
         <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.medium }]}>
+          <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
             Encryption Password
           </Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <View
+            style={[
+              styles.inputContainer,
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
+            ]}
+          >
             <TextInput
               style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
               value={password}
@@ -288,11 +290,16 @@ export default function EncoderScreen() {
               placeholderTextColor={colors.muted}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color={colors.muted} />
+              <Ionicons
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={20}
+                color={colors.muted}
+              />
             </Pressable>
           </View>
         </View>
 
+        {/* Progress Bar */}
         {showProgress && (
           <ProgressBar
             percent={progressUpdate.percent}
@@ -303,30 +310,30 @@ export default function EncoderScreen() {
           />
         )}
 
+        {/* Generate Button */}
         <Pressable
           onPress={handleEncode}
           disabled={loading || !password.trim()}
           style={[
-            styles.button, 
-            { 
-              backgroundColor: colors.accent, 
-              opacity: (loading || !password.trim()) ? 0.5 : 1 
-            }
+            styles.button,
+            { backgroundColor: colors.accent, opacity: loading || !password.trim() ? 0.5 : 1 },
           ]}
         >
           {loading && !imageUri ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-              Generate Encrypted Image
-            </Text>
+            <Ionicons name="lock-closed" size={20} color="#fff" />
           )}
+          <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+            Generate Encrypted Image
+          </Text>
         </Pressable>
 
+        {/* Generated Image Preview */}
         {imageUri && !loading && (
           <>
             <View style={styles.section}>
-              <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.medium }]}>
+              <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
                 Generated Backup Image
               </Text>
               <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
@@ -335,9 +342,10 @@ export default function EncoderScreen() {
               </Text>
             </View>
 
+            {/* Share & Download Buttons */}
             <View style={styles.buttonRow}>
-              <Pressable 
-                onPress={handleSharePress} 
+              <Pressable
+                onPress={handleSharePress}
                 style={[styles.buttonHalf, { backgroundColor: colors.accent2 }]}
               >
                 <Ionicons name="share-outline" size={20} color="#fff" />
@@ -346,8 +354,8 @@ export default function EncoderScreen() {
                 </Text>
               </Pressable>
 
-              <Pressable 
-                onPress={handleDownloadPress} 
+              <Pressable
+                onPress={handleDownloadPress}
                 style={[styles.buttonHalf, { backgroundColor: colors.accent }]}
               >
                 <Ionicons name="download-outline" size={20} color="#fff" />
@@ -357,8 +365,9 @@ export default function EncoderScreen() {
               </Pressable>
             </View>
 
+            {/* Expo Go Info */}
             {isExpoGo() && (
-              <Text style={[styles.infoText, { color: colors.warning, fontFamily: fontConfig.regular }]}>
+              <Text style={[styles.infoText, { color: colors.danger, fontFamily: fontConfig.regular }]}>
                 ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
               </Text>
             )}
@@ -371,31 +380,53 @@ export default function EncoderScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <Ionicons name="information-circle" size={48} color={colors.accent} />
-            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: colors.text, fontFamily: fontConfig.bold },
+              ]}
+            >
               Development Mode
             </Text>
-            <Text style={[styles.modalMessage, { color: colors.text, fontFamily: fontConfig.regular }]}>
+            <Text
+              style={[
+                styles.modalMessage,
+                { color: colors.text, fontFamily: fontConfig.regular },
+              ]}
+            >
               Download to device storage is only available in production builds.
               {'\n\n'}
               File saved to app directory. Use the Share button to export this file.
             </Text>
+
             <View style={styles.modalButtons}>
-              <Pressable 
-                onPress={() => setDownloadModalVisible(false)} 
+              <Pressable
+                onPress={() => setDownloadModalVisible(false)}
                 style={[styles.modalButton, { backgroundColor: colors.cardBorder }]}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text, fontFamily: fontConfig.medium }]}>
+                <Text
+                  style={[
+                    styles.modalButtonText,
+                    { color: colors.text, fontFamily: fontConfig.regular },
+                  ]}
+                >
                   OK
                 </Text>
               </Pressable>
-              <Pressable 
+
+              <Pressable
                 onPress={() => {
                   setDownloadModalVisible(false);
                   handleSharePress();
-                }} 
+                }}
                 style={[styles.modalButton, { backgroundColor: colors.accent }]}
               >
-                <Text style={[styles.modalButtonText, { color: '#fff', fontFamily: fontConfig.medium }]}>
+                <Text
+                  style={[
+                    styles.modalButtonText,
+                    { color: '#fff', fontFamily: fontConfig.regular },
+                  ]}
+                >
                   Share Now
                 </Text>
               </Pressable>
@@ -432,6 +463,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     flexDirection: 'row',
     justifyContent: 'center',
+    gap: 8,
   },
   buttonText: { color: '#fff', fontSize: 16 },
   buttonRow: {
