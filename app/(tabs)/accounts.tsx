@@ -33,10 +33,18 @@ type Account = {
 };
 
 export default function AccountsScreen() {
-  const { platform, key: platformKey } = useLocalSearchParams<{
+  const { 
+    platform, 
+    key: platformKey,
+    matchedAccountIds: matchedIdsParam,
+    searchQuery: searchQueryParam,
+  } = useLocalSearchParams<{
     platform: string;
     key: string;
+    matchedAccountIds?: string;
+    searchQuery?: string;
   }>();
+
   const nav = useNavigation();
   const { colors, fontConfig, fontsLoaded } = useTheme();
   const {
@@ -100,6 +108,10 @@ export default function AccountsScreen() {
   // Refresh state
   const [refreshing, setRefreshing] = useState(false);
 
+  // Highlight state for matched accounts from search
+  const [highlightedAccountIds, setHighlightedAccountIds] = useState<Set<string>>(new Set());
+  const [showHighlightBanner, setShowHighlightBanner] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       setAnimationKey((prev) => prev + 1);
@@ -120,7 +132,21 @@ export default function AccountsScreen() {
         }
       };
       loadSortPreference();
-    }, [])
+
+      // Handle matched accounts from navigation params
+      if (matchedIdsParam && searchQueryParam) {
+        try {
+          const ids = JSON.parse(matchedIdsParam);
+          setHighlightedAccountIds(new Set(ids));
+          setShowHighlightBanner(true);
+        } catch (error) {
+          console.error("Failed to parse matched account IDs:", error);
+        }
+      } else {
+        setHighlightedAccountIds(new Set());
+        setShowHighlightBanner(false);
+      }
+    }, [matchedIdsParam, searchQueryParam])
   );
 
   // Debounced search query update
@@ -136,6 +162,11 @@ export default function AccountsScreen() {
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     debouncedSetQuery(text);
+    // Clear highlights when user starts searching locally
+    if (highlightedAccountIds.size > 0) {
+      setHighlightedAccountIds(new Set());
+      setShowHighlightBanner(false);
+    }
   };
 
   // Clear search
@@ -157,14 +188,22 @@ export default function AccountsScreen() {
   // Pull to refresh
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Clear search and exit selection mode
+    // Clear search, highlights, and exit selection mode
     handleClearSearch();
     setIsSelectionMode(false);
     setSelectedAccounts(new Set());
     setExpandedCards(new Set());
     setVisiblePw({});
+    setHighlightedAccountIds(new Set());
+    setShowHighlightBanner(false);
     await new Promise((resolve) => setTimeout(resolve, 500));
     setRefreshing(false);
+  };
+
+  // Dismiss highlight banner
+  const dismissHighlightBanner = () => {
+    setShowHighlightBanner(false);
+    setHighlightedAccountIds(new Set());
   };
 
   // Apply search filter
@@ -421,6 +460,29 @@ export default function AccountsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg[0], paddingTop: insets.top + 60 }]}>
+      {/* Highlight Banner */}
+      {showHighlightBanner && highlightedAccountIds.size > 0 && (
+        <View
+          style={[
+            styles.highlightBanner,
+            { backgroundColor: colors.accent + "15", borderColor: colors.accent + "40" },
+          ]}
+        >
+          <Ionicons name="search" size={18} color={colors.accent} />
+          <Text
+            style={[
+              styles.highlightBannerText,
+              { color: colors.accent, fontFamily: fontConfig.regular },
+            ]}
+          >
+            Showing {highlightedAccountIds.size} account(s) matching "{searchQueryParam}"
+          </Text>
+          <Pressable onPress={dismissHighlightBanner} style={styles.highlightBannerClose}>
+            <Ionicons name="close-circle" size={20} color={colors.accent} />
+          </Pressable>
+        </View>
+      )}
+
       {/* Search & Sort Bar */}
       {!isSelectionMode && (
         <>
@@ -479,6 +541,7 @@ export default function AccountsScreen() {
         renderItem={({ item, index }) => {
           const isExpanded = expandedCards.has(item.id);
           const isSelected = selectedAccounts.has(item.id);
+          const isHighlighted = highlightedAccountIds.has(item.id);
 
           return (
             <MotiView
@@ -487,7 +550,7 @@ export default function AccountsScreen() {
               animate={{ opacity: 1, translateY: 0 }}
               transition={{ type: "timing", duration: 200, delay: index * 50 }}
             >
-              {/* Animated card with scale effect */}
+              {/* Animated card with highlight */}
               <Pressable
                 onPress={() => handleCardPress(item.id)}
                 onLongPress={() => handleLongPress(item.id)}
@@ -495,13 +558,17 @@ export default function AccountsScreen() {
                 style={[
                   styles.card,
                   {
-                    backgroundColor: colors.card,
+                    backgroundColor: isHighlighted 
+                      ? colors.accent + "10" 
+                      : colors.card,
                     borderColor: isSelected
                       ? colors.accent
                       : isExpanded
                       ? colors.accent
+                      : isHighlighted
+                      ? colors.accent + "60"
                       : colors.cardBorder,
-                    borderWidth: isSelected ? 2 : isExpanded ? 2 : 1,
+                    borderWidth: isSelected ? 2 : isExpanded ? 2 : isHighlighted ? 2 : 1,
                   },
                 ]}
                 android_ripple={{ color: colors.accent + "22" }}
@@ -522,25 +589,24 @@ export default function AccountsScreen() {
                 )}
 
                 <View style={styles.rowBetween}>
-                  <Text
-                    style={[
-                      styles.cardTitle,
-                      { color: colors.text, fontFamily: fontConfig.bold },
-                    ]}
-                  >
-                    {item.name || "Untitled"}
-                  </Text>
-
-                  {!isExpanded && !isSelectionMode && (
+                  <View style={styles.cardTitleRow}>
+                    {isHighlighted && (
+                      <Ionicons 
+                        name="search-circle" 
+                        size={20} 
+                        color={colors.accent} 
+                        style={{ marginRight: 8 }}
+                      />
+                    )}
                     <Text
                       style={[
-                        styles.tapHint,
-                        { color: colors.muted, fontFamily: fontConfig.regular },
+                        styles.cardTitle,
+                        { color: colors.text, fontFamily: fontConfig.bold },
                       ]}
                     >
-                      Tap to view details
+                      {item.name || "Untitled"}
                     </Text>
-                  )}
+                  </View>
 
                   {!isSelectionMode && (
                     <View style={styles.actions}>
@@ -558,6 +624,15 @@ export default function AccountsScreen() {
                           color={colors.text}
                         />
                       </Pressable>
+                      
+                      {/* Expand/Collapse Arrow */}
+                      <View style={styles.iconBtn}>
+                        <Ionicons
+                          name={isExpanded ? "chevron-up" : "chevron-down"}
+                          size={20}
+                          color={colors.accent}
+                        />
+                      </View>
                     </View>
                   )}
                 </View>
@@ -740,6 +815,7 @@ export default function AccountsScreen() {
         </View>
       )}
 
+      {/* Modals */}
       <FormModal
         visible={accModal.visible}
         onClose={() => setAccModal({ visible: false })}
@@ -786,6 +862,23 @@ export default function AccountsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 18 },
+  highlightBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  highlightBannerText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  highlightBannerClose: {
+    padding: 4,
+  },
   searchSortRow: {
     flexDirection: "row",
     gap: 8,
@@ -819,6 +912,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
   actions: {
     flexDirection: "row",
     alignItems: "center",
@@ -831,11 +929,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     flex: 1,
-  },
-  tapHint: {
-    fontSize: 12,
-    fontStyle: "italic",
-    marginRight: 8,
   },
   fieldRow: {
     marginTop: 12,
