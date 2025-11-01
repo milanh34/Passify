@@ -179,12 +179,12 @@ export default function ManageScreen() {
   const searchMatchMap = useMemo(() => {
     const map = new Map<
       string,
-      { matchType: "platform" | "account"; matchedCount?: number }
+      { matchType: "platform" | "account"; matchedAccounts?: any[] }
     >();
     searchResults.forEach((result) => {
       map.set(result.platform.key, {
         matchType: result.matchType,
-        matchedCount: result.matchedAccounts?.length,
+        matchedAccounts: result.matchedAccounts,
       });
     });
     return map;
@@ -215,11 +215,32 @@ export default function ManageScreen() {
   // Toggle selection in selection mode, or navigate normally
   const handlePlatformPress = (platformKey: string, platformName: string) => {
     if (!isSelectionMode) {
-      // Normal tap - navigate to accounts
-      router.push({
-        pathname: "/(tabs)/accounts",
-        params: { platform: platformName, key: platformKey },
-      });
+      // Check if there are matched accounts from search
+      const matchInfo = searchMatchMap.get(platformKey);
+      const hasMatchedAccounts =
+        debouncedQuery.trim() &&
+        matchInfo?.matchType === "account" &&
+        matchInfo.matchedAccounts &&
+        matchInfo.matchedAccounts.length > 0;
+
+      // Navigate with or without search context
+      if (hasMatchedAccounts) {
+        const matchedIds = matchInfo.matchedAccounts!.map((acc) => acc.id);
+        router.push({
+          pathname: "/(tabs)/accounts",
+          params: {
+            platform: platformName,
+            key: platformKey,
+            matchedAccountIds: JSON.stringify(matchedIds),
+            searchQuery: debouncedQuery,
+          },
+        });
+      } else {
+        router.push({
+          pathname: "/(tabs)/accounts",
+          params: { platform: platformName, key: platformKey },
+        });
+      }
     } else {
       // Selection mode - toggle selection
       setSelectedPlatforms((prev) => {
@@ -460,8 +481,8 @@ export default function ManageScreen() {
           const showAccountMatchIndicator =
             debouncedQuery.trim() &&
             matchInfo?.matchType === "account" &&
-            matchInfo.matchedCount &&
-            matchInfo.matchedCount > 0;
+            matchInfo.matchedAccounts &&
+            matchInfo.matchedAccounts.length > 0;
 
           return (
             <Pressable
@@ -544,8 +565,8 @@ export default function ManageScreen() {
                           size={12}
                           color={colors.accent}
                         />{" "}
-                        {matchInfo.matchedCount} matching account
-                        {matchInfo.matchedCount !== 1 ? "s" : ""}
+                        {matchInfo.matchedAccounts!.length} matching account
+                        {matchInfo.matchedAccounts!.length !== 1 ? "s" : ""}
                       </Text>
                     )}
                   </View>
