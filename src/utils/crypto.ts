@@ -2,10 +2,12 @@ import * as Crypto from 'expo-crypto';
 import aesjs from 'aes-js';
 import { ThrottledProgress, ProgressCallback } from '../types/progress';
 
+
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 32;
 const PBKDF2_ITERATIONS = 100000;
 const CHUNK_SIZE = 8192; // 8KB chunks
+
 
 async function deriveKeys(
   password: string,
@@ -19,6 +21,10 @@ async function deriveKeys(
   
   let derivedKey = input;
   
+  // FIXED: Update every 1% instead of every 5%
+  // Calculate update interval for 1% increments (100 updates total)
+  const updateInterval = Math.max(1, Math.floor(PBKDF2_ITERATIONS / 100));
+  
   for (let i = 0; i < PBKDF2_ITERATIONS; i++) {
     const hash = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
@@ -26,10 +32,14 @@ async function deriveKeys(
     );
     derivedKey = new Uint8Array(hash.match(/.{2}/g)!.map(byte => parseInt(byte, 16)));
     
-    if (progress && i % 5000 === 0) {
+    // Update progress every 1% (100 times instead of 20)
+    if (progress && i % updateInterval === 0) {
       progress.update('encrypt', i, PBKDF2_ITERATIONS);
     }
   }
+  
+  // Final update to ensure 100%
+  progress?.update('encrypt', PBKDF2_ITERATIONS, PBKDF2_ITERATIONS);
   
   const aesKey = derivedKey.slice(0, KEY_LENGTH);
   
@@ -42,6 +52,7 @@ async function deriveKeys(
   
   return { aesKey, hmacKey };
 }
+
 
 async function computeHMAC(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
   const blockSize = 64;
@@ -85,6 +96,7 @@ async function computeHMAC(key: Uint8Array, data: Uint8Array): Promise<Uint8Arra
   return new Uint8Array(outerHash.match(/.{2}/g)!.map(byte => parseInt(byte, 16)));
 }
 
+
 export async function encryptData(
   data: string,
   password: string,
@@ -102,22 +114,30 @@ export async function encryptData(
   for (let i = 0; i < salt.length; i++) salt[i] = Math.floor(Math.random() * 256);
   for (let i = 0; i < iv.length; i++) iv[i] = Math.floor(Math.random() * 256);
   
-  // Stage 2: Derive keys (reports internally)
+  // Stage 2: Derive keys (reports internally with 1% granularity)
   const { aesKey, hmacKey } = await deriveKeys(password, salt, progress);
   
-  // Stage 3: Encrypt in chunks
+  // Stage 3: Encrypt in chunks with 1% granularity
   const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey, new aesjs.Counter(Array.from(iv)));
   const encryptedBytes = new Uint8Array(textBytes.length);
   
+  // FIXED: Calculate chunk size for 1% updates
+  // Ensure we get at least 100 updates for smooth progress
+  const effectiveChunkSize = Math.max(1, Math.floor(textBytes.length / 100));
+  
   let processedBytes = 0;
-  for (let i = 0; i < textBytes.length; i += CHUNK_SIZE) {
-    const chunk = textBytes.slice(i, Math.min(i + CHUNK_SIZE, textBytes.length));
+  for (let i = 0; i < textBytes.length; i += effectiveChunkSize) {
+    const chunkEnd = Math.min(i + effectiveChunkSize, textBytes.length);
+    const chunk = textBytes.slice(i, chunkEnd);
     const encrypted = aesCtr.encrypt(chunk);
     encryptedBytes.set(encrypted, i);
     
-    processedBytes += chunk.length;
+    processedBytes = chunkEnd;
     progress?.update('encrypt', processedBytes, totalInputBytes);
   }
+  
+  // Ensure final 100% update
+  progress?.update('encrypt', totalInputBytes, totalInputBytes);
   
   // Compute HMAC
   const dataToAuth = new Uint8Array(salt.length + iv.length + encryptedBytes.length);
@@ -136,6 +156,7 @@ export async function encryptData(
   return result;
 }
 
+
 export async function decryptData(
   encryptedData: Uint8Array,
   password: string,
@@ -152,7 +173,7 @@ export async function decryptData(
   const hmac = encryptedData.slice(-32);
   const ciphertext = encryptedData.slice(SALT_LENGTH + 16, -32);
   
-  // Derive keys
+  // Derive keys (reports internally with 1% granularity)
   const { aesKey, hmacKey } = await deriveKeys(password, salt, progress);
   
   // Verify HMAC
@@ -168,19 +189,27 @@ export async function decryptData(
     throw new Error('Authentication failed: wrong password or corrupted data');
   }
   
-  // Decrypt in chunks
+  // Decrypt in chunks with 1% granularity
   const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey, new aesjs.Counter(Array.from(iv)));
   const decryptedBytes = new Uint8Array(ciphertext.length);
   
+  // FIXED: Calculate chunk size for 1% updates
+  // Ensure we get at least 100 updates for smooth progress
+  const effectiveChunkSize = Math.max(1, Math.floor(ciphertext.length / 100));
+  
   let processedBytes = 0;
-  for (let i = 0; i < ciphertext.length; i += CHUNK_SIZE) {
-    const chunk = ciphertext.slice(i, Math.min(i + CHUNK_SIZE, ciphertext.length));
+  for (let i = 0; i < ciphertext.length; i += effectiveChunkSize) {
+    const chunkEnd = Math.min(i + effectiveChunkSize, ciphertext.length);
+    const chunk = ciphertext.slice(i, chunkEnd);
     const decrypted = aesCtr.decrypt(chunk);
     decryptedBytes.set(decrypted, i);
     
-    processedBytes += chunk.length;
+    processedBytes = chunkEnd;
     progress?.update('decrypt', processedBytes, ciphertext.length);
   }
+  
+  // Ensure final 100% update
+  progress?.update('decrypt', ciphertext.length, ciphertext.length);
   
   return aesjs.utils.utf8.fromBytes(decryptedBytes);
 }
