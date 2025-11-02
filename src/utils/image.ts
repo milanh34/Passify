@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { encodePNG, decodePNG, PNGProgressCallback } from './pngEncoder';
 
+
 /**
  * Saves pixel buffer as PNG file using legacy FileSystem API.
  * Compatible with Expo Go and SDK 54.
@@ -10,11 +11,25 @@ export async function savePixelsAsPNG(
   width: number,
   height: number,
   filename = 'encoded_data.png',
-  onProgress?: PNGProgressCallback
+  onProgress?: (phase: string, percent: number) => void
 ): Promise<string> {
-  const pngData = await encodePNG(pixels, width, height, onProgress);
+  // FIXED: Map PNG encoder phases to proper phase names
+  const pngProgress: PNGProgressCallback = (phase, percent) => {
+    // Map internal PNG phases to user-friendly display phases
+    if (phase === 'Creating PNG structure') {
+      onProgress?.('encodePNG', percent);
+    } else if (phase === 'Compressing image data') {
+      onProgress?.('encodePNG', percent);
+    } else if (phase === 'Finalizing PNG') {
+      onProgress?.('encodePNG', percent);
+    } else {
+      onProgress?.('encodePNG', percent);
+    }
+  };
 
-  onProgress?.('Writing to file', 0);
+  const pngData = await encodePNG(pixels, width, height, pngProgress);
+
+  onProgress?.('writeFile', 0);
 
   // Compose full document path the legacy way
   const fileUri = `${FileSystem.documentDirectory}${filename}`;
@@ -37,19 +52,20 @@ export async function savePixelsAsPNG(
     throw new Error('File write failed or produced empty file.');
   }
 
-  onProgress?.('Writing to file', 100);
+  onProgress?.('writeFile', 100);
 
   return fileUri;
 }
+
 
 /**
  * Loads PNG from file URI, returns decoded pixels buffer.
  */
 export async function loadPNGAsPixels(
   fileUri: string,
-  onProgress?: PNGProgressCallback
+  onProgress?: (phase: string, percent: number) => void
 ): Promise<{ pixels: Uint8Array; width: number; height: number }> {
-  onProgress?.('Reading file', 0);
+  onProgress?.('readFile', 0);
 
   const info = await FileSystem.getInfoAsync(fileUri);
   if (!info.exists) {
@@ -66,10 +82,25 @@ export async function loadPNGAsPixels(
 
   const pngData = base64ToArrayBuffer(base64);
 
-  onProgress?.('Reading file', 100);
+  onProgress?.('readFile', 100);
 
-  return decodePNG(pngData, onProgress);
+  // FIXED: Map PNG decoder phases to proper phase names
+  const pngProgress: PNGProgressCallback = (phase, percent) => {
+    // Map internal PNG phases to user-friendly display phases
+    if (phase === 'Parsing PNG structure') {
+      onProgress?.('decodePNG', percent);
+    } else if (phase === 'Decompressing image data') {
+      onProgress?.('decodePNG', percent);
+    } else if (phase === 'Extracting pixel data') {
+      onProgress?.('decodePNG', percent);
+    } else {
+      onProgress?.('decodePNG', percent);
+    }
+  };
+
+  return decodePNG(pngData, pngProgress);
 }
+
 
 /**
  * Util: Uint8Array to base64
@@ -81,6 +112,7 @@ function arrayBufferToBase64(buffer: Uint8Array): string {
   }
   return btoa(binary);
 }
+
 
 /**
  * Util: base64 to Uint8Array

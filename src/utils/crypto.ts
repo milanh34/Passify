@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import aesjs from 'aes-js';
-import { ThrottledProgress, ProgressCallback } from '../types/progress';
+import { ThrottledProgress, ProgressCallback, ProgressPhase } from '../types/progress';
 
 
 const SALT_LENGTH = 32;
@@ -9,9 +9,11 @@ const PBKDF2_ITERATIONS = 100000;
 const CHUNK_SIZE = 8192; // 8KB chunks
 
 
+// FIXED: Accept phase parameter to use correct label during encrypt vs decrypt
 async function deriveKeys(
   password: string,
   salt: Uint8Array,
+  phase: ProgressPhase, // ✅ NEW PARAMETER
   progress?: ThrottledProgress
 ): Promise<{ aesKey: Uint8Array; hmacKey: Uint8Array }> {
   const passwordBuffer = new TextEncoder().encode(password);
@@ -21,7 +23,6 @@ async function deriveKeys(
   
   let derivedKey = input;
   
-  // FIXED: Update every 1% instead of every 5%
   // Calculate update interval for 1% increments (100 updates total)
   const updateInterval = Math.max(1, Math.floor(PBKDF2_ITERATIONS / 100));
   
@@ -32,14 +33,14 @@ async function deriveKeys(
     );
     derivedKey = new Uint8Array(hash.match(/.{2}/g)!.map(byte => parseInt(byte, 16)));
     
-    // Update progress every 1% (100 times instead of 20)
+    // FIXED: Use the passed phase parameter instead of hardcoded 'encrypt'
     if (progress && i % updateInterval === 0) {
-      progress.update('encrypt', i, PBKDF2_ITERATIONS);
+      progress.update(phase, i, PBKDF2_ITERATIONS); // ✅ Dynamic phase
     }
   }
   
-  // Final update to ensure 100%
-  progress?.update('encrypt', PBKDF2_ITERATIONS, PBKDF2_ITERATIONS);
+  // FIXED: Final update with correct phase
+  progress?.update(phase, PBKDF2_ITERATIONS, PBKDF2_ITERATIONS); // ✅ Dynamic phase
   
   const aesKey = derivedKey.slice(0, KEY_LENGTH);
   
@@ -114,15 +115,15 @@ export async function encryptData(
   for (let i = 0; i < salt.length; i++) salt[i] = Math.floor(Math.random() * 256);
   for (let i = 0; i < iv.length; i++) iv[i] = Math.floor(Math.random() * 256);
   
-  // Stage 2: Derive keys (reports internally with 1% granularity)
-  const { aesKey, hmacKey } = await deriveKeys(password, salt, progress);
+  // Stage 2: Derive keys (with correct 'encrypt' phase)
+  // FIXED: Pass 'encrypt' as the phase parameter
+  const { aesKey, hmacKey } = await deriveKeys(password, salt, 'encrypt', progress);
   
   // Stage 3: Encrypt in chunks with 1% granularity
   const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey, new aesjs.Counter(Array.from(iv)));
   const encryptedBytes = new Uint8Array(textBytes.length);
   
-  // FIXED: Calculate chunk size for 1% updates
-  // Ensure we get at least 100 updates for smooth progress
+  // Calculate chunk size for 1% updates
   const effectiveChunkSize = Math.max(1, Math.floor(textBytes.length / 100));
   
   let processedBytes = 0;
@@ -173,8 +174,9 @@ export async function decryptData(
   const hmac = encryptedData.slice(-32);
   const ciphertext = encryptedData.slice(SALT_LENGTH + 16, -32);
   
-  // Derive keys (reports internally with 1% granularity)
-  const { aesKey, hmacKey } = await deriveKeys(password, salt, progress);
+  // FIXED: Derive keys with correct 'decrypt' phase
+  // This is the key fix - pass 'decrypt' instead of hardcoded 'encrypt'
+  const { aesKey, hmacKey } = await deriveKeys(password, salt, 'decrypt', progress);
   
   // Verify HMAC
   const dataToAuth = encryptedData.slice(0, -32);
@@ -193,8 +195,7 @@ export async function decryptData(
   const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey, new aesjs.Counter(Array.from(iv)));
   const decryptedBytes = new Uint8Array(ciphertext.length);
   
-  // FIXED: Calculate chunk size for 1% updates
-  // Ensure we get at least 100 updates for smooth progress
+  // Calculate chunk size for 1% updates
   const effectiveChunkSize = Math.max(1, Math.floor(ciphertext.length / 100));
   
   let processedBytes = 0;
