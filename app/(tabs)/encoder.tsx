@@ -29,6 +29,7 @@ import { savePixelsAsPNG } from '../../src/utils/image';
 import { downloadImage, shareFile, isExpoGo } from '../../src/utils/fileSharing';
 import { ThrottledProgress, ProgressUpdate } from '../../src/types/progress';
 
+
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
@@ -110,8 +111,10 @@ export default function EncoderScreen() {
     if (isMountedRef.current) setRefreshing(false);
   };
 
+  // FIXED: Progress callback that properly updates state
   const onProgress = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
+      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`); // Debug log
       setProgressUpdate(update);
     }
   };
@@ -132,10 +135,11 @@ export default function EncoderScreen() {
     setShowProgress(true);
 
     try {
-      // Stringify
+      // Stage 1: Stringify
       const dataToEncrypt = JSON.stringify({ database, schemas });
       const encoder = new TextEncoder();
       const dataBytes = encoder.encode(dataToEncrypt);
+      
       onProgress({
         phase: 'stringify',
         processedBytes: dataBytes.length,
@@ -145,9 +149,15 @@ export default function EncoderScreen() {
 
       if (!isProcessingRef.current) return;
 
-      // Encrypt
+      // Small delay to show stringify phase
+      await new Promise(r => setTimeout(r, 100));
+
+      // Stage 2: Encrypt (this will show 'encrypt' phase from crypto.ts)
       const encryptedBytes = await encryptData(dataToEncrypt, password, onProgress);
       if (!isProcessingRef.current) return;
+
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
 
       // Calculate dimensions
       const { width, height } = calculateDimensions(encryptedBytes.length);
@@ -171,14 +181,17 @@ export default function EncoderScreen() {
 
       if (!isProcessingRef.current) return;
 
-      // Encode to pixels
+      // Stage 3: Encode to pixels (this will show 'pack' phase from blocks.ts)
       const progress = new ThrottledProgress(onProgress);
       const pixels = encodeToPixels(fullData, width, height, progress);
       progress.done();
 
       if (!isProcessingRef.current) return;
 
-      // Save as PNG
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
+
+      // Stage 4: Save as PNG (this will show 'encodePNG' and 'writeFile' phases)
       const generatedFilename = `passify_backup_${Date.now()}.png`;
       const pngUri = await savePixelsAsPNG(
         pixels,
@@ -187,7 +200,7 @@ export default function EncoderScreen() {
         generatedFilename,
         (phase, percent) => {
           onProgress({
-            phase: 'writeFile',
+            phase: phase as any,
             processedBytes: percent,
             totalBytes: 100,
             percent,
@@ -225,11 +238,9 @@ export default function EncoderScreen() {
 
   const handleDownloadPress = () => {
     if (!imageUri) return;
-    // Show info if in Expo Go
     if (isExpoGo()) {
       setDownloadModalVisible(true);
     } else {
-      // Production build - direct download
       handleDownloadConfirm();
     }
   };

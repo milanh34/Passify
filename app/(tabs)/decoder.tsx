@@ -25,10 +25,12 @@ import { loadPNGAsPixels } from "../../src/utils/image";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { generateExportText, toTitleCase } from "../../src/utils/transferParser";
 
+
 interface DecodedData {
   database: Record<string, any[]>;
   schemas: Record<string, string[]>;
 }
+
 
 export default function DecoderScreen() {
   const { colors, fontConfig } = useTheme();
@@ -61,6 +63,7 @@ export default function DecoderScreen() {
   const isProcessingRef = useRef(false);
   const progressCallbacksRef = useRef<Set<Function>>(new Set());
 
+
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -68,6 +71,7 @@ export default function DecoderScreen() {
       progressCallbacksRef.current.clear();
     };
   }, []);
+
 
   const showToastMessage = (message: string, type: "success" | "error" = "success") => {
     if (!isMountedRef.current) return;
@@ -80,6 +84,7 @@ export default function DecoderScreen() {
       }
     }, 3000);
   };
+
 
   const cleanup = () => {
     isProcessingRef.current = false;
@@ -96,6 +101,7 @@ export default function DecoderScreen() {
       });
     }
   };
+
 
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
@@ -125,6 +131,7 @@ export default function DecoderScreen() {
     }
   };
 
+
   const handlePickImage = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -140,6 +147,16 @@ export default function DecoderScreen() {
       showToastMessage(`Failed to pick image: ${error.message}`, "error");
     }
   };
+
+
+  // FIXED: Progress callback that properly updates state
+  const safeProgressUpdate = (update: ProgressUpdate) => {
+    if (isMountedRef.current && isProcessingRef.current) {
+      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`); // Debug log
+      setProgressUpdate(update);
+    }
+  };
+
 
   const handleDecode = async () => {
     if (!imageUri) {
@@ -161,16 +178,10 @@ export default function DecoderScreen() {
     setLoading(true);
     setShowProgress(true);
     
-    const safeProgressUpdate = (update: ProgressUpdate) => {
-      if (isMountedRef.current && isProcessingRef.current) {
-        setProgressUpdate(update);
-      }
-    };
-    
     progressCallbacksRef.current.add(safeProgressUpdate);
     
     try {
-      // Stage 1: Read file and decode PNG
+      // Stage 1: Read file and decode PNG (shows 'readFile' and 'decodePNG' phases)
       if (!isProcessingRef.current) return;
       
       safeProgressUpdate({
@@ -183,7 +194,7 @@ export default function DecoderScreen() {
       const { pixels, width, height } = await loadPNGAsPixels(imageUri, (phase, percent) => {
         if (isProcessingRef.current) {
           safeProgressUpdate({
-            phase: phase === 'Reading file' ? 'readFile' : 'decodePNG',
+            phase: phase as any,
             processedBytes: Math.round(percent),
             totalBytes: 100,
             percent,
@@ -191,9 +202,12 @@ export default function DecoderScreen() {
         }
       });
       
-      // Stage 2: Decode header
       if (!isProcessingRef.current) return;
       
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
+      
+      // Stage 2: Decode header (shows 'unpack' phase)
       const progress = new ThrottledProgress((update) => {
         if (isProcessingRef.current) {
           safeProgressUpdate(update);
@@ -208,33 +222,52 @@ export default function DecoderScreen() {
         throw new Error("Image dimensions mismatch");
       }
       
-      // Stage 3: Decode full data
       if (!isProcessingRef.current) return;
       
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
+      
+      // Stage 3: Decode full data (shows 'unpack' phase)
       const fullDataLength = BLOCK_CONSTANTS.HEADER_SIZE + header.dataLength;
       const fullData = decodeFromPixels(pixels, fullDataLength, progress);
       const encryptedData = fullData.slice(BLOCK_CONSTANTS.HEADER_SIZE);
       
-      // Stage 4: Verify checksum
       if (!isProcessingRef.current) return;
+      
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
+      
+      // Stage 4: Verify checksum
+      safeProgressUpdate({
+        phase: 'unpack',
+        processedBytes: encryptedData.length,
+        totalBytes: encryptedData.length,
+        percent: 100,
+      });
       
       const checksum = calculateChecksum(encryptedData);
       if (checksum !== header.checksum) {
         throw new Error("Data integrity check failed: corrupted image");
       }
       
-      // Stage 5: Decrypt
       if (!isProcessingRef.current) return;
       
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
+      
+      // Stage 5: Decrypt (shows 'decrypt' phase - FIXED to use correct phase)
       const decryptedJson = await decryptData(encryptedData, password, (update) => {
         if (isProcessingRef.current) {
           safeProgressUpdate(update);
         }
       });
       
-      // Stage 6: Parse JSON
       if (!isProcessingRef.current) return;
       
+      // Small delay to show transition
+      await new Promise(r => setTimeout(r, 100));
+      
+      // Stage 6: Parse JSON
       safeProgressUpdate({
         phase: 'parseJSON',
         processedBytes: 0,
@@ -252,6 +285,9 @@ export default function DecoderScreen() {
       });
       
       if (!isProcessingRef.current) return;
+      
+      // Small delay to show completion
+      await new Promise(r => setTimeout(r, 100));
       
       if (isMountedRef.current) {
         setDecodedData(parsed);
@@ -296,6 +332,7 @@ export default function DecoderScreen() {
       }, 1000);
     }
   };
+
 
   const handleImportToAccounts = async () => {
     if (!decodedData) return;
@@ -366,6 +403,7 @@ export default function DecoderScreen() {
     }
   };
 
+
   const handleGetFormattedText = () => {
     if (!decodedData) return;
     
@@ -393,12 +431,14 @@ export default function DecoderScreen() {
     showToastMessage("Formatted text copied!");
   };
 
+
   const handleCopyJSON = async () => {
     if (decodedText) {
       await Clipboard.setStringAsync(decodedText);
       showToastMessage("Copied to clipboard");
     }
   };
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
