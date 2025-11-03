@@ -121,12 +121,12 @@ export default function EncoderScreen() {
 
   const handleEncode = async () => {
     if (!password.trim()) {
-      showToastMessage('Please enter a password', 'error');
+      showToastMessage("Please enter a password", "error");
       return;
     }
 
     if (isProcessingRef.current) {
-      showToastMessage('Encoding already in progress', 'error');
+      showToastMessage("Encoding already in progress", "error");
       return;
     }
 
@@ -136,90 +136,123 @@ export default function EncoderScreen() {
 
     try {
       // Stage 1: Stringify
-      const dataToEncrypt = JSON.stringify({ database, schemas });
-      const encoder = new TextEncoder();
-      const dataBytes = encoder.encode(dataToEncrypt);
-      
-      onProgress({
-        phase: 'stringify',
-        processedBytes: dataBytes.length,
-        totalBytes: dataBytes.length,
-        percent: 100,
-      });
+      let dataToEncrypt: string;
+      let dataBytes: Uint8Array;
+
+      try {
+        dataToEncrypt = JSON.stringify({ database, schemas });
+        const encoder = new TextEncoder();
+        dataBytes = encoder.encode(dataToEncrypt);
+
+        onProgress({
+          phase: "stringify",
+          processedBytes: dataBytes.length,
+          totalBytes: dataBytes.length,
+          percent: 100,
+        });
+      } catch (error: any) {
+        throw new Error(`Failed to serialize data: ${error.message}`);
+      }
 
       if (!isProcessingRef.current) return;
+      await new Promise((r) => setTimeout(r, 100));
 
-      // Small delay to show stringify phase
-      await new Promise(r => setTimeout(r, 100));
+      // Stage 2: Encrypt
+      let encryptedBytes: Uint8Array;
+      try {
+        encryptedBytes = await encryptData(dataToEncrypt, password, onProgress);
+      } catch (error: any) {
+        throw new Error(`Encryption failed: ${error.message}`);
+      }
 
-      // Stage 2: Encrypt (this will show 'encrypt' phase from crypto.ts)
-      const encryptedBytes = await encryptData(dataToEncrypt, password, onProgress);
       if (!isProcessingRef.current) return;
-
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
 
       // Calculate dimensions
       const { width, height } = calculateDimensions(encryptedBytes.length);
 
       // Pack header
-      const header = {
-        magic: BLOCK_CONSTANTS.MAGIC_NUMBER,
-        version: BLOCK_CONSTANTS.VERSION,
-        mode: BLOCK_CONSTANTS.MODE_1X1,
-        width,
-        height,
-        dataLength: encryptedBytes.length,
-        checksum: calculateChecksum(encryptedBytes),
-        reserved: 0,
-      };
+      let fullData: Uint8Array;
+      try {
+        const header = {
+          magic: BLOCK_CONSTANTS.MAGIC_NUMBER,
+          version: BLOCK_CONSTANTS.VERSION,
+          mode: BLOCK_CONSTANTS.MODE_1X1,
+          width,
+          height,
+          dataLength: encryptedBytes.length,
+          checksum: calculateChecksum(encryptedBytes),
+          reserved: 0,
+        };
 
-      const headerBytes = packHeader(header);
-      const fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
-      fullData.set(headerBytes);
-      fullData.set(encryptedBytes, headerBytes.length);
-
-      if (!isProcessingRef.current) return;
-
-      // Stage 3: Encode to pixels (this will show 'pack' phase from blocks.ts)
-      const progress = new ThrottledProgress(onProgress);
-      const pixels = encodeToPixels(fullData, width, height, progress);
-      progress.done();
+        const headerBytes = packHeader(header);
+        fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
+        fullData.set(headerBytes);
+        fullData.set(encryptedBytes, headerBytes.length);
+      } catch (error: any) {
+        throw new Error(`Failed to create image header: ${error.message}`);
+      }
 
       if (!isProcessingRef.current) return;
 
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
+      // Stage 3: Encode to pixels
+      let pixels: Uint8Array;
+      try {
+        const progress = new ThrottledProgress(onProgress);
+        pixels = encodeToPixels(fullData, width, height, progress);
+        progress.done();
+      } catch (error: any) {
+        throw new Error(`Failed to encode pixels: ${error.message}`);
+      }
 
-      // Stage 4: Save as PNG (this will show 'encodePNG' and 'writeFile' phases)
+      if (!isProcessingRef.current) return;
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Stage 4: Save as PNG
+      let pngUri: string;
       const generatedFilename = `passify_backup_${Date.now()}.png`;
-      const pngUri = await savePixelsAsPNG(
-        pixels,
-        width,
-        height,
-        generatedFilename,
-        (phase, percent) => {
-          onProgress({
-            phase: phase as any,
-            processedBytes: percent,
-            totalBytes: 100,
-            percent,
-          });
-        }
-      );
+
+      try {
+        pngUri = await savePixelsAsPNG(
+          pixels,
+          width,
+          height,
+          generatedFilename,
+          (phase, percent) => {
+            onProgress({
+              phase: phase as any,
+              processedBytes: percent,
+              totalBytes: 100,
+              percent,
+            });
+          }
+        );
+      } catch (error: any) {
+        throw new Error(`Failed to save image: ${error.message}`);
+      }
 
       if (!isProcessingRef.current) return;
 
+      // Success
       if (isMountedRef.current) {
         setImageUri(pngUri);
         setFilename(generatedFilename);
-        onProgress({ phase: 'done', processedBytes: 100, totalBytes: 100, percent: 100 });
-        showToastMessage('Image generated successfully!');
+        onProgress({
+          phase: "done",
+          processedBytes: 100,
+          totalBytes: 100,
+          percent: 100,
+        });
+        showToastMessage("Image generated successfully!");
       }
-    } catch (e: any) {
-      console.error('Encoding error:', e);
+    } catch (error: any) {
+      // Centralized error handling - only show custom toast
+      console.error("🔴 Encoding error:", error);
+
       if (isMountedRef.current && isProcessingRef.current) {
-        showToastMessage(`Encoding failed: ${e.message}`, 'error');
+        const errorMessage =
+          error.message || "An unexpected error occurred during encoding";
+        showToastMessage(errorMessage, "error");
       }
     } finally {
       cleanup();
@@ -228,6 +261,7 @@ export default function EncoderScreen() {
       }, 1000);
     }
   };
+
 
   const handleSharePress = async () => {
     if (!imageUri) return;

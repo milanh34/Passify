@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TextInput,
   RefreshControl,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -163,7 +162,7 @@ export default function DecoderScreen() {
       showToastMessage("Please select an image", "error");
       return;
     }
-    
+
     if (!password.trim()) {
       showToastMessage("Please enter password", "error");
       return;
@@ -177,154 +176,197 @@ export default function DecoderScreen() {
     isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
-    
+
     progressCallbacksRef.current.add(safeProgressUpdate);
-    
+
     try {
-      // Stage 1: Read file and decode PNG (shows 'readFile' and 'decodePNG' phases)
+      // Stage 1: Read file and decode PNG
       if (!isProcessingRef.current) return;
-      
+
       safeProgressUpdate({
-        phase: 'readFile',
+        phase: "readFile",
         processedBytes: 0,
         totalBytes: 100,
         percent: 0,
       });
-      
-      const { pixels, width, height } = await loadPNGAsPixels(imageUri, (phase, percent) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate({
-            phase: phase as any,
-            processedBytes: Math.round(percent),
-            totalBytes: 100,
-            percent,
-          });
-        }
-      });
-      
-      if (!isProcessingRef.current) return;
-      
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
-      
-      // Stage 2: Decode header (shows 'unpack' phase)
-      const progress = new ThrottledProgress((update) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate(update);
-        }
-      });
-      
-      const headerBytes = decodeFromPixels(pixels, BLOCK_CONSTANTS.HEADER_SIZE, progress);
-      const header = unpackHeader(headerBytes);
-      
-      // Validate dimensions
-      if (header.width !== width || header.height !== height) {
-        throw new Error("Image dimensions mismatch");
+
+      let pixels: Uint8Array;
+      let width: number;
+      let height: number;
+
+      try {
+        const result = await loadPNGAsPixels(imageUri, (phase, percent) => {
+          if (isProcessingRef.current) {
+            safeProgressUpdate({
+              phase: phase as any,
+              processedBytes: Math.round(percent),
+              totalBytes: 100,
+              percent,
+            });
+          }
+        });
+        pixels = result.pixels;
+        width = result.width;
+        height = result.height;
+      } catch (error: any) {
+        throw new Error(`Failed to read image file: ${error.message}`);
       }
-      
+
       if (!isProcessingRef.current) return;
-      
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
-      
-      // Stage 3: Decode full data (shows 'unpack' phase)
-      const fullDataLength = BLOCK_CONSTANTS.HEADER_SIZE + header.dataLength;
-      const fullData = decodeFromPixels(pixels, fullDataLength, progress);
-      const encryptedData = fullData.slice(BLOCK_CONSTANTS.HEADER_SIZE);
-      
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Stage 2: Decode header
+      let header;
+      try {
+        const progress = new ThrottledProgress((update) => {
+          if (isProcessingRef.current) {
+            safeProgressUpdate(update);
+          }
+        });
+
+        const headerBytes = decodeFromPixels(
+          pixels,
+          BLOCK_CONSTANTS.HEADER_SIZE,
+          progress
+        );
+        header = unpackHeader(headerBytes);
+
+        // Validate dimensions
+        if (header.width !== width || header.height !== height) {
+          throw new Error("Image dimensions don't match header data");
+        }
+      } catch (error: any) {
+        if (error.message.includes("Invalid magic number")) {
+          throw new Error("This is not a valid Passify backup image");
+        } else if (error.message.includes("Unsupported version")) {
+          throw new Error("Image was created with an incompatible version");
+        } else {
+          throw new Error(`Failed to decode image header: ${error.message}`);
+        }
+      }
+
       if (!isProcessingRef.current) return;
-      
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
-      
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Stage 3: Decode full data
+      let encryptedData: Uint8Array;
+      try {
+        const progress = new ThrottledProgress((update) => {
+          if (isProcessingRef.current) {
+            safeProgressUpdate(update);
+          }
+        });
+
+        const fullDataLength = BLOCK_CONSTANTS.HEADER_SIZE + header.dataLength;
+        const fullData = decodeFromPixels(pixels, fullDataLength, progress);
+        encryptedData = fullData.slice(BLOCK_CONSTANTS.HEADER_SIZE);
+      } catch (error: any) {
+        throw new Error(`Failed to extract encrypted data: ${error.message}`);
+      }
+
+      if (!isProcessingRef.current) return;
+      await new Promise((r) => setTimeout(r, 100));
+
       // Stage 4: Verify checksum
-      safeProgressUpdate({
-        phase: 'unpack',
-        processedBytes: encryptedData.length,
-        totalBytes: encryptedData.length,
-        percent: 100,
-      });
-      
-      const checksum = calculateChecksum(encryptedData);
-      if (checksum !== header.checksum) {
-        throw new Error("Data integrity check failed: corrupted image");
-      }
-      
-      if (!isProcessingRef.current) return;
-      
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
-      
-      // Stage 5: Decrypt (shows 'decrypt' phase - FIXED to use correct phase)
-      const decryptedJson = await decryptData(encryptedData, password, (update) => {
-        if (isProcessingRef.current) {
-          safeProgressUpdate(update);
+      try {
+        safeProgressUpdate({
+          phase: "unpack",
+          processedBytes: encryptedData.length,
+          totalBytes: encryptedData.length,
+          percent: 100,
+        });
+
+        const checksum = calculateChecksum(encryptedData);
+        if (checksum !== header.checksum) {
+          throw new Error("Image data is corrupted or has been tampered with");
         }
-      });
-      
+      } catch (error: any) {
+        throw new Error(`Data integrity check failed: ${error.message}`);
+      }
+
       if (!isProcessingRef.current) return;
-      
-      // Small delay to show transition
-      await new Promise(r => setTimeout(r, 100));
-      
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Stage 5: Decrypt
+      let decryptedJson: string;
+      try {
+        decryptedJson = await decryptData(encryptedData, password, (update) => {
+          if (isProcessingRef.current) {
+            safeProgressUpdate(update);
+          }
+        });
+      } catch (error: any) {
+        if (error.message.includes("Authentication failed")) {
+          throw new Error("Incorrect password. Please try again.");
+        } else {
+          throw new Error(`Decryption failed: ${error.message}`);
+        }
+      }
+
+      if (!isProcessingRef.current) return;
+      await new Promise((r) => setTimeout(r, 100));
+
       // Stage 6: Parse JSON
-      safeProgressUpdate({
-        phase: 'parseJSON',
-        processedBytes: 0,
-        totalBytes: decryptedJson.length,
-        percent: 0,
-      });
-      
-      const parsed: DecodedData = JSON.parse(decryptedJson);
-      
-      safeProgressUpdate({
-        phase: 'parseJSON',
-        processedBytes: decryptedJson.length,
-        totalBytes: decryptedJson.length,
-        percent: 100,
-      });
-      
+      let parsed: DecodedData;
+      try {
+        safeProgressUpdate({
+          phase: "parseJSON",
+          processedBytes: 0,
+          totalBytes: decryptedJson.length,
+          percent: 0,
+        });
+
+        parsed = JSON.parse(decryptedJson);
+
+        // Validate parsed data structure
+        if (!parsed.database || !parsed.schemas) {
+          throw new Error("Invalid data format");
+        }
+
+        safeProgressUpdate({
+          phase: "parseJSON",
+          processedBytes: decryptedJson.length,
+          totalBytes: decryptedJson.length,
+          percent: 100,
+        });
+      } catch (error: any) {
+        throw new Error(`Failed to parse decrypted data: ${error.message}`);
+      }
+
       if (!isProcessingRef.current) return;
-      
-      // Small delay to show completion
-      await new Promise(r => setTimeout(r, 100));
-      
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Success
       if (isMountedRef.current) {
         setDecodedData(parsed);
         setDecodedText(JSON.stringify(parsed, null, 2));
-        
+
         safeProgressUpdate({
-          phase: 'done',
+          phase: "done",
           processedBytes: 100,
           totalBytes: 100,
           percent: 100,
         });
-        
+
         showToastMessage("Successfully decoded!");
       }
-      
     } catch (error: any) {
+      // Centralized error handling - only show custom toast
       if (isMountedRef.current && isProcessingRef.current) {
-        console.error("Decoding error:", error);
-        
-        if (error.message.includes("Authentication failed")) {
-          showToastMessage("Wrong password", "error");
-        } else if (error.message.includes("Invalid magic number")) {
-          showToastMessage("Not a valid Passify backup image", "error");
-        } else if (error.message.includes("Unsupported version")) {
-          showToastMessage("Incompatible image version", "error");
-        } else {
-          showToastMessage(`Decoding failed: ${error.message}`, "error");
-        }
-      }
-      
-      if (isMountedRef.current) {
+        console.error("🔴 Decoding error:", error);
+
+        // Show user-friendly error message
+        const errorMessage =
+          error.message || "An unexpected error occurred during decoding";
+        showToastMessage(errorMessage, "error");
+
+        // Clear any partial data
         setDecodedData(null);
         setDecodedText("");
       }
     } finally {
       cleanup();
-      
+
       setTimeout(() => {
         if (isMountedRef.current) {
           setShowProgress(false);
@@ -332,6 +374,7 @@ export default function DecoderScreen() {
       }, 1000);
     }
   };
+
 
 
   const handleImportToAccounts = async () => {
@@ -406,30 +449,17 @@ export default function DecoderScreen() {
 
   const handleGetFormattedText = () => {
     if (!decodedData) return;
-    
-    // Generate formatted export text
-    const formattedText = generateExportText(decodedData.database, decodedData.schemas);
-    
-    Alert.alert(
-      "Formatted Export Text",
-      "Text has been copied to clipboard",
-      [
-        {
-          text: "View Text",
-          onPress: () => {
-            setDecodedText(formattedText);
-          },
-        },
-        {
-          text: "OK",
-          style: "cancel",
-        },
-      ]
+
+    const formattedText = generateExportText(
+      decodedData.database,
+      decodedData.schemas
     );
-    
-    Clipboard.setStringAsync(formattedText);
-    showToastMessage("Formatted text copied!");
+
+    setDecodedText(formattedText);
+
+    showToastMessage("Formatted text copied to clipboard!", "success");
   };
+
 
 
   const handleCopyJSON = async () => {
