@@ -35,7 +35,7 @@ export default function ImportTab() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isGuideExpanded, setIsGuideExpanded] = useState(false);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
 
   // Conflict resolution state
   const [conflictModalVisible, setConflictModalVisible] = useState(false);
@@ -51,7 +51,7 @@ export default function ImportTab() {
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
 
   // Helper to show toast
-  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
@@ -143,7 +143,7 @@ export default function ImportTab() {
 
   const handleImport = async () => {
     if (!inputText.trim()) {
-      showToastMessage("Please paste some text to import", "error");
+      showToastMessage("Please paste some text to import", "warning");
       return;
     }
 

@@ -59,7 +59,7 @@ export default function ManageScreen() {
   // Toast state
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -136,10 +136,7 @@ export default function ManageScreen() {
   };
 
   // Helper to show toast
-  const showToastMessage = (
-    message: string,
-    type: "success" | "error" = "success"
-  ) => {
+  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);

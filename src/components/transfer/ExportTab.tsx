@@ -31,13 +31,13 @@ export default function ExportTab() {
   );
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
   const [exportedText, setExportedText] = useState("");
 
   const platformIds = Object.keys(database);
 
   // Helper to show toast
-  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
@@ -147,7 +147,7 @@ export default function ExportTab() {
     }
 
     if (Object.keys(selectedData).length === 0) {
-      showToastMessage("Please select at least one account to export", "error");
+      showToastMessage("Please select at least one account to export", "warning");
       return;
     }
 
@@ -170,7 +170,7 @@ export default function ExportTab() {
   const handleCopyExport = async () => {
     if (exportedText) {
       await Clipboard.setStringAsync(exportedText);
-      showToastMessage("Copied to clipboard!", "success");
+      showToastMessage("Copied to clipboard!", "info");
     }
   };
 
@@ -502,7 +502,7 @@ export default function ExportTab() {
         </MotiView>
       )}
 
-      <Toast message={toastMessage} visible={showToast} type={toastType} type={toastType} />
+      <Toast message={toastMessage} visible={showToast} type={toastType} />
     </>
   );
 }

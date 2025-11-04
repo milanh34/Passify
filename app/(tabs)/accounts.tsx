@@ -89,7 +89,7 @@ export default function AccountsScreen() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
 
   // Multi-select state
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(
@@ -218,7 +218,7 @@ export default function AccountsScreen() {
 
   const displayToast = (
     message: string,
-    type: "success" | "error" = "success"
+    type: "success" | "error" | "info" | "warning" = "success"
   ) => {
     setToastMessage(message);
     setToastType(type);

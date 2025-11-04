@@ -46,7 +46,7 @@ export default function DecoderScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
   
   // Byte-accurate progress
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
@@ -72,7 +72,7 @@ export default function DecoderScreen() {
   }, []);
 
 
-  const showToastMessage = (message: string, type: "success" | "error" = "success") => {
+  const showToastMessage = (message: string, type: "success" | "error" | "info" | "warning" = "success") => {
     if (!isMountedRef.current) return;
     setToastMessage(message);
     setToastType(type);
@@ -140,7 +140,7 @@ export default function DecoderScreen() {
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setImageUri(result.assets[0].uri);
-        showToastMessage("Image loaded");
+        showToastMessage("Image loaded", "info");
       }
     } catch (error: any) {
       showToastMessage(`Failed to pick image: ${error.message}`, "error");
@@ -348,7 +348,7 @@ export default function DecoderScreen() {
           percent: 100,
         });
 
-        showToastMessage("Successfully decoded!");
+        showToastMessage("Successfully decoded!", "success");
       }
     } catch (error: any) {
       // Centralized error handling - only show custom toast
@@ -457,7 +457,7 @@ export default function DecoderScreen() {
 
     setDecodedText(formattedText);
 
-    showToastMessage("Formatted text copied to clipboard!", "success");
+    showToastMessage("Formatted text copied to clipboard!", "info");
   };
 
 
@@ -465,7 +465,7 @@ export default function DecoderScreen() {
   const handleCopyJSON = async () => {
     if (decodedText) {
       await Clipboard.setStringAsync(decodedText);
-      showToastMessage("Copied to clipboard");
+      showToastMessage("Copied to clipboard", "info");
     }
   };
 

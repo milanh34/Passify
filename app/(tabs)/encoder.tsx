@@ -43,7 +43,7 @@ export default function EncoderScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
   const [downloadModalVisible, setDownloadModalVisible] = useState(false);
 
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
@@ -64,7 +64,7 @@ export default function EncoderScreen() {
     };
   }, []);
 
-  const showToastMessage = (msg: string, type: 'success' | 'error' = 'success') => {
+  const showToastMessage = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     if (!isMountedRef.current) return;
     setToastMessage(msg);
     setToastType(type);
@@ -243,7 +243,7 @@ export default function EncoderScreen() {
           totalBytes: 100,
           percent: 100,
         });
-        showToastMessage("Image generated successfully!");
+        showToastMessage("Image generated successfully!", "success");
       }
     } catch (error: any) {
       // Centralized error handling - only show custom toast
@@ -286,7 +286,7 @@ export default function EncoderScreen() {
     const success = await downloadImage(imageUri, filename);
     setLoading(false);
     if (success) {
-      showToastMessage('Download successful!');
+      showToastMessage('Download successful!', "info");
     }
   };
 
