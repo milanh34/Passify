@@ -12,8 +12,11 @@ import {
   Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useDb } from '../../src/context/DbContext';
+import { useAuth } from '../../src/context/AuthContext'; // 🔐 AUTH: Import useAuth
+import { useInactivityTracker } from '../../src/utils/inactivityTracker'; // 🔐 AUTH: Import inactivity tracker
 import ProgressBar from '../../src/components/ProgressBar';
 import Toast from '../../src/components/Toast';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,11 +32,14 @@ import { savePixelsAsPNG } from '../../src/utils/image';
 import { downloadImage, shareFile, isExpoGo } from '../../src/utils/fileSharing';
 import { ThrottledProgress, ProgressUpdate } from '../../src/types/progress';
 
-
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
+
+  // 🔐 AUTH: Get auth state and initialize inactivity tracker
+  const { isAuthEnabled } = useAuth();
+  const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -63,6 +69,15 @@ export default function EncoderScreen() {
       isProcessingRef.current = false;
     };
   }, []);
+
+  // 🔐 AUTH: Update activity on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isAuthEnabled && !isProcessingRef.current) {
+        updateActivity();
+      }
+    }, [isAuthEnabled, updateActivity])
+  );
 
   const showToastMessage = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     if (!isMountedRef.current) return;
@@ -109,12 +124,17 @@ export default function EncoderScreen() {
 
     await new Promise((r) => setTimeout(r, 300));
     if (isMountedRef.current) setRefreshing(false);
+
+    // 🔐 AUTH: Update activity on refresh
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // FIXED: Progress callback that properly updates state
   const onProgress = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
-      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`); // Debug log
+      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
       setProgressUpdate(update);
     }
   };
@@ -128,6 +148,11 @@ export default function EncoderScreen() {
     if (isProcessingRef.current) {
       showToastMessage("Encoding already in progress", "error");
       return;
+    }
+
+    // 🔐 AUTH: Update activity before starting long operation
+    if (isAuthEnabled) {
+      updateActivity();
     }
 
     isProcessingRef.current = true;
@@ -246,7 +271,6 @@ export default function EncoderScreen() {
         showToastMessage("Image generated successfully!", "success");
       }
     } catch (error: any) {
-      // Centralized error handling - only show custom toast
       console.error("🔴 Encoding error:", error);
 
       if (isMountedRef.current && isProcessingRef.current) {
@@ -259,15 +283,23 @@ export default function EncoderScreen() {
       setTimeout(() => {
         if (isMountedRef.current) setShowProgress(false);
       }, 1000);
+
+      // 🔐 AUTH: Update activity after long operation completes
+      if (isAuthEnabled) {
+        updateActivity();
+      }
     }
   };
-
 
   const handleSharePress = async () => {
     if (!imageUri) return;
     setLoading(true);
     await shareFile(imageUri, 'image/png');
     setLoading(false);
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   const handleDownloadPress = () => {
@@ -276,6 +308,10 @@ export default function EncoderScreen() {
       setDownloadModalVisible(true);
     } else {
       handleDownloadConfirm();
+    }
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
     }
   };
 
@@ -287,6 +323,10 @@ export default function EncoderScreen() {
     setLoading(false);
     if (success) {
       showToastMessage('Download successful!', "info");
+    }
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
     }
   };
 
@@ -328,13 +368,28 @@ export default function EncoderScreen() {
             <TextInput
               style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                // 🔐 AUTH: Update activity on text input
+                if (isAuthEnabled) {
+                  updateActivity();
+                }
+              }}
               secureTextEntry={!showPassword}
               editable={!loading}
               placeholder="Enter a strong password"
               placeholderTextColor={colors.muted}
             />
-            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+            <Pressable
+              onPress={() => {
+                setShowPassword(!showPassword);
+                // 🔐 AUTH: Update activity on toggle
+                if (isAuthEnabled) {
+                  updateActivity();
+                }
+              }}
+              style={styles.eyeIcon}
+            >
               <Ionicons
                 name={showPassword ? 'eye-off' : 'eye'}
                 size={20}
@@ -446,7 +501,13 @@ export default function EncoderScreen() {
 
             <View style={styles.modalButtons}>
               <Pressable
-                onPress={() => setDownloadModalVisible(false)}
+                onPress={() => {
+                  setDownloadModalVisible(false);
+                  // 🔐 AUTH: Update activity on modal dismiss
+                  if (isAuthEnabled) {
+                    updateActivity();
+                  }
+                }}
                 style={[styles.modalButton, { backgroundColor: colors.cardBorder }]}
               >
                 <Text

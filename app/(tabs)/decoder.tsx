@@ -10,9 +10,11 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
+import { useAuth } from "../../src/context/AuthContext"; // 🔐 AUTH: Import useAuth
+import { useInactivityTracker } from "../../src/utils/inactivityTracker"; // 🔐 AUTH: Import inactivity tracker
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "../../src/components/Toast";
 import ProgressBar from "../../src/components/ProgressBar";
@@ -24,18 +26,20 @@ import { loadPNGAsPixels } from "../../src/utils/image";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { generateExportText, toTitleCase } from "../../src/utils/transferParser";
 
-
 interface DecodedData {
   database: Record<string, any[]>;
   schemas: Record<string, string[]>;
 }
-
 
 export default function DecoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // 🔐 AUTH: Get auth state and initialize inactivity tracker
+  const { isAuthEnabled } = useAuth();
+  const { updateActivity } = useInactivityTracker(isAuthEnabled);
   
   const [imageUri, setImageUri] = useState("");
   const [password, setPassword] = useState("");
@@ -62,7 +66,6 @@ export default function DecoderScreen() {
   const isProcessingRef = useRef(false);
   const progressCallbacksRef = useRef<Set<Function>>(new Set());
 
-
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -71,6 +74,14 @@ export default function DecoderScreen() {
     };
   }, []);
 
+  // 🔐 AUTH: Update activity on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isAuthEnabled && !isProcessingRef.current) {
+        updateActivity();
+      }
+    }, [isAuthEnabled, updateActivity])
+  );
 
   const showToastMessage = (message: string, type: "success" | "error" | "info" | "warning" = "success") => {
     if (!isMountedRef.current) return;
@@ -83,7 +94,6 @@ export default function DecoderScreen() {
       }
     }, 3000);
   };
-
 
   const cleanup = () => {
     isProcessingRef.current = false;
@@ -100,7 +110,6 @@ export default function DecoderScreen() {
       });
     }
   };
-
 
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
@@ -128,8 +137,12 @@ export default function DecoderScreen() {
     if (isMountedRef.current) {
       setRefreshing(false);
     }
-  };
 
+    // 🔐 AUTH: Update activity on refresh
+    if (isAuthEnabled) {
+      updateActivity();
+    }
+  };
 
   const handlePickImage = async () => {
     try {
@@ -142,20 +155,23 @@ export default function DecoderScreen() {
         setImageUri(result.assets[0].uri);
         showToastMessage("Image loaded", "info");
       }
+
+      // 🔐 AUTH: Update activity after picking image
+      if (isAuthEnabled) {
+        updateActivity();
+      }
     } catch (error: any) {
       showToastMessage(`Failed to pick image: ${error.message}`, "error");
     }
   };
 
-
   // FIXED: Progress callback that properly updates state
   const safeProgressUpdate = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
-      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`); // Debug log
+      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
       setProgressUpdate(update);
     }
   };
-
 
   const handleDecode = async () => {
     if (!imageUri) {
@@ -171,6 +187,11 @@ export default function DecoderScreen() {
     if (isProcessingRef.current) {
       showToastMessage("A process is already running", "error");
       return;
+    }
+
+    // 🔐 AUTH: Update activity before starting long operation
+    if (isAuthEnabled) {
+      updateActivity();
     }
 
     isProcessingRef.current = true;
@@ -372,15 +393,23 @@ export default function DecoderScreen() {
           setShowProgress(false);
         }
       }, 1000);
+
+      // 🔐 AUTH: Update activity after long operation completes
+      if (isAuthEnabled) {
+        updateActivity();
+      }
     }
   };
-
-
 
   const handleImportToAccounts = async () => {
     if (!decodedData) return;
     
     setLoading(true);
+
+    // 🔐 AUTH: Update activity before starting import
+    if (isAuthEnabled) {
+      updateActivity();
+    }
     
     try {
       let importedCount = 0;
@@ -443,9 +472,13 @@ export default function DecoderScreen() {
       if (isMountedRef.current) {
         setLoading(false);
       }
+
+      // 🔐 AUTH: Update activity after import completes
+      if (isAuthEnabled) {
+        updateActivity();
+      }
     }
   };
-
 
   const handleGetFormattedText = () => {
     if (!decodedData) return;
@@ -457,18 +490,25 @@ export default function DecoderScreen() {
 
     setDecodedText(formattedText);
 
-    showToastMessage("Formatted text copied to clipboard!", "info");
+    showToastMessage("Text formatted successfully!", "info");
+
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
-
-
 
   const handleCopyJSON = async () => {
     if (decodedText) {
       await Clipboard.setStringAsync(decodedText);
       showToastMessage("Copied to clipboard", "info");
+
+      // 🔐 AUTH: Update activity on user interaction
+      if (isAuthEnabled) {
+        updateActivity();
+      }
     }
   };
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
@@ -519,13 +559,28 @@ export default function DecoderScreen() {
             <TextInput
               style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                // 🔐 AUTH: Update activity on text input
+                if (isAuthEnabled) {
+                  updateActivity();
+                }
+              }}
               placeholder="Enter decryption password"
               placeholderTextColor={colors.muted}
               secureTextEntry={!showPassword}
               editable={!loading}
             />
-            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+            <Pressable
+              onPress={() => {
+                setShowPassword(!showPassword);
+                // 🔐 AUTH: Update activity on toggle
+                if (isAuthEnabled) {
+                  updateActivity();
+                }
+              }}
+              style={styles.eyeIcon}
+            >
               <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
             </Pressable>
           </View>

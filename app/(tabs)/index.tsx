@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
+import { useAuth } from "../../src/context/AuthContext"; // 🔐 AUTH: Import useAuth
+import { useInactivityTracker } from "../../src/utils/inactivityTracker"; // 🔐 AUTH: Import inactivity tracker
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal";
@@ -38,6 +40,10 @@ export default function ManageScreen() {
     deletePlatform,
   } = useDb();
   const insets = useSafeAreaInsets();
+
+  // 🔐 AUTH: Get auth state and initialize inactivity tracker
+  const { isAuthEnabled } = useAuth();
+  const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
   // Modal states
   const [platformModal, setPlatformModal] = useState<{
@@ -90,7 +96,12 @@ export default function ManageScreen() {
       // Reset selection mode on screen focus
       setIsSelectionMode(false);
       setSelectedPlatforms(new Set());
-    }, [])
+
+      // 🔐 AUTH: Update activity when screen is focused
+      if (isAuthEnabled) {
+        updateActivity();
+      }
+    }, [isAuthEnabled, updateActivity])
   );
 
   // Debounced search query update
@@ -106,12 +117,20 @@ export default function ManageScreen() {
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     debouncedSetQuery(text);
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Clear search
   const handleClearSearch = () => {
     setSearchQuery("");
     setDebouncedQuery("");
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Handle sort selection
@@ -121,6 +140,10 @@ export default function ManageScreen() {
       await AsyncStorage.setItem(SORT_PREFERENCE_KEY, option);
     } catch (error) {
       console.error("Failed to save sort preference:", error);
+    }
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
     }
   };
 
@@ -133,6 +156,10 @@ export default function ManageScreen() {
     setSelectedPlatforms(new Set());
     await new Promise((resolve) => setTimeout(resolve, 500));
     setRefreshing(false);
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Helper to show toast
@@ -201,16 +228,29 @@ export default function ManageScreen() {
     }
 
     setPlatformModal({ visible: false });
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Long press handler to enter selection mode
   const handleLongPress = (platformKey: string) => {
     setIsSelectionMode(true);
     setSelectedPlatforms(new Set([platformKey]));
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Toggle selection in selection mode, or navigate normally
   const handlePlatformPress = (platformKey: string, platformName: string) => {
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
+
     if (!isSelectionMode) {
       // Check if there are matched accounts from search
       const matchInfo = searchMatchMap.get(platformKey);
@@ -262,12 +302,20 @@ export default function ManageScreen() {
   const selectAllPlatforms = () => {
     const allKeys = sortedPlatforms.map((p) => p.key);
     setSelectedPlatforms(new Set(allKeys));
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Deselect all
   const deselectAllPlatforms = () => {
     setSelectedPlatforms(new Set());
     setIsSelectionMode(false);
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Delete selected platforms
@@ -280,12 +328,20 @@ export default function ManageScreen() {
         count: selectedPlatforms.size,
       },
     });
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Exit selection mode
   const exitSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedPlatforms(new Set());
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   // Execute delete
@@ -305,6 +361,10 @@ export default function ManageScreen() {
     }
 
     setDeleteModal({ visible: false });
+    // 🔐 AUTH: Update activity on user interaction
+    if (isAuthEnabled) {
+      updateActivity();
+    }
   };
 
   if (isDbLoading || !fontsLoaded) {
@@ -579,6 +639,10 @@ export default function ManageScreen() {
                           visible: true,
                           editing: item,
                         });
+                        // 🔐 AUTH: Update activity on user interaction
+                        if (isAuthEnabled) {
+                          updateActivity();
+                        }
                       }}
                       style={styles.iconBtn}
                       android_ripple={{ color: colors.accent + "33" }}
@@ -596,6 +660,10 @@ export default function ManageScreen() {
                           visible: true,
                           item,
                         });
+                        // 🔐 AUTH: Update activity on user interaction
+                        if (isAuthEnabled) {
+                          updateActivity();
+                        }
                       }}
                       style={styles.iconBtn}
                       android_ripple={{ color: colors.danger + "33" }}
@@ -659,7 +727,13 @@ export default function ManageScreen() {
         /* Normal add button */
         <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
           <FAB
-            onPress={() => setPlatformModal({ visible: true })}
+            onPress={() => {
+              setPlatformModal({ visible: true });
+              // 🔐 AUTH: Update activity on user interaction
+              if (isAuthEnabled) {
+                updateActivity();
+              }
+            }}
             icon="add"
             color={colors.fab}
           />
