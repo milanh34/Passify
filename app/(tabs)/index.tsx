@@ -13,14 +13,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
-import { useAuth } from "../../src/context/AuthContext"; // 🔐 AUTH: Import useAuth
-import { useInactivityTracker } from "../../src/utils/inactivityTracker"; // 🔐 AUTH: Import inactivity tracker
+import { useAuth } from "../../src/context/AuthContext";
+import { useInactivityTracker } from "../../src/utils/inactivityTracker";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal";
 import Toast from "../../src/components/Toast";
 import SearchBar from "../../src/components/SearchBar";
 import SortModal from "../../src/components/SortModal";
+import PlatformIcon from "../../src/components/PlatformIcon";
 import { toTitleCase } from "@/src/utils/transferParser";
 import { searchPlatforms, debounce } from "../../src/utils/searchFilter";
 import { sortPlatforms, SortOption } from "../../src/utils/sortPlatforms";
@@ -65,7 +66,9 @@ export default function ManageScreen() {
   // Toast state
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
+  const [toastType, setToastType] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -163,7 +166,10 @@ export default function ManageScreen() {
   };
 
   // Helper to show toast
-  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" | "info" | "warning" = "success"
+  ) => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
@@ -184,6 +190,9 @@ export default function ManageScreen() {
         name: platformName,
         count: accounts.length,
         createdAt: platformsMetadata?.[key]?.createdAt || 0,
+        // 🎨 ICONS: Include icon metadata
+        icon: platformsMetadata?.[key]?.icon || null,
+        iconColor: platformsMetadata?.[key]?.iconColor || null,
       };
     });
   }, [database, platformsMetadata]);
@@ -214,6 +223,7 @@ export default function ManageScreen() {
     return map;
   }, [searchResults]);
 
+  // Save platform
   // Save platform
   const savePlatform = (data: Record<string, any>) => {
     const name = data.name?.trim();
@@ -579,11 +589,12 @@ export default function ManageScreen() {
 
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
-                  <Ionicons
-                    name="folder"
-                    size={32}
-                    color={colors.accent}
-                    style={{ opacity: 0.8 }}
+                  {/* 🎨 ICONS: Use PlatformIcon instead of generic folder icon */}
+                  <PlatformIcon
+                    platformName={item.name}
+                    iconKey={item.icon}
+                    iconColor={item.iconColor}
+                    size={48}
                   />
                   <View style={styles.cardInfo}>
                     <Text
@@ -741,6 +752,7 @@ export default function ManageScreen() {
       )}
 
       {/* Modals */}
+      {/* 🎨 ICONS: Enable icon selector for platform modal */}
       <FormModal
         visible={platformModal.visible}
         onClose={() => setPlatformModal({ visible: false })}

@@ -1,146 +1,156 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../../src/context/ThemeContext';
-import { useAuth } from '../../src/context/AuthContext'; // 🔐 AUTH: Import useAuth
-import { useInactivityTracker } from '../../src/utils/inactivityTracker'; // 🔐 AUTH: Import inactivity tracker
-import { useFocusEffect } from 'expo-router';
-import React from 'react';
+import React, { useState } from "react";
+import { View, StyleSheet, Pressable, Text } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { MotiView, AnimatePresence } from "moti";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../src/context/ThemeContext";
+import { useAnimation } from "../../src/context/AnimationContext";
+import ImportTab from "../../src/components/transfer/ImportTab";
+import ExportTab from "../../src/components/transfer/ExportTab";
 
-export default function TransferLayout() {
+export default function TransferScreen() {
   const { colors, fontConfig } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [animationKey, setAnimationKey] = useState(0);
+  const { TAB_ANIMATION } = useAnimation();
+  const [activeTab, setActiveTab] = useState<"import" | "export">("import");
 
-  // 🔐 AUTH: Get auth state and initialize inactivity tracker
-  const { isAuthEnabled } = useAuth();
-  const { updateActivity } = useInactivityTracker(isAuthEnabled);
-
-  // 🔐 AUTH: Update activity when transfer tab is focused
   useFocusEffect(
     React.useCallback(() => {
-      if (isAuthEnabled) {
-        updateActivity();
-      }
-    }, [isAuthEnabled, updateActivity])
+      setAnimationKey((prev) => prev + 1);
+    }, [])
   );
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarStyle: {
-          backgroundColor: colors.bg[0],
-          borderTopColor: colors.cardBorder,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: {
-          fontFamily: fontConfig.regular,
-          fontSize: 12,
-        },
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: colors.bg[0],
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.cardBorder,
-        },
-        headerTitleStyle: {
-          color: colors.text,
-          fontFamily: fontConfig.bold,
-          fontSize: 18,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="ImportTab"
-        options={{
-          title: 'Import',
-          headerTitle: 'Import Data',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name={focused ? 'cloud-download' : 'cloud-download-outline'}
-                size={size}
-                color={color}
-              />
-            </View>
-          ),
-          tabBarLabel: ({ focused, color }) => (
+    <LinearGradient colors={colors.bg} style={styles.root}>
+      <MotiView
+        key={animationKey}
+        from={TAB_ANIMATION.from}
+        animate={TAB_ANIMATION.animate}
+        transition={{
+          type: TAB_ANIMATION.type,
+          duration: TAB_ANIMATION.duration,
+        }}
+        style={[styles.container, { paddingTop: insets.top + 20 }]}
+      >
+        {/* Tab Switcher - Smaller with Icons */}
+        <View
+          style={[
+            styles.tabContainer,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.accent + "30",
+            },
+          ]}
+        >
+          <Pressable
+            onPress={() => setActiveTab("import")}
+            style={[
+              styles.tab,
+              activeTab === "import" && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+          >
+            <Ionicons 
+              name={activeTab === "export" ? "cloud-upload-outline" : "cloud-upload"} 
+              size={16} 
+              color={activeTab === "import" ? "#fff" : colors.text} 
+            />
             <Text
               style={[
-                styles.tabLabel,
+                styles.tabText,
                 {
-                  color,
-                  fontFamily: focused ? fontConfig.bold : fontConfig.regular,
+                  color: activeTab === "import" ? "#fff" : colors.text,
+                  fontFamily: fontConfig.bold,
                 },
               ]}
             >
               Import
             </Text>
-          ),
-        }}
-        listeners={{
-          // 🔐 AUTH: Update activity when tab is pressed
-          tabPress: () => {
-            if (isAuthEnabled) {
-              updateActivity();
-            }
-          },
-        }}
-      />
+          </Pressable>
 
-      <Tabs.Screen
-        name="ExportTab"
-        options={{
-          title: 'Export',
-          headerTitle: 'Export Data',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name={focused ? 'cloud-upload' : 'cloud-upload-outline'}
-                size={size}
-                color={color}
-              />
-            </View>
-          ),
-          tabBarLabel: ({ focused, color }) => (
+          <Pressable
+            onPress={() => setActiveTab("export")}
+            style={[
+              styles.tab,
+              activeTab === "export" && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+          >
+            <Ionicons 
+              name={activeTab === "import" ? "cloud-download-outline" : "cloud-download"} 
+              size={16} 
+              color={activeTab === "export" ? "#fff" : colors.text} 
+            />
             <Text
               style={[
-                styles.tabLabel,
+                styles.tabText,
                 {
-                  color,
-                  fontFamily: focused ? fontConfig.bold : fontConfig.regular,
+                  color: activeTab === "export" ? "#fff" : colors.text,
+                  fontFamily: fontConfig.bold,
                 },
               ]}
             >
               Export
             </Text>
-          ),
-        }}
-        listeners={{
-          // 🔐 AUTH: Update activity when tab is pressed
-          tabPress: () => {
-            if (isAuthEnabled) {
-              updateActivity();
-            }
-          },
-        }}
-      />
-    </Tabs>
+          </Pressable>
+        </View>
+
+        {/* Tab Content with Animation */}
+        <AnimatePresence exitBeforeEnter>
+          {activeTab === "import" ? (
+            <MotiView
+              key="import"
+              from={{ opacity: 0, translateX: -20 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              exit={{ opacity: 0, translateX: 20 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={{ flex: 1 }}
+            >
+              <ImportTab />
+            </MotiView>
+          ) : (
+            <MotiView
+              key="export"
+              from={{ opacity: 0, translateX: 20 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              exit={{ opacity: 0, translateX: -20 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={{ flex: 1 }}
+            >
+              <ExportTab />
+            </MotiView>
+          )}
+        </AnimatePresence>
+      </MotiView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  root: { flex: 1 },
+  container: { flex: 1, paddingHorizontal: 20 },
+  tabContainer: {
+    flexDirection: "row",
+    borderRadius: 10,
+    padding: 3,
+    marginBottom: 16,
+    borderWidth: 1,
   },
-  tabLabel: {
-    fontSize: 12,
-    marginTop: 4,
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    paddingVertical: 10, // Smaller
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  tabText: {
+    fontSize: 14, // Smaller
   },
 });

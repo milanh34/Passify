@@ -20,6 +20,7 @@ import DeleteModal from "../../src/components/DeleteModal";
 import Toast from "../../src/components/Toast";
 import SearchBar from "../../src/components/SearchBar";
 import AccountSortModal from "../../src/components/AccountSortModal";
+import PlatformIcon from "../../src/components/PlatformIcon";
 import { searchAccounts, debounceSearch } from "../../src/utils/searchAccounts";
 import { sortAccounts, AccountSortOption } from "../../src/utils/sortAccounts";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -50,13 +51,14 @@ export default function AccountsScreen() {
   const nav = useNavigation();
   const { colors, fontConfig, fontsLoaded } = useTheme();
   const {
-    database,
-    schemas,
-    addAccount,
-    updateAccount,
-    deleteAccount,
-    updatePlatformSchema,
-  } = useDb();
+  database,
+  schemas,
+  platformsMetadata,
+  addAccount,
+  updateAccount,
+  deleteAccount,
+  updatePlatformSchema,
+} = useDb();
   const insets = useSafeAreaInsets();
 
   // 🔐 AUTH: Get auth state and initialize inactivity tracker
@@ -354,12 +356,42 @@ export default function AccountsScreen() {
       }
     };
 
+    // 🎨 ICONS: Get platform icon data
+    const platformMeta = platformKey
+      ? platformsMetadata[String(platformKey)]
+      : null;
+    const platformIcon = platformMeta?.icon || null;
+    const platformIconColor = platformMeta?.iconColor || null;
+
     nav.setOptions({
       headerShown: true,
       title: platform || "Accounts",
       headerTransparent: true,
       headerStyle: { height: 60 + insets.top },
       headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold },
+
+      // 🎨 ICONS: Custom header title with icon
+      headerTitle: () => (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <PlatformIcon
+            platformName={platform || "Accounts"}
+            iconKey={platformIcon}
+            iconColor={platformIconColor}
+            size={32}
+          />
+          <Text
+            style={{
+              color: colors.text,
+              fontFamily: fontConfig.bold,
+              fontSize: 18,
+            }}
+            numberOfLines={1}
+          >
+            {platform || "Accounts"}
+          </Text>
+        </View>
+      ),
+
       headerLeft: () => (
         <Pressable
           onPress={() => {
@@ -383,7 +415,14 @@ export default function AccountsScreen() {
         </Pressable>
       ),
       headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginRight: 15 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            marginRight: 15,
+          }}
+        >
           {isSelectionMode ? (
             // Show Select All / Deselect All in selection mode
             selectedAccounts.size === sortedAccounts.length ? (
@@ -402,8 +441,18 @@ export default function AccountsScreen() {
                 }}
                 android_ripple={{ color: colors.accent + "22" }}
               >
-                <Ionicons name="close-circle-outline" size={18} color={colors.accent} />
-                <Text style={{ color: colors.accent, fontFamily: fontConfig.bold, fontSize: 13 }}>
+                <Ionicons
+                  name="close-circle-outline"
+                  size={18}
+                  color={colors.accent}
+                />
+                <Text
+                  style={{
+                    color: colors.accent,
+                    fontFamily: fontConfig.bold,
+                    fontSize: 13,
+                  }}
+                >
                   Deselect All
                 </Text>
               </Pressable>
@@ -423,8 +472,18 @@ export default function AccountsScreen() {
                 }}
                 android_ripple={{ color: colors.accent + "22" }}
               >
-                <Ionicons name="checkmark-done-outline" size={18} color={colors.accent} />
-                <Text style={{ color: colors.accent, fontFamily: fontConfig.bold, fontSize: 13 }}>
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={18}
+                  color={colors.accent}
+                />
+                <Text
+                  style={{
+                    color: colors.accent,
+                    fontFamily: fontConfig.bold,
+                    fontSize: 13,
+                  }}
+                >
                   Select All
                 </Text>
               </Pressable>
@@ -450,6 +509,8 @@ export default function AccountsScreen() {
     });
   }, [
     platform,
+    platformKey,
+    platformsMetadata,
     colors,
     fontConfig,
     insets,
@@ -461,6 +522,7 @@ export default function AccountsScreen() {
     isAuthEnabled,
     updateActivity,
   ]);
+
 
   if (!fontsLoaded)
     return <View style={[styles.root, { backgroundColor: colors.bg[0] }]} />;
