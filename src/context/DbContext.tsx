@@ -17,10 +17,12 @@ type Account = { id: string; name: string; createdAt?: number; updatedAt?: numbe
 type Database = Record<string, Account[]>;
 type Schemas = Record<string, string[]>;
 
-// Platform metadata type
+// 🎨 ICONS: Extended platform metadata type with icon support
 type PlatformMetadata = {
   createdAt: number;
   updatedAt: number;
+  icon?: string | null; // Icon key from iconMapping (e.g., "gmail", "github")
+  iconColor?: string | null; // Hex color for icon (e.g., "#4285F4")
 };
 type PlatformsMetadata = Record<string, PlatformMetadata>;
 
@@ -41,22 +43,56 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const [db, sc, meta] = await AsyncStorage.multiGet([DB_KEY, SCHEMA_KEY, METADATA_KEY]);
+        const [db, sc, meta] = await AsyncStorage.multiGet([
+          DB_KEY,
+          SCHEMA_KEY,
+          METADATA_KEY,
+        ]);
         const dbVal = db[1] ? JSON.parse(db[1]) : initialData;
         const scVal = sc[1] ? JSON.parse(sc[1]) : defaultSchemas;
         const metaVal = meta[1] ? JSON.parse(meta[1]) : {};
 
         const now = Date.now();
-        
+
+        // 🎨 ICONS: Import findBestMatchingIcon at top of file
+        const { findBestMatchingIcon } = require("../utils/iconLibrary");
+
         // Migrate platforms to have metadata
         const updatedMeta = { ...metaVal };
         let needsMetaUpdate = false;
 
         Object.keys(dbVal).forEach((key) => {
           if (!updatedMeta[key]) {
+            // 🎨 ICONS: Auto-assign icon based on platform name
+            const accounts = dbVal[key] || [];
+            const platformName =
+              accounts.length > 0 && accounts[0].platform
+                ? accounts[0].platform
+                : key.replace(/_/g, " ");
+
+            const iconMatch = findBestMatchingIcon(platformName);
+
             updatedMeta[key] = {
-              createdAt: now - Math.floor(Math.random() * 86400000 * 30), // Random time in last 30 days
+              createdAt: now - Math.floor(Math.random() * 86400000 * 30),
               updatedAt: now,
+              icon: iconMatch?.platform || null,
+              iconColor: iconMatch?.defaultColor || null,
+            };
+            needsMetaUpdate = true;
+          } else if (updatedMeta[key].icon === undefined) {
+            // 🎨 ICONS: Migrate existing platforms - auto-assign icon if not set
+            const accounts = dbVal[key] || [];
+            const platformName =
+              accounts.length > 0 && accounts[0].platform
+                ? accounts[0].platform
+                : key.replace(/_/g, " ");
+
+            const iconMatch = findBestMatchingIcon(platformName);
+
+            updatedMeta[key] = {
+              ...updatedMeta[key],
+              icon: iconMatch?.platform || null,
+              iconColor: iconMatch?.defaultColor || null,
             };
             needsMetaUpdate = true;
           }
@@ -71,8 +107,12 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
               needsDbUpdate = true;
               return {
                 ...acc,
-                createdAt: acc.createdAt || now - Math.floor(Math.random() * 86400000 * 60), // Random within last 60 days
-                updatedAt: acc.updatedAt || now - Math.floor(Math.random() * 86400000 * 30), // Random within last 30 days
+                createdAt:
+                  acc.createdAt ||
+                  now - Math.floor(Math.random() * 86400000 * 60),
+                updatedAt:
+                  acc.updatedAt ||
+                  now - Math.floor(Math.random() * 86400000 * 30),
               };
             }
             return acc;
@@ -89,14 +129,17 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
           setPlatformsMetadata(metaVal);
         }
 
-        if (!db[1] || needsDbUpdate) await AsyncStorage.setItem(DB_KEY, JSON.stringify(dbVal));
-        if (!sc[1]) await AsyncStorage.setItem(SCHEMA_KEY, JSON.stringify(scVal));
+        if (!db[1] || needsDbUpdate)
+          await AsyncStorage.setItem(DB_KEY, JSON.stringify(dbVal));
+        if (!sc[1])
+          await AsyncStorage.setItem(SCHEMA_KEY, JSON.stringify(scVal));
       } finally {
         setIsDbLoading(false);
       }
     };
     load();
   }, []);
+
 
   useEffect(() => {
     if (!isDbLoading) {
@@ -113,11 +156,21 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     if (database[platformKey]) return;
 
     const now = Date.now();
+
+    // 🎨 ICONS: Auto-assign icon based on platform name
+    const { findBestMatchingIcon } = require("../utils/iconLibrary");
+    const iconMatch = findBestMatchingIcon(displayName || key);
+
     setDatabase((db) => ({ ...db, [platformKey]: [] }));
     setSchemas((s) => ({ ...s, [platformKey]: ["name", "password"] }));
     setPlatformsMetadata((m) => ({
       ...m,
-      [platformKey]: { createdAt: now, updatedAt: now },
+      [platformKey]: {
+        createdAt: now,
+        updatedAt: now,
+        icon: iconMatch?.platform || null,
+        iconColor: iconMatch?.defaultColor || null,
+      },
     }));
   };
 
@@ -126,6 +179,11 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     if (database[newKey] || oldKey === newKey) return;
 
     const now = Date.now();
+
+    // 🎨 ICONS: Auto-reassign icon based on new platform name
+    const { findBestMatchingIcon } = require("../utils/iconLibrary");
+    const iconMatch = findBestMatchingIcon(newName);
+
     setDatabase((db) => {
       const { [oldKey]: accounts, ...rest } = db;
       const updatedAccounts = (accounts || []).map((acc: any) => ({
@@ -147,9 +205,26 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
         [newKey]: {
           createdAt: oldMeta?.createdAt || now,
           updatedAt: now,
+          icon: iconMatch?.platform || null, // 🎨 ICONS: Use new icon based on new name
+          iconColor: iconMatch?.defaultColor || null, // 🎨 ICONS: Use new color based on new name
         },
       };
     });
+  };
+
+
+  // 🎨 ICONS: New method to update platform icon and color
+  const updatePlatformIcon = (platformKey: string, icon: string | null, iconColor?: string | null) => {
+    const now = Date.now();
+    setPlatformsMetadata((m) => ({
+      ...m,
+      [platformKey]: {
+        ...m[platformKey],
+        icon,
+        iconColor: iconColor !== undefined ? iconColor : m[platformKey]?.iconColor || null,
+        updatedAt: now,
+      },
+    }));
   };
 
   const deletePlatform = (key: string) => {
@@ -260,6 +335,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       isDbLoading,
       addPlatform,
       updatePlatformName,
+      updatePlatformIcon, // 🎨 ICONS: Export new method
       deletePlatform,
       addAccount,
       updateAccount,

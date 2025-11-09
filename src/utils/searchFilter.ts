@@ -7,6 +7,8 @@ export interface Platform {
   name: string;
   count: number;
   createdAt?: number;
+  icon?: string | null; // 🎨 ICONS: Icon key from iconMapping
+  iconColor?: string | null; // 🎨 ICONS: Hex color for icon
 }
 
 export interface SearchResult {
