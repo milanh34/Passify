@@ -1,70 +1,164 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../context/ThemeContext';
+import React, { useState, useMemo, useRef } from "react";
+import { View, TextInput, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
+import SearchSuggestionsDropdown from "./SearchSuggestionsDropdown";
 
 interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
+  onClear: () => void;
   placeholder?: string;
-  onClear?: () => void;
+  suggestions?: string[]; // Simple array of suggestions
 }
 
 export default function SearchBar({
   value,
   onChangeText,
-  placeholder = 'Search platforms or accounts...',
   onClear,
+  placeholder = "Search...",
+  suggestions = [],
 }: SearchBarProps) {
   const { colors, fontConfig } = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  // Filter suggestions based on current input
+  const filteredSuggestions = useMemo(() => {
+    if (!value || value.trim().length === 0) {
+      return suggestions.slice(0, 10); // Show first 10 when empty
+    }
+
+    const lowerQuery = value.toLowerCase().trim();
+    return suggestions
+      .filter((suggestion) => suggestion.toLowerCase().includes(lowerQuery))
+      .slice(0, 10);
+  }, [value, suggestions]);
+
+  // Toggle suggestions when search icon is clicked
+  const toggleSuggestions = () => {
+    if (showSuggestions) {
+      // If suggestions are showing, hide them and blur
+      setShowSuggestions(false);
+      Keyboard.dismiss();
+    } else {
+      // If suggestions are hidden, show them and focus
+      setShowSuggestions(true);
+      inputRef.current?.focus();
+    }
+  };
+
+  // Handle focus - auto show suggestions
+  const handleFocus = () => {
+    setIsFocused(true);
+    setShowSuggestions(true);
+  };
+
+  // Handle blur - auto hide suggestions
+  const handleBlur = () => {
+    setTimeout(() => {
+      setIsFocused(false);
+      setShowSuggestions(false);
+    }, 150);
+  };
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (query: string) => {
+    onChangeText(query);
+    setShowSuggestions(false);
+    Keyboard.dismiss();
+  };
+
+  // Handle clear
   const handleClear = () => {
-    onChangeText('');
-    onClear?.();
-    inputRef.current?.blur();
+    onClear();
+    setShowSuggestions(false);
+    inputRef.current?.focus();
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-      <Ionicons name="search" size={20} color={colors.muted} style={styles.searchIcon} />
-      <TextInput
-        ref={inputRef}
-        style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="search"
-      />
-      {value.length > 0 && (
-        <Pressable onPress={handleClear} style={styles.clearButton}>
-          <Ionicons name="close-circle" size={20} color={colors.muted} />
+    <View style={styles.container}>
+      <View
+        style={[
+          styles.searchBar,
+          {
+            backgroundColor: colors.card,
+            borderColor: isFocused ? colors.accent : colors.cardBorder,
+          },
+        ]}
+      >
+        {/* Search icon as toggle button */}
+        <Pressable
+          onPress={toggleSuggestions}
+          style={styles.searchIconButton}
+          android_ripple={{ color: colors.accent + "33" }}
+        >
+          <Ionicons
+            name={showSuggestions ? "chevron-down" : "search"}
+            size={20}
+            color={isFocused ? colors.accent : colors.muted}
+          />
         </Pressable>
-      )}
+
+        <TextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          placeholderTextColor={colors.muted}
+          style={[
+            styles.input,
+            { color: colors.text, fontFamily: fontConfig.regular },
+          ]}
+          returnKeyType="search"
+          clearButtonMode="never"
+        />
+        {value.length > 0 && (
+          <Pressable
+            onPress={handleClear}
+            style={styles.clearButton}
+            android_ripple={{ color: colors.accent + "33" }}
+          >
+            <Ionicons name="close-circle" size={20} color={colors.muted} />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Suggestions Dropdown */}
+      <SearchSuggestionsDropdown
+        visible={showSuggestions && filteredSuggestions.length > 0}
+        suggestions={filteredSuggestions}
+        onSelectSuggestion={handleSelectSuggestion}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 12,
+    position: "relative",
+    zIndex: 100,
   },
-  searchIcon: {
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingHorizontal: 12,
+  },
+  searchIconButton: {
+    padding: 4,
     marginRight: 8,
+    borderRadius: 6,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    paddingVertical: 4,
+    fontSize: 15,
+    paddingVertical: 8,
   },
   clearButton: {
     padding: 4,
