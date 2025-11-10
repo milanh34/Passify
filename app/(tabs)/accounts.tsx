@@ -229,6 +229,10 @@ export default function AccountsScreen() {
     }
   };
 
+  const accountNames = useMemo(() => {
+  return accounts.map(acc => acc.name).filter(name => name && name.trim());
+}, [accounts]);
+
   // Dismiss highlight banner
   const dismissHighlightBanner = () => {
     setShowHighlightBanner(false);
@@ -605,13 +609,21 @@ export default function AccountsScreen() {
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg[0], paddingTop: insets.top + 60 }]}>
+    <View
+      style={[
+        styles.root,
+        { backgroundColor: colors.bg[0], paddingTop: insets.top + 60 },
+      ]}
+    >
       {/* Highlight Banner */}
       {showHighlightBanner && highlightedAccountIds.size > 0 && (
         <View
           style={[
             styles.highlightBanner,
-            { backgroundColor: colors.accent + "15", borderColor: colors.accent + "40" },
+            {
+              backgroundColor: colors.accent + "15",
+              borderColor: colors.accent + "40",
+            },
           ]}
         >
           <Ionicons name="search" size={18} color={colors.accent} />
@@ -621,9 +633,13 @@ export default function AccountsScreen() {
               { color: colors.accent, fontFamily: fontConfig.regular },
             ]}
           >
-            Showing {highlightedAccountIds.size} account(s) matching "{searchQueryParam}"
+            Showing {highlightedAccountIds.size} account(s) matching "
+            {searchQueryParam}"
           </Text>
-          <Pressable onPress={dismissHighlightBanner} style={styles.highlightBannerClose}>
+          <Pressable
+            onPress={dismissHighlightBanner}
+            style={styles.highlightBannerClose}
+          >
             <Ionicons name="close-circle" size={20} color={colors.accent} />
           </Pressable>
         </View>
@@ -639,12 +655,12 @@ export default function AccountsScreen() {
                 onChangeText={handleSearchChange}
                 onClear={handleClearSearch}
                 placeholder="Search accounts..."
+                suggestions={accountNames}
               />
             </View>
             <Pressable
               onPress={() => {
                 setSortModalVisible(true);
-                // 🔐 AUTH: Update activity on user interaction
                 if (isAuthEnabled) {
                   updateActivity();
                 }
@@ -681,7 +697,10 @@ export default function AccountsScreen() {
         key={animationKey}
         data={sortedAccounts}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: 18,
+          paddingBottom: insets.bottom + 120,
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -719,7 +738,8 @@ export default function AccountsScreen() {
                       : selectedAccounts.has(item.id)
                       ? colors.accent
                       : colors.cardBorder,
-                    borderWidth: isHighlighted || selectedAccounts.has(item.id) ? 2 : 1,
+                    borderWidth:
+                      isHighlighted || selectedAccounts.has(item.id) ? 2 : 1,
                   },
                 ]}
                 android_ripple={{ color: colors.accent + "22" }}
@@ -746,7 +766,11 @@ export default function AccountsScreen() {
                 {/* Header */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
-                    <Ionicons name="person-circle" size={28} color={colors.accent} />
+                    <Ionicons
+                      name="person-circle"
+                      size={28}
+                      color={colors.accent}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text
                         style={[
@@ -761,7 +785,10 @@ export default function AccountsScreen() {
                         <Text
                           style={[
                             styles.matchBadge,
-                            { color: colors.accent, fontFamily: fontConfig.regular },
+                            {
+                              color: colors.accent,
+                              fontFamily: fontConfig.regular,
+                            },
                           ]}
                         >
                           <Ionicons name="search" size={12} /> Matched
@@ -790,13 +817,20 @@ export default function AccountsScreen() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ type: "timing", duration: 200 }}
                     >
-                      <View style={[styles.cardBody, { borderTopColor: colors.cardBorder }]}>
+                      <View
+                        style={[
+                          styles.cardBody,
+                          { borderTopColor: colors.cardBorder },
+                        ]}
+                      >
                         {schema
                           .filter((f) => f !== "id" && f !== "name")
                           .map((fieldName) => {
                             const value = item[fieldName];
                             const fieldKey = `${item.id}-${fieldName}`;
-                            const isPassword = fieldName.toLowerCase().includes("password");
+                            const isPassword = fieldName
+                              .toLowerCase()
+                              .includes("password");
                             const isPwVisible = visiblePw[fieldKey];
 
                             return (
@@ -804,7 +838,10 @@ export default function AccountsScreen() {
                                 <Text
                                   style={[
                                     styles.fieldLabel,
-                                    { color: colors.subtext, fontFamily: fontConfig.regular },
+                                    {
+                                      color: colors.subtext,
+                                      fontFamily: fontConfig.regular,
+                                    },
                                   ]}
                                 >
                                   {fieldName.charAt(0).toUpperCase() +
@@ -821,7 +858,9 @@ export default function AccountsScreen() {
                                     ]}
                                     numberOfLines={1}
                                   >
-                                    {isPassword && !isPwVisible ? "••••••••" : value || "—"}
+                                    {isPassword && !isPwVisible
+                                      ? "••••••••"
+                                      : value || "—"}
                                   </Text>
                                   <View style={styles.fieldActions}>
                                     {isPassword && (
@@ -837,19 +876,29 @@ export default function AccountsScreen() {
                                           }
                                         }}
                                         style={styles.iconButton}
-                                        android_ripple={{ color: colors.accent + "33" }}
+                                        android_ripple={{
+                                          color: colors.accent + "33",
+                                        }}
                                       >
                                         <Ionicons
-                                          name={isPwVisible ? "eye-off-outline" : "eye-outline"}
+                                          name={
+                                            isPwVisible
+                                              ? "eye-off-outline"
+                                              : "eye-outline"
+                                          }
                                           size={18}
                                           color={colors.muted}
                                         />
                                       </Pressable>
                                     )}
                                     <Pressable
-                                      onPress={() => copyToClipboard(value, fieldKey)}
+                                      onPress={() =>
+                                        copyToClipboard(value, fieldKey)
+                                      }
                                       style={styles.iconButton}
-                                      android_ripple={{ color: colors.accent + "33" }}
+                                      android_ripple={{
+                                        color: colors.accent + "33",
+                                      }}
                                     >
                                       <Ionicons
                                         name={
@@ -859,7 +908,9 @@ export default function AccountsScreen() {
                                         }
                                         size={18}
                                         color={
-                                          copiedField === fieldKey ? colors.accent : colors.muted
+                                          copiedField === fieldKey
+                                            ? colors.accent
+                                            : colors.muted
                                         }
                                       />
                                     </Pressable>
@@ -888,11 +939,18 @@ export default function AccountsScreen() {
                             ]}
                             android_ripple={{ color: colors.accent + "33" }}
                           >
-                            <Ionicons name="create-outline" size={18} color={colors.accent} />
+                            <Ionicons
+                              name="create-outline"
+                              size={18}
+                              color={colors.accent}
+                            />
                             <Text
                               style={[
                                 styles.actionButtonText,
-                                { color: colors.accent, fontFamily: fontConfig.bold },
+                                {
+                                  color: colors.accent,
+                                  fontFamily: fontConfig.bold,
+                                },
                               ]}
                             >
                               Edit
@@ -916,11 +974,18 @@ export default function AccountsScreen() {
                             ]}
                             android_ripple={{ color: colors.danger + "33" }}
                           >
-                            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                            <Ionicons
+                              name="trash-outline"
+                              size={18}
+                              color={colors.danger}
+                            />
                             <Text
                               style={[
                                 styles.actionButtonText,
-                                { color: colors.danger, fontFamily: fontConfig.bold },
+                                {
+                                  color: colors.danger,
+                                  fontFamily: fontConfig.bold,
+                                },
                               ]}
                             >
                               Delete
@@ -938,7 +1003,9 @@ export default function AccountsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons
-              name={debouncedQuery.trim() ? "search-outline" : "person-add-outline"}
+              name={
+                debouncedQuery.trim() ? "search-outline" : "person-add-outline"
+              }
               size={64}
               color={colors.muted}
             />

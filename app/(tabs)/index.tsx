@@ -499,6 +499,7 @@ export default function ManageScreen() {
               value={searchQuery}
               onChangeText={handleSearchChange}
               onClear={handleClearSearch}
+              suggestions={platforms.map((p) => p.name)}
             />
           </View>
           <Pressable
