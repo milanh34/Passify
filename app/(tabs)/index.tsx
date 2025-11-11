@@ -485,7 +485,7 @@ export default function ManageScreen() {
                 { color: colors.accent, fontFamily: fontConfig.regular },
               ]}
             >
-              Theme
+              Customize
             </Text>
           </Pressable>
         )}

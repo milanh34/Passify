@@ -230,7 +230,7 @@ export default function Customize() {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          Customize
+          App Customization
         </Text>
         <View style={{ width: 40 }} />
       </View>
