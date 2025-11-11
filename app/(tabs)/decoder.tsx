@@ -25,6 +25,8 @@ import { unpackHeader, calculateChecksum, decodeFromPixels, BLOCK_CONSTANTS } fr
 import { loadPNGAsPixels } from "../../src/utils/image";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { generateExportText, toTitleCase } from "../../src/utils/transferParser";
+import { useAnimation } from '../../src/context/AnimationContext';
+import { MotiView } from "moti";
 
 interface DecodedData {
   database: Record<string, any[]>;
@@ -37,10 +39,16 @@ export default function DecoderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  // ✅ NEW: Get TAB_ANIMATION
+  const { TAB_ANIMATION } = useAnimation();
+
+  // ✅ NEW: Animation key state
+  const [animationKey, setAnimationKey] = useState(0);
+
   // 🔐 AUTH: Get auth state and initialize inactivity tracker
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
-  
+
   const [imageUri, setImageUri] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +59,7 @@ export default function DecoderScreen() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
-  
+
   // Byte-accurate progress
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
     phase: 'readFile',
@@ -60,7 +68,7 @@ export default function DecoderScreen() {
     percent: 0,
   });
   const [showProgress, setShowProgress] = useState(false);
-  
+
   // Proper cleanup refs
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
@@ -77,6 +85,9 @@ export default function DecoderScreen() {
   // 🔐 AUTH: Update activity on screen focus
   useFocusEffect(
     React.useCallback(() => {
+      // ✅ NEW: Trigger animation on focus
+      setAnimationKey((prev) => prev + 1);
+
       if (isAuthEnabled && !isProcessingRef.current) {
         updateActivity();
       }
@@ -98,7 +109,7 @@ export default function DecoderScreen() {
   const cleanup = () => {
     isProcessingRef.current = false;
     progressCallbacksRef.current.clear();
-    
+
     if (isMountedRef.current) {
       setLoading(false);
       setShowProgress(false);
@@ -116,9 +127,9 @@ export default function DecoderScreen() {
       console.log('🛑 Cancelling ongoing decode...');
       cleanup();
     }
-    
+
     setRefreshing(true);
-    
+
     setImageUri("");
     setPassword("");
     setDecodedData(null);
@@ -131,9 +142,9 @@ export default function DecoderScreen() {
       totalBytes: 0,
       percent: 0,
     });
-    
+
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     if (isMountedRef.current) {
       setRefreshing(false);
     }
@@ -150,7 +161,7 @@ export default function DecoderScreen() {
         type: "image/png",
         copyToCacheDirectory: true,
       });
-      
+
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setImageUri(result.assets[0].uri);
         showToastMessage("Image loaded", "info");
@@ -403,46 +414,46 @@ export default function DecoderScreen() {
 
   const handleImportToAccounts = async () => {
     if (!decodedData) return;
-    
+
     setLoading(true);
 
     // 🔐 AUTH: Update activity before starting import
     if (isAuthEnabled) {
       updateActivity();
     }
-    
+
     try {
       let importedCount = 0;
       let updatedCount = 0;
-      
+
       // Process each platform
       for (const [platformId, accounts] of Object.entries(decodedData.database)) {
         const platformName = toTitleCase(platformId.replace(/_/g, ' '));
-        
+
         // Add platform if it doesn't exist
         if (!database[platformId]) {
           addPlatform(platformId, platformName);
         }
-        
+
         // Merge schemas
         const existingSchema = schemas[platformId] || [];
         const newSchema = decodedData.schemas[platformId] || [];
         const mergedSchema = Array.from(new Set([...existingSchema, ...newSchema]));
-        
+
         if (mergedSchema.length > existingSchema.length) {
           updatePlatformSchema(platformId, mergedSchema);
         }
-        
+
         // Import accounts
         for (const account of accounts) {
           const existingAccounts = database[platformId] || [];
-          
+
           // Check for duplicate by email or username
           const identifierField = account.email ? 'email' : account.username ? 'username' : null;
           const duplicate = identifierField
             ? existingAccounts.find((a: any) => a[identifierField] === account[identifierField])
             : null;
-          
+
           if (duplicate) {
             updateAccount(platformId, duplicate.id, account);
             updatedCount++;
@@ -452,19 +463,19 @@ export default function DecoderScreen() {
           }
         }
       }
-      
+
       showToastMessage(
         `Import complete! ${importedCount} new, ${updatedCount} updated`,
         "success"
       );
-      
+
       // Navigate to manage screen after 1 second
       setTimeout(() => {
         if (isMountedRef.current) {
           router.push('/(tabs)');
         }
       }, 1000);
-      
+
     } catch (error: any) {
       console.error("Import error:", error);
       showToastMessage(`Import failed: ${error.message}`, "error");
@@ -512,183 +523,193 @@ export default function DecoderScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
-          />
-        }
+      <MotiView
+        key={animationKey}
+        from={TAB_ANIMATION.from}
+        animate={TAB_ANIMATION.animate}
+        transition={{
+          type: TAB_ANIMATION.type,
+          duration: TAB_ANIMATION.duration,
+        }}
+        style={{ flex: 1 }}
       >
-        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          Decode from Image
-        </Text>
-        
-        <Text style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-          Recover your account data from a colored encrypted image.
-        </Text>
-
-        {/* Pick Image Button */}
-        <Pressable
-          onPress={handlePickImage}
-          disabled={loading}
-          style={[styles.button, { backgroundColor: colors.accent2, opacity: loading ? 0.7 : 1 }]}
-        >
-          <Ionicons name="folder-open" size={20} color="#fff" />
-          <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-            {imageUri ? "Change Image" : "Select Image"}
-          </Text>
-        </Pressable>
-
-        {imageUri && (
-          <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-            📄 {imageUri.split('/').pop()}
-          </Text>
-        )}
-
-        {/* Password Input */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-            Password
-          </Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <TextInput
-              style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                // 🔐 AUTH: Update activity on text input
-                if (isAuthEnabled) {
-                  updateActivity();
-                }
-              }}
-              placeholder="Enter decryption password"
-              placeholderTextColor={colors.muted}
-              secureTextEntry={!showPassword}
-              editable={!loading}
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
             />
-            <Pressable
-              onPress={() => {
-                setShowPassword(!showPassword);
-                // 🔐 AUTH: Update activity on toggle
-                if (isAuthEnabled) {
-                  updateActivity();
-                }
-              }}
-              style={styles.eyeIcon}
-            >
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Progress Bar */}
-        {showProgress && (
-          <ProgressBar
-            percent={progressUpdate.percent}
-            phase={progressUpdate.phase}
-            processedBytes={progressUpdate.processedBytes}
-            totalBytes={progressUpdate.totalBytes}
-            visible={showProgress}
-          />
-        )}
-
-        {/* Decode Button */}
-        <Pressable
-          onPress={handleDecode}
-          disabled={loading || !imageUri}
-          style={[styles.button, { backgroundColor: colors.accent, opacity: (!imageUri || loading) ? 0.5 : 1 }]}
+          }
         >
-          {loading && !decodedData ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="lock-open" size={20} color="#fff" />
-              <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-                Decode Image
-              </Text>
-            </>
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+            Decode from Image
+          </Text>
+
+          <Text style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+            Recover your account data from a colored encrypted image.
+          </Text>
+
+          {/* Pick Image Button */}
+          <Pressable
+            onPress={handlePickImage}
+            disabled={loading}
+            style={[styles.button, { backgroundColor: colors.accent2, opacity: loading ? 0.7 : 1 }]}
+          >
+            <Ionicons name="folder-open" size={20} color="#fff" />
+            <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+              {imageUri ? "Change Image" : "Select Image"}
+            </Text>
+          </Pressable>
+
+          {imageUri && (
+            <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+              📄 {imageUri.split('/').pop()}
+            </Text>
           )}
-        </Pressable>
 
-        {/* Post-Decode Actions */}
-        {decodedData && !loading && (
+          {/* Password Input */}
           <View style={styles.section}>
-            <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.accent }]}>
-              <Ionicons name="checkmark-circle" size={48} color={colors.accent} />
-              <Text style={[styles.successText, { color: colors.text, fontFamily: fontConfig.bold }]}>
-                Decoding Successful!
-              </Text>
-              <Text style={[styles.successSubtext, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-                {Object.keys(decodedData.database).length} platforms • {' '}
-                {Object.values(decodedData.database).flat().length} accounts
-              </Text>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
+            <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+              Password
+            </Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  // 🔐 AUTH: Update activity on text input
+                  if (isAuthEnabled) {
+                    updateActivity();
+                  }
+                }}
+                placeholder="Enter decryption password"
+                placeholderTextColor={colors.muted}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+              />
               <Pressable
-                onPress={handleImportToAccounts}
-                disabled={loading}
-                style={[styles.button, styles.primaryAction, { backgroundColor: colors.accent }]}
+                onPress={() => {
+                  setShowPassword(!showPassword);
+                  // 🔐 AUTH: Update activity on toggle
+                  if (isAuthEnabled) {
+                    updateActivity();
+                  }
+                }}
+                style={styles.eyeIcon}
               >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="cloud-upload" size={20} color="#fff" />
-                    <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-                      Import to Accounts
-                    </Text>
-                  </>
-                )}
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
               </Pressable>
+            </View>
+          </View>
 
-              <Pressable
-                onPress={handleGetFormattedText}
-                style={[styles.button, styles.secondaryAction, { 
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
-                  borderWidth: 1,
-                }]}
-              >
-                <Ionicons name="document-text" size={20} color={colors.text} />
-                <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
-                  Get Formatted Text
+          {/* Progress Bar */}
+          {showProgress && (
+            <ProgressBar
+              percent={progressUpdate.percent}
+              phase={progressUpdate.phase}
+              processedBytes={progressUpdate.processedBytes}
+              totalBytes={progressUpdate.totalBytes}
+              visible={showProgress}
+            />
+          )}
+
+          {/* Decode Button */}
+          <Pressable
+            onPress={handleDecode}
+            disabled={loading || !imageUri}
+            style={[styles.button, { backgroundColor: colors.accent, opacity: (!imageUri || loading) ? 0.5 : 1 }]}
+          >
+            {loading && !decodedData ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="lock-open" size={20} color="#fff" />
+                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                  Decode Image
                 </Text>
-              </Pressable>
-            </View>
+              </>
+            )}
+          </Pressable>
 
-            {/* JSON Preview */}
+          {/* Post-Decode Actions */}
+          {decodedData && !loading && (
             <View style={styles.section}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-                  Decoded Data (JSON)
+              <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.accent }]}>
+                <Ionicons name="checkmark-circle" size={48} color={colors.accent} />
+                <Text style={[styles.successText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                  Decoding Successful!
                 </Text>
-                <Pressable onPress={handleCopyJSON} style={styles.copyButton}>
-                  <Ionicons name="copy-outline" size={18} color={colors.accent} />
-                  <Text style={[styles.copyText, { color: colors.accent, fontFamily: fontConfig.regular }]}>
-                    Copy
+                <Text style={[styles.successSubtext, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                  {Object.keys(decodedData.database).length} platforms • {' '}
+                  {Object.values(decodedData.database).flat().length} accounts
+                </Text>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <Pressable
+                  onPress={handleImportToAccounts}
+                  disabled={loading}
+                  style={[styles.button, styles.primaryAction, { backgroundColor: colors.accent }]}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="cloud-upload" size={20} color="#fff" />
+                      <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                        Import to Accounts
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  onPress={handleGetFormattedText}
+                  style={[styles.button, styles.secondaryAction, {
+                    backgroundColor: colors.card,
+                    borderColor: colors.cardBorder,
+                    borderWidth: 1,
+                  }]}
+                >
+                  <Ionicons name="document-text" size={20} color={colors.text} />
+                  <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                    Get Formatted Text
                   </Text>
                 </Pressable>
               </View>
-              
-              <ScrollView
-                style={[styles.outputBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-                nestedScrollEnabled
-              >
-                <Text style={[styles.outputText, { color: colors.text, fontFamily: "monospace" }]}>
-                  {decodedText}
-                </Text>
-              </ScrollView>
+
+              {/* JSON Preview */}
+              <View style={styles.section}>
+                <View style={styles.labelRow}>
+                  <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                    Decoded Data (JSON)
+                  </Text>
+                  <Pressable onPress={handleCopyJSON} style={styles.copyButton}>
+                    <Ionicons name="copy-outline" size={18} color={colors.accent} />
+                    <Text style={[styles.copyText, { color: colors.accent, fontFamily: fontConfig.regular }]}>
+                      Copy
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  style={[styles.outputBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+                  nestedScrollEnabled
+                >
+                  <Text style={[styles.outputText, { color: colors.text, fontFamily: "monospace" }]}>
+                    {decodedText}
+                  </Text>
+                </ScrollView>
+              </View>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      </MotiView>
 
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>

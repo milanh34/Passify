@@ -10,11 +10,13 @@ import {
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti"; // ✅ Already imported
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { useAuth } from "../../src/context/AuthContext";
 import { useInactivityTracker } from "../../src/utils/inactivityTracker";
+import { useAnimation } from "../../src/context/AnimationContext"; // ✅ NEW: Import animation
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal";
@@ -46,12 +48,17 @@ export default function ManageScreen() {
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
+  // ✅ NEW: Get TAB_ANIMATION
+  const { TAB_ANIMATION } = useAnimation();
+
+  // ✅ NEW: Animation key state
+  const [animationKey, setAnimationKey] = useState(0);
+
   // Modal states
   const [platformModal, setPlatformModal] = useState<{
     visible: boolean;
     editing?: { key: string; name: string };
   }>({ visible: false });
-
   const [deleteModal, setDeleteModal] = useState<{
     visible: boolean;
     item?: any;
@@ -84,6 +91,9 @@ export default function ManageScreen() {
   // Load sort preference on mount
   useFocusEffect(
     useCallback(() => {
+      // ✅ NEW: Trigger animation on focus
+      setAnimationKey((prev) => prev + 1);
+
       const loadSortPreference = async () => {
         try {
           const saved = await AsyncStorage.getItem(SORT_PREFERENCE_KEY);
@@ -184,7 +194,6 @@ export default function ManageScreen() {
         accounts.length > 0 && accounts[0].platform
           ? accounts[0].platform
           : toTitleCase(key.replace(/_/g, " "));
-
       return {
         key,
         name: platformName,
@@ -224,7 +233,6 @@ export default function ManageScreen() {
   }, [searchResults]);
 
   // Save platform
-  // Save platform
   const savePlatform = (data: Record<string, any>) => {
     const name = data.name?.trim();
     if (!name) return;
@@ -236,7 +244,6 @@ export default function ManageScreen() {
       addPlatform(name);
       showToastMessage("Platform added successfully");
     }
-
     setPlatformModal({ visible: false });
     // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
@@ -297,12 +304,10 @@ export default function ManageScreen() {
         } else {
           newSet.add(platformKey);
         }
-
         // Exit selection mode if no items selected
         if (newSet.size === 0) {
           setIsSelectionMode(false);
         }
-
         return newSet;
       });
     }
@@ -369,7 +374,6 @@ export default function ManageScreen() {
       deletePlatform(deleteModal.item.key);
       showToastMessage("Platform deleted successfully", "success");
     }
-
     setDeleteModal({ visible: false });
     // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
@@ -380,10 +384,13 @@ export default function ManageScreen() {
   if (isDbLoading || !fontsLoaded) {
     return (
       <View
-        style={[
-          styles.root,
-          { backgroundColor: colors.bg[0], paddingTop: insets.top },
-        ]}
+        style={{
+          ...styles.root,
+          backgroundColor: colors.bg[0],
+          paddingTop: insets.top,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
         <ActivityIndicator size="large" color={colors.accent} />
       </View>
@@ -392,54 +399,96 @@ export default function ManageScreen() {
 
   return (
     <View
-      style={[
-        styles.root,
-        { backgroundColor: colors.bg[0], paddingTop: insets.top },
-      ]}
+      style={{
+        ...styles.root,
+        backgroundColor: colors.bg[0],
+        paddingTop: insets.top,
+      }}
     >
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <Text
-          style={[
-            styles.title,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
-          {isSelectionMode ? `${selectedPlatforms.size} Selected` : "Manage"}
-        </Text>
-        {isSelectionMode ? (
-          // Show Select All / Deselect All based on selection
-          selectedPlatforms.size === sortedPlatforms.length ? (
-            <Pressable
-              onPress={deselectAllPlatforms}
-              style={[
-                styles.selectAllBtn,
-                {
-                  borderColor: colors.cardBorder,
-                  backgroundColor: colors.card,
-                },
-              ]}
-              android_ripple={{ color: colors.accent + "33" }}
-            >
-              <Ionicons
-                name="close-circle-outline"
-                size={18}
-                color={colors.accent}
-              />
-              <Text
+      {/* ✅ NEW: Animated wrapper */}
+      <MotiView
+        key={animationKey}
+        from={TAB_ANIMATION.from}
+        animate={TAB_ANIMATION.animate}
+        transition={{
+          type: TAB_ANIMATION.type,
+          duration: TAB_ANIMATION.duration,
+        }}
+        style={{ flex: 1 }}
+      >
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <Text
+            style={{
+              ...styles.title,
+              color: colors.text,
+              fontFamily: fontConfig.bold,
+            }}
+          >
+            {isSelectionMode ? `${selectedPlatforms.size} Selected` : "Manage"}
+          </Text>
+          {isSelectionMode ? (
+            // Show Select All / Deselect All based on selection
+            selectedPlatforms.size === sortedPlatforms.length ? (
+              <Pressable
+                onPress={deselectAllPlatforms}
                 style={[
-                  styles.selectAllText,
-                  { color: colors.accent, fontFamily: fontConfig.bold },
+                  styles.selectAllBtn,
+                  {
+                    borderColor: colors.cardBorder,
+                    backgroundColor: colors.card,
+                  },
                 ]}
+                android_ripple={{ color: colors.accent + "33" }}
               >
-                Deselect All
-              </Text>
-            </Pressable>
+                <Ionicons
+                  name="close-circle-outline"
+                  size={18}
+                  color={colors.accent}
+                />
+                <Text
+                  style={{
+                    ...styles.selectAllText,
+                    color: colors.accent,
+                    fontFamily: fontConfig.bold,
+                  }}
+                >
+                  Deselect All
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={selectAllPlatforms}
+                style={[
+                  styles.selectAllBtn,
+                  {
+                    borderColor: colors.cardBorder,
+                    backgroundColor: colors.card,
+                  },
+                ]}
+                android_ripple={{ color: colors.accent + "33" }}
+              >
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={18}
+                  color={colors.accent}
+                />
+                <Text
+                  style={{
+                    ...styles.selectAllText,
+                    color: colors.accent,
+                    fontFamily: fontConfig.bold,
+                  }}
+                >
+                  Select All
+                </Text>
+              </Pressable>
+            )
           ) : (
             <Pressable
-              onPress={selectAllPlatforms}
+              onPress={() => router.push("/customize")}
               style={[
-                styles.selectAllBtn,
+                styles.settingsBtn,
                 {
                   borderColor: colors.cardBorder,
                   backgroundColor: colors.card,
@@ -448,278 +497,254 @@ export default function ManageScreen() {
               android_ripple={{ color: colors.accent + "33" }}
             >
               <Ionicons
-                name="checkmark-done-outline"
+                name="color-palette-outline"
                 size={18}
                 color={colors.accent}
               />
               <Text
-                style={[
-                  styles.selectAllText,
-                  { color: colors.accent, fontFamily: fontConfig.bold },
-                ]}
+                style={{
+                  ...styles.settingsBtnText,
+                  color: colors.accent,
+                  fontFamily: fontConfig.regular,
+                }}
               >
-                Select All
+                Customize
               </Text>
             </Pressable>
-          )
-        ) : (
-          <Pressable
-            onPress={() => router.push("/customize")}
-            style={[
-              styles.settingsBtn,
-              {
-                borderColor: colors.cardBorder,
-                backgroundColor: colors.card,
-              },
-            ]}
-            android_ripple={{ color: colors.accent + "33" }}
-          >
-            <Ionicons
-              name="color-palette-outline"
-              size={18}
-              color={colors.accent}
-            />
-            <Text
-              style={[
-                styles.settingsBtnText,
-                { color: colors.accent, fontFamily: fontConfig.regular },
-              ]}
-            >
-              Customize
-            </Text>
-          </Pressable>
-        )}
-      </View>
-
-      {/* Search Bar */}
-      {!isSelectionMode && (
-        <View style={styles.searchSortRow}>
-          <View style={styles.searchContainer}>
-            <SearchBar
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-              onClear={handleClearSearch}
-              suggestions={platforms.map((p) => p.name)}
-            />
-          </View>
-          <Pressable
-            onPress={() => setSortModalVisible(true)}
-            style={[
-              styles.sortButton,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.cardBorder,
-              },
-            ]}
-            android_ripple={{ color: colors.accent + "22" }}
-          >
-            <Ionicons name="funnel-outline" size={20} color={colors.accent} />
-          </Pressable>
+          )}
         </View>
-      )}
 
-      {/* Result count */}
-      {!isSelectionMode && debouncedQuery.trim() && (
-        <Text
-          style={[
-            styles.resultCount,
-            { color: colors.muted, fontFamily: fontConfig.regular },
-          ]}
-        >
-          Showing {sortedPlatforms.length} of {platforms.length} platforms
-        </Text>
-      )}
-
-      {/* Platform List */}
-      <FlatList
-        data={sortedPlatforms}
-        keyExtractor={(i) => i.key}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
-          />
-        }
-        renderItem={({ item, index }) => {
-          const matchInfo = searchMatchMap.get(item.key);
-          const showAccountMatchIndicator =
-            debouncedQuery.trim() &&
-            matchInfo?.matchType === "account" &&
-            matchInfo.matchedAccounts &&
-            matchInfo.matchedAccounts.length > 0;
-
-          return (
+        {/* Search Bar */}
+        {!isSelectionMode && (
+          <View style={styles.searchSortRow}>
+            <View style={styles.searchContainer}>
+              <SearchBar
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+                onClear={handleClearSearch}
+                suggestions={platforms.map((p) => p.name)}
+              />
+            </View>
             <Pressable
-              onPress={() => handlePlatformPress(item.key, item.name)}
-              onLongPress={() => handleLongPress(item.key)}
-              delayLongPress={500}
-              android_ripple={{ color: colors.accent + "22" }}
+              onPress={() => setSortModalVisible(true)}
               style={[
-                styles.card,
+                styles.sortButton,
                 {
                   backgroundColor: colors.card,
-                  borderColor: selectedPlatforms.has(item.key)
-                    ? colors.accent
-                    : colors.cardBorder,
-                  borderWidth: selectedPlatforms.has(item.key) ? 2 : 1,
+                  borderColor: colors.cardBorder,
                 },
               ]}
+              android_ripple={{ color: colors.accent + "22" }}
             >
-              {/* Selection indicator */}
-              {isSelectionMode && (
-                <View style={styles.selectionIndicator}>
-                  <Ionicons
-                    name={
-                      selectedPlatforms.has(item.key)
-                        ? "checkmark-circle"
-                        : "ellipse-outline"
-                    }
-                    size={24}
-                    color={
-                      selectedPlatforms.has(item.key)
-                        ? colors.accent
-                        : colors.muted
-                    }
-                  />
-                </View>
-              )}
+              <Ionicons name="funnel-outline" size={20} color={colors.accent} />
+            </Pressable>
+          </View>
+        )}
 
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  {/* 🎨 ICONS: Use PlatformIcon instead of generic folder icon */}
-                  <PlatformIcon
-                    platformName={item.name}
-                    iconKey={item.icon}
-                    iconColor={item.iconColor}
-                    size={48}
-                  />
-                  <View style={styles.cardInfo}>
-                    <Text
-                      style={[
-                        styles.cardTitle,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {item.name}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.cardSubtitle,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      {item.count} account{item.count !== 1 ? "s" : ""}
-                    </Text>
-                    {/* Matching accounts indicator */}
-                    {showAccountMatchIndicator && (
-                      <Text
-                        style={[
-                          styles.matchIndicator,
-                          {
-                            color: colors.accent,
-                            fontFamily: fontConfig.regular,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name="search"
-                          size={12}
-                          color={colors.accent}
-                        />{" "}
-                        {matchInfo.matchedAccounts!.length} matching account
-                        {matchInfo.matchedAccounts!.length !== 1 ? "s" : ""}
-                      </Text>
-                    )}
-                  </View>
-                </View>
+        {/* Result count */}
+        {!isSelectionMode && debouncedQuery.trim() && (
+          <Text
+            style={{
+              ...styles.resultCount,
+              color: colors.muted,
+              fontFamily: fontConfig.regular,
+            }}
+          >
+            Showing {sortedPlatforms.length} of {platforms.length} platforms
+          </Text>
+        )}
 
-                {/* Action buttons - only show when NOT in selection mode */}
-                {!isSelectionMode && (
-                  <View style={styles.actions}>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setPlatformModal({
-                          visible: true,
-                          editing: item,
-                        });
-                        // 🔐 AUTH: Update activity on user interaction
-                        if (isAuthEnabled) {
-                          updateActivity();
-                        }
-                      }}
-                      style={styles.iconBtn}
-                      android_ripple={{ color: colors.accent + "33" }}
-                    >
-                      <Ionicons
-                        name="create-outline"
-                        size={20}
-                        color={colors.text}
-                      />
-                    </Pressable>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setDeleteModal({
-                          visible: true,
-                          item,
-                        });
-                        // 🔐 AUTH: Update activity on user interaction
-                        if (isAuthEnabled) {
-                          updateActivity();
-                        }
-                      }}
-                      style={styles.iconBtn}
-                      android_ripple={{ color: colors.danger + "33" }}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={20}
-                        color={colors.danger}
-                      />
-                    </Pressable>
+        {/* Platform List */}
+        <FlatList
+          data={sortedPlatforms}
+          keyExtractor={(i) => i.key}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
+          }
+          renderItem={({ item, index }) => {
+            const matchInfo = searchMatchMap.get(item.key);
+            const showAccountMatchIndicator =
+              debouncedQuery.trim() &&
+              matchInfo?.matchType === "account" &&
+              matchInfo.matchedAccounts &&
+              matchInfo.matchedAccounts.length > 0;
+
+            return (
+              <Pressable
+                onPress={() => handlePlatformPress(item.key, item.name)}
+                onLongPress={() => handleLongPress(item.key)}
+                delayLongPress={500}
+                android_ripple={{ color: colors.accent + "22" }}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: selectedPlatforms.has(item.key)
+                      ? colors.accent
+                      : colors.cardBorder,
+                    borderWidth: selectedPlatforms.has(item.key) ? 2 : 1,
+                  },
+                ]}
+              >
+                {/* Selection indicator */}
+                {isSelectionMode && (
+                  <View style={styles.selectionIndicator}>
+                    <Ionicons
+                      name={
+                        selectedPlatforms.has(item.key)
+                          ? "checkmark-circle"
+                          : "ellipse-outline"
+                      }
+                      size={24}
+                      color={
+                        selectedPlatforms.has(item.key)
+                          ? colors.accent
+                          : colors.muted
+                      }
+                    />
                   </View>
                 )}
-              </View>
-            </Pressable>
-          );
-        }}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons
-              name={
-                debouncedQuery.trim() ? "search-outline" : "folder-open-outline"
-              }
-              size={64}
-              color={colors.muted}
-            />
-            <Text
-              style={[
-                styles.emptyText,
-                { color: colors.subtext, fontFamily: fontConfig.regular },
-              ]}
-            >
-              {debouncedQuery.trim()
-                ? "No platforms or accounts match your search."
-                : "No platforms yet. Tap + to add one!"}
-            </Text>
-          </View>
-        }
-      />
+
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    {/* 🎨 ICONS: Use PlatformIcon instead of generic folder icon */}
+                    <PlatformIcon
+                      platformName={item.name}
+                      iconKey={item.icon}
+                      iconColor={item.iconColor}
+                      size={48}
+                    />
+                    <View style={styles.cardInfo}>
+                      <Text
+                        style={{
+                          ...styles.cardTitle,
+                          color: colors.text,
+                          fontFamily: fontConfig.bold,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={{
+                          ...styles.cardSubtitle,
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        }}
+                      >
+                        {item.count} account{item.count !== 1 ? "s" : ""}
+                      </Text>
+                      {/* Matching accounts indicator */}
+                      {showAccountMatchIndicator && (
+                        <Text
+                          style={{
+                            ...styles.matchIndicator,
+                            color: colors.accent,
+                            fontFamily: fontConfig.regular,
+                          }}
+                        >
+                          <Ionicons
+                            name="search"
+                            size={12}
+                            color={colors.accent}
+                          />{" "}
+                          {matchInfo.matchedAccounts!.length} matching account
+                          {matchInfo.matchedAccounts!.length !== 1 ? "s" : ""}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Action buttons - only show when NOT in selection mode */}
+                  {!isSelectionMode && (
+                    <View style={styles.actions}>
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setPlatformModal({
+                            visible: true,
+                            editing: item,
+                          });
+                          // 🔐 AUTH: Update activity on user interaction
+                          if (isAuthEnabled) {
+                            updateActivity();
+                          }
+                        }}
+                        style={styles.iconBtn}
+                        android_ripple={{ color: colors.accent + "33" }}
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={20}
+                          color={colors.text}
+                        />
+                      </Pressable>
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal({
+                            visible: true,
+                            item,
+                          });
+                          // 🔐 AUTH: Update activity on user interaction
+                          if (isAuthEnabled) {
+                            updateActivity();
+                          }
+                        }}
+                        style={styles.iconBtn}
+                        android_ripple={{ color: colors.danger + "33" }}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={20}
+                          color={colors.danger}
+                        />
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons
+                name={
+                  debouncedQuery.trim()
+                    ? "search-outline"
+                    : "folder-open-outline"
+                }
+                size={64}
+                color={colors.muted}
+              />
+              <Text
+                style={{
+                  ...styles.emptyText,
+                  color: colors.subtext,
+                  fontFamily: fontConfig.regular,
+                }}
+              >
+                {debouncedQuery.trim()
+                  ? "No platforms or accounts match your search."
+                  : "No platforms yet. Tap + to add one!"}
+              </Text>
+            </View>
+          }
+        />
+      </MotiView>
 
       {/* FAB buttons */}
       {isSelectionMode && selectedPlatforms.size > 0 ? (
         <>
           {/* Delete button when in selection mode */}
-          <View style={[styles.fabContainer, { bottom: insets.bottom + 90 }]}>
+          <View style={{ ...styles.fabContainer, bottom: insets.bottom + 90 }}>
             <FAB
               onPress={handleDeleteSelected}
               icon="trash"
@@ -727,7 +752,7 @@ export default function ManageScreen() {
             />
           </View>
           {/* Cancel button */}
-          <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
+          <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
             <FAB
               onPress={exitSelectionMode}
               icon="close"
@@ -737,7 +762,7 @@ export default function ManageScreen() {
         </>
       ) : (
         /* Normal add button */
-        <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
+        <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
           <FAB
             onPress={() => {
               setPlatformModal({ visible: true });
@@ -753,7 +778,6 @@ export default function ManageScreen() {
       )}
 
       {/* Modals */}
-      {/* 🎨 ICONS: Enable icon selector for platform modal */}
       <FormModal
         visible={platformModal.visible}
         onClose={() => setPlatformModal({ visible: false })}
@@ -764,7 +788,6 @@ export default function ManageScreen() {
           platformModal.editing ? { name: platformModal.editing.name } : {}
         }
       />
-
       <DeleteModal
         visible={deleteModal.visible}
         onClose={() => setDeleteModal({ visible: false })}
@@ -780,14 +803,12 @@ export default function ManageScreen() {
             : `Are you sure you want to delete "${deleteModal.item?.name}" and all associated accounts? This action cannot be undone.`
         }
       />
-
       <SortModal
         visible={sortModalVisible}
         currentSort={sortOption}
         onSelect={handleSortSelect}
         onClose={() => setSortModalVisible(false)}
       />
-
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
   );

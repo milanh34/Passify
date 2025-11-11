@@ -31,11 +31,19 @@ import {
 import { savePixelsAsPNG } from '../../src/utils/image';
 import { downloadImage, shareFile, isExpoGo } from '../../src/utils/fileSharing';
 import { ThrottledProgress, ProgressUpdate } from '../../src/types/progress';
+import { useAnimation } from '../../src/context/AnimationContext';
+import { MotiView } from 'moti';
 
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
+
+  // ✅ NEW: Get TAB_ANIMATION
+  const { TAB_ANIMATION } = useAnimation();
+
+  // ✅ NEW: Animation key state
+  const [animationKey, setAnimationKey] = useState(0);
 
   // 🔐 AUTH: Get auth state and initialize inactivity tracker
   const { isAuthEnabled } = useAuth();
@@ -73,6 +81,9 @@ export default function EncoderScreen() {
   // 🔐 AUTH: Update activity on screen focus
   useFocusEffect(
     React.useCallback(() => {
+      // ✅ NEW: Trigger animation on focus
+      setAnimationKey((prev) => prev + 1);
+
       if (isAuthEnabled && !isProcessingRef.current) {
         updateActivity();
       }
@@ -332,148 +343,155 @@ export default function EncoderScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 },
-        ]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
-          />
-        }
+      <MotiView
+        key={animationKey}
+        from={TAB_ANIMATION.from}
+        animate={TAB_ANIMATION.animate}
+        transition={{
+          type: TAB_ANIMATION.type,
+          duration: TAB_ANIMATION.duration,
+        }}
+        style={{ flex: 1 }}
       >
-        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          Encode to Image
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-          Create an encrypted backup image from your account data
-        </Text>
-
-        {/* Password Input */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-            Encryption Password
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
+          }
+        >
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+            Encode to Image
           </Text>
-          <View
+          <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+            Create an encrypted backup image from your account data
+          </Text>
+
+          {/* Password Input */}
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+              Encryption Password
+            </Text>
+            <View
+              style={[
+                styles.inputContainer,
+                { backgroundColor: colors.card, borderColor: colors.cardBorder },
+              ]}
+            >
+              <TextInput
+                style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  // 🔐 AUTH: Update activity on text input
+                  if (isAuthEnabled) {
+                    updateActivity();
+                  }
+                }}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+                placeholder="Enter a strong password"
+                placeholderTextColor={colors.muted}
+              />
+              <Pressable
+                onPress={() => {
+                  setShowPassword(!showPassword);
+                  // 🔐 AUTH: Update activity on toggle
+                  if (isAuthEnabled) {
+                    updateActivity();
+                  }
+                }}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.muted}
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Progress Bar */}
+          {showProgress && (
+            <ProgressBar
+              percent={progressUpdate.percent}
+              phase={progressUpdate.phase}
+              processedBytes={progressUpdate.processedBytes}
+              totalBytes={progressUpdate.totalBytes}
+              visible={showProgress}
+            />
+          )}
+
+          {/* Generate Button */}
+          <Pressable
+            onPress={handleEncode}
+            disabled={loading || !password.trim()}
             style={[
-              styles.inputContainer,
-              { backgroundColor: colors.card, borderColor: colors.cardBorder },
+              styles.button,
+              { backgroundColor: colors.accent, opacity: loading || !password.trim() ? 0.5 : 1 },
             ]}
           >
-            <TextInput
-              style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                // 🔐 AUTH: Update activity on text input
-                if (isAuthEnabled) {
-                  updateActivity();
-                }
-              }}
-              secureTextEntry={!showPassword}
-              editable={!loading}
-              placeholder="Enter a strong password"
-              placeholderTextColor={colors.muted}
-            />
-            <Pressable
-              onPress={() => {
-                setShowPassword(!showPassword);
-                // 🔐 AUTH: Update activity on toggle
-                if (isAuthEnabled) {
-                  updateActivity();
-                }
-              }}
-              style={styles.eyeIcon}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-off' : 'eye'}
-                size={20}
-                color={colors.muted}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Progress Bar */}
-        {showProgress && (
-          <ProgressBar
-            percent={progressUpdate.percent}
-            phase={progressUpdate.phase}
-            processedBytes={progressUpdate.processedBytes}
-            totalBytes={progressUpdate.totalBytes}
-            visible={showProgress}
-          />
-        )}
-
-        {/* Generate Button */}
-        <Pressable
-          onPress={handleEncode}
-          disabled={loading || !password.trim()}
-          style={[
-            styles.button,
-            { backgroundColor: colors.accent, opacity: loading || !password.trim() ? 0.5 : 1 },
-          ]}
-        >
-          {loading && !imageUri ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Ionicons name="lock-closed" size={20} color="#fff" />
-          )}
-          <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
-            Generate Encrypted Image
-          </Text>
-        </Pressable>
-
-        {/* Generated Image Preview */}
-        {imageUri && !loading && (
-          <>
-            <View style={styles.section}>
-              <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-                Generated Backup Image
-              </Text>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
-              <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-                {filename}
-              </Text>
-            </View>
-
-            {/* Share & Download Buttons */}
-            <View style={styles.buttonRow}>
-              <Pressable
-                onPress={handleSharePress}
-                style={[styles.buttonHalf, { backgroundColor: colors.accent2 }]}
-              >
-                <Ionicons name="share-outline" size={20} color="#fff" />
-                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
-                  Share
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleDownloadPress}
-                style={[styles.buttonHalf, { backgroundColor: colors.accent }]}
-              >
-                <Ionicons name="download-outline" size={20} color="#fff" />
-                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
-                  Download
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Expo Go Info */}
-            {isExpoGo() && (
-              <Text style={[styles.infoText, { color: colors.danger, fontFamily: fontConfig.regular }]}>
-                ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
-              </Text>
+            {loading && !imageUri ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Ionicons name="lock-closed" size={20} color="#fff" />
             )}
-          </>
-        )}
-      </ScrollView>
+            <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+              Generate Encrypted Image
+            </Text>
+          </Pressable>
+
+          {/* Generated Image Preview */}
+          {imageUri && !loading && (
+            <>
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                  Generated Backup Image
+                </Text>
+                <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
+                <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                  {filename}
+                </Text>
+              </View>
+
+              {/* Share & Download Buttons */}
+              <View style={styles.buttonRow}>
+                <Pressable
+                  onPress={handleSharePress}
+                  style={[styles.buttonHalf, { backgroundColor: colors.accent2 }]}
+                >
+                  <Ionicons name="share-outline" size={20} color="#fff" />
+                  <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
+                    Share
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleDownloadPress}
+                  style={[styles.buttonHalf, { backgroundColor: colors.accent }]}
+                >
+                  <Ionicons name="download-outline" size={20} color="#fff" />
+                  <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
+                    Download
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Expo Go Info */}
+              {isExpoGo() && (
+                <Text style={[styles.infoText, { color: colors.danger, fontFamily: fontConfig.regular }]}>
+                  ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
+                </Text>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </MotiView>
 
       {/* Download Info Modal for Expo Go */}
       <Modal visible={downloadModalVisible} transparent animationType="fade">
@@ -543,6 +561,7 @@ export default function EncoderScreen() {
 
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
+
   );
 }
 
