@@ -13,11 +13,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
-import { useAuth } from "../../src/context/AuthContext"; // 🔐 AUTH: Import useAuth
-import { useInactivityTracker } from "../../src/utils/inactivityTracker"; // 🔐 AUTH: Import inactivity tracker
+import { useAuth } from "../../src/context/AuthContext";
+import { useInactivityTracker } from "../../src/utils/inactivityTracker";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "../../src/components/Toast";
 import ProgressBar from "../../src/components/ProgressBar";
+import DecodedDataDisplay from "../../src/components/DecodedDataDisplay";
 import * as DocumentPicker from "expo-document-picker";
 import * as Clipboard from "expo-clipboard";
 import { decryptData } from "../../src/utils/crypto";
@@ -39,13 +40,9 @@ export default function DecoderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // ✅ NEW: Get TAB_ANIMATION
   const { TAB_ANIMATION } = useAnimation();
-
-  // ✅ NEW: Animation key state
   const [animationKey, setAnimationKey] = useState(0);
 
-  // 🔐 AUTH: Get auth state and initialize inactivity tracker
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
@@ -53,14 +50,16 @@ export default function DecoderScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [decodedData, setDecodedData] = useState<DecodedData | null>(null);
-  const [decodedText, setDecodedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
 
-  // Byte-accurate progress
+  // ✅ NEW: View mode state (formatted or text export)
+  const [viewMode, setViewMode] = useState<"formatted" | "text">("formatted");
+  const [exportText, setExportText] = useState("");
+
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
     phase: 'readFile',
     processedBytes: 0,
@@ -69,7 +68,6 @@ export default function DecoderScreen() {
   });
   const [showProgress, setShowProgress] = useState(false);
 
-  // Proper cleanup refs
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
   const progressCallbacksRef = useRef<Set<Function>>(new Set());
@@ -82,10 +80,8 @@ export default function DecoderScreen() {
     };
   }, []);
 
-  // 🔐 AUTH: Update activity on screen focus
   useFocusEffect(
     React.useCallback(() => {
-      // ✅ NEW: Trigger animation on focus
       setAnimationKey((prev) => prev + 1);
 
       if (isAuthEnabled && !isProcessingRef.current) {
@@ -129,11 +125,11 @@ export default function DecoderScreen() {
     }
 
     setRefreshing(true);
-
     setImageUri("");
     setPassword("");
     setDecodedData(null);
-    setDecodedText("");
+    setExportText("");
+    setViewMode("formatted");
     setLoading(false);
     setShowProgress(false);
     setProgressUpdate({
@@ -149,7 +145,6 @@ export default function DecoderScreen() {
       setRefreshing(false);
     }
 
-    // 🔐 AUTH: Update activity on refresh
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -167,7 +162,6 @@ export default function DecoderScreen() {
         showToastMessage("Image loaded", "info");
       }
 
-      // 🔐 AUTH: Update activity after picking image
       if (isAuthEnabled) {
         updateActivity();
       }
@@ -176,7 +170,6 @@ export default function DecoderScreen() {
     }
   };
 
-  // FIXED: Progress callback that properly updates state
   const safeProgressUpdate = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
       console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
@@ -200,7 +193,6 @@ export default function DecoderScreen() {
       return;
     }
 
-    // 🔐 AUTH: Update activity before starting long operation
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -208,7 +200,6 @@ export default function DecoderScreen() {
     isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
-
     progressCallbacksRef.current.add(safeProgressUpdate);
 
     try {
@@ -263,7 +254,6 @@ export default function DecoderScreen() {
         );
         header = unpackHeader(headerBytes);
 
-        // Validate dimensions
         if (header.width !== width || header.height !== height) {
           throw new Error("Image dimensions don't match header data");
         }
@@ -350,7 +340,6 @@ export default function DecoderScreen() {
 
         parsed = JSON.parse(decryptedJson);
 
-        // Validate parsed data structure
         if (!parsed.database || !parsed.schemas) {
           throw new Error("Invalid data format");
         }
@@ -371,7 +360,7 @@ export default function DecoderScreen() {
       // Success
       if (isMountedRef.current) {
         setDecodedData(parsed);
-        setDecodedText(JSON.stringify(parsed, null, 2));
+        setViewMode("formatted"); // ✅ NEW: Default to formatted view
 
         safeProgressUpdate({
           phase: "done",
@@ -383,18 +372,12 @@ export default function DecoderScreen() {
         showToastMessage("Successfully decoded!", "success");
       }
     } catch (error: any) {
-      // Centralized error handling - only show custom toast
       if (isMountedRef.current && isProcessingRef.current) {
         console.error("🔴 Decoding error:", error);
-
-        // Show user-friendly error message
-        const errorMessage =
-          error.message || "An unexpected error occurred during decoding";
+        const errorMessage = error.message || "An unexpected error occurred during decoding";
         showToastMessage(errorMessage, "error");
-
-        // Clear any partial data
         setDecodedData(null);
-        setDecodedText("");
+        setExportText("");
       }
     } finally {
       cleanup();
@@ -405,7 +388,6 @@ export default function DecoderScreen() {
         }
       }, 1000);
 
-      // 🔐 AUTH: Update activity after long operation completes
       if (isAuthEnabled) {
         updateActivity();
       }
@@ -417,7 +399,6 @@ export default function DecoderScreen() {
 
     setLoading(true);
 
-    // 🔐 AUTH: Update activity before starting import
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -426,16 +407,13 @@ export default function DecoderScreen() {
       let importedCount = 0;
       let updatedCount = 0;
 
-      // Process each platform
       for (const [platformId, accounts] of Object.entries(decodedData.database)) {
         const platformName = toTitleCase(platformId.replace(/_/g, ' '));
 
-        // Add platform if it doesn't exist
         if (!database[platformId]) {
           addPlatform(platformId, platformName);
         }
 
-        // Merge schemas
         const existingSchema = schemas[platformId] || [];
         const newSchema = decodedData.schemas[platformId] || [];
         const mergedSchema = Array.from(new Set([...existingSchema, ...newSchema]));
@@ -444,11 +422,8 @@ export default function DecoderScreen() {
           updatePlatformSchema(platformId, mergedSchema);
         }
 
-        // Import accounts
         for (const account of accounts) {
           const existingAccounts = database[platformId] || [];
-
-          // Check for duplicate by email or username
           const identifierField = account.email ? 'email' : account.username ? 'username' : null;
           const duplicate = identifierField
             ? existingAccounts.find((a: any) => a[identifierField] === account[identifierField])
@@ -469,7 +444,6 @@ export default function DecoderScreen() {
         "success"
       );
 
-      // Navigate to manage screen after 1 second
       setTimeout(() => {
         if (isMountedRef.current) {
           router.push('/(tabs)');
@@ -484,13 +458,13 @@ export default function DecoderScreen() {
         setLoading(false);
       }
 
-      // 🔐 AUTH: Update activity after import completes
       if (isAuthEnabled) {
         updateActivity();
       }
     }
   };
 
+  // ✅ UPDATED: Generate formatted text and switch to text view
   const handleGetFormattedText = () => {
     if (!decodedData) return;
 
@@ -499,25 +473,32 @@ export default function DecoderScreen() {
       decodedData.schemas
     );
 
-    setDecodedText(formattedText);
+    setExportText(formattedText);
+    setViewMode("text");
+    showToastMessage("Switched to text export view", "info");
 
-    showToastMessage("Text formatted successfully!", "info");
-
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  const handleCopyJSON = async () => {
-    if (decodedText) {
-      await Clipboard.setStringAsync(decodedText);
-      showToastMessage("Copied to clipboard", "info");
+  // ✅ NEW: Copy text export to clipboard
+  const handleCopyText = async () => {
+    if (exportText) {
+      await Clipboard.setStringAsync(exportText);
+      showToastMessage("Copied to clipboard", "success");
 
-      // 🔐 AUTH: Update activity on user interaction
       if (isAuthEnabled) {
         updateActivity();
       }
+    }
+  };
+
+  // ✅ NEW: Switch back to formatted view
+  const handleShowFormatted = () => {
+    setViewMode("formatted");
+    if (isAuthEnabled) {
+      updateActivity();
     }
   };
 
@@ -534,7 +515,7 @@ export default function DecoderScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -581,7 +562,6 @@ export default function DecoderScreen() {
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
-                  // 🔐 AUTH: Update activity on text input
                   if (isAuthEnabled) {
                     updateActivity();
                   }
@@ -594,7 +574,6 @@ export default function DecoderScreen() {
               <Pressable
                 onPress={() => {
                   setShowPassword(!showPassword);
-                  // 🔐 AUTH: Update activity on toggle
                   if (isAuthEnabled) {
                     updateActivity();
                   }
@@ -668,44 +647,68 @@ export default function DecoderScreen() {
                   )}
                 </Pressable>
 
-                <Pressable
-                  onPress={handleGetFormattedText}
-                  style={[styles.button, styles.secondaryAction, {
-                    backgroundColor: colors.card,
-                    borderColor: colors.cardBorder,
-                    borderWidth: 1,
-                  }]}
-                >
-                  <Ionicons name="document-text" size={20} color={colors.text} />
-                  <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
-                    Get Formatted Text
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* JSON Preview */}
-              <View style={styles.section}>
-                <View style={styles.labelRow}>
-                  <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
-                    Decoded Data (JSON)
-                  </Text>
-                  <Pressable onPress={handleCopyJSON} style={styles.copyButton}>
-                    <Ionicons name="copy-outline" size={18} color={colors.accent} />
-                    <Text style={[styles.copyText, { color: colors.accent, fontFamily: fontConfig.regular }]}>
-                      Copy
+                {/* ✅ UPDATED: Conditional button based on view mode */}
+                {viewMode === "formatted" ? (
+                  <Pressable
+                    onPress={handleGetFormattedText}
+                    style={[styles.button, styles.secondaryAction, {
+                      backgroundColor: colors.card,
+                      borderColor: colors.cardBorder,
+                      borderWidth: 1,
+                    }]}
+                  >
+                    <Ionicons name="document-text" size={20} color={colors.text} />
+                    <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                      Get Text Export
                     </Text>
                   </Pressable>
-                </View>
-
-                <ScrollView
-                  style={[styles.outputBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-                  nestedScrollEnabled
-                >
-                  <Text style={[styles.outputText, { color: colors.text, fontFamily: "monospace" }]}>
-                    {decodedText}
-                  </Text>
-                </ScrollView>
+                ) : (
+                  <Pressable
+                    onPress={handleShowFormatted}
+                    style={[styles.button, styles.secondaryAction, {
+                      backgroundColor: colors.card,
+                      borderColor: colors.cardBorder,
+                      borderWidth: 1,
+                    }]}
+                  >
+                    <Ionicons name="list" size={20} color={colors.text} />
+                    <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                      Show Formatted View
+                    </Text>
+                  </Pressable>
+                )}
               </View>
+
+              {/* ✅ NEW: Conditional rendering based on view mode */}
+              {viewMode === "formatted" ? (
+                <DecodedDataDisplay 
+                  decodedData={decodedData}
+                  onCopyField={(value) => showToastMessage("Copied to clipboard", "info")}
+                />
+              ) : (
+                <View style={styles.section}>
+                  <View style={styles.labelRow}>
+                    <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                      Text Export
+                    </Text>
+                    <Pressable onPress={handleCopyText} style={styles.copyButton}>
+                      <Ionicons name="copy-outline" size={18} color={colors.accent} />
+                      <Text style={[styles.copyText, { color: colors.accent, fontFamily: fontConfig.regular }]}>
+                        Copy All
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <ScrollView
+                    style={[styles.outputBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+                    nestedScrollEnabled
+                  >
+                    <Text style={[styles.outputText, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                      {exportText}
+                    </Text>
+                  </ScrollView>
+                </View>
+              )}
             </View>
           )}
         </ScrollView>
@@ -794,12 +797,8 @@ const styles = StyleSheet.create({
   actionButtons: {
     gap: 12,
   },
-  primaryAction: {
-    // Inherits button styles
-  },
-  secondaryAction: {
-    // Inherits button styles
-  },
+  primaryAction: {},
+  secondaryAction: {},
   outputBox: {
     maxHeight: 300,
     borderRadius: 12,
