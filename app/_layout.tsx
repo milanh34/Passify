@@ -5,29 +5,58 @@ import { DbProvider } from "../src/context/DbContext";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { StatusBar } from "expo-status-bar";
 import { View, LogBox, ActivityIndicator } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler"; // 🎯 ADD THIS
 import ErrorBoundary from "../src/components/ErrorBoundary";
-import BiometricUnlockScreen from "./screens/BiometricUnlockScreen"; 
+import BiometricUnlockScreen from "./screens/BiometricUnlockScreen";
+import { useState, useEffect } from "react";
+import { useRouter, useSegments, useRootNavigationState } from "expo-router";
+import { isOnboardingComplete } from "../src/utils/onboardingState";
 
 LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
 ]);
 
-const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-  console.error("🔴 Unhandled Promise Rejection:", event.reason);
-  event.preventDefault();
-};
+// 🎓 ONBOARDING: Component to check and redirect to onboarding
+function OnboardingGate({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const segments = useSegments();
+  const navigationState = useRootNavigationState();
+  const [isChecking, setIsChecking] = useState(true);
 
-const handleGlobalError = (error: ErrorEvent) => {
-  console.error("🔴 Global Error:", error.error);
-  error.preventDefault();
-};
+  useEffect(() => {
+    if (!navigationState?.key) return;
+    
+    checkOnboarding();
+  }, [navigationState?.key]);
 
-// 🔐 AUTH: New component to handle lock/unlock state
+  const checkOnboarding = async () => {
+    try {
+      const completed = await isOnboardingComplete();
+      setIsChecking(false);
+
+      if (!completed && segments[0] !== "onboarding") {
+        setTimeout(() => {
+          router.replace("/onboarding");
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Failed to check onboarding state:", error);
+      setIsChecking(false);
+    }
+  };
+
+  if (isChecking || !navigationState?.key) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
+// 🔐 AUTH: Component to handle lock/unlock state
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLocked, isInitialized } = useAuth();
   const { colors } = useTheme();
 
-  // Show loading spinner while auth is initializing
   if (!isInitialized) {
     return (
       <View
@@ -43,12 +72,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Show unlock screen if locked
   if (isLocked) {
     return <BiometricUnlockScreen />;
   }
 
-  // Show main app if unlocked
   return <>{children}</>;
 }
 
@@ -57,30 +84,39 @@ function RootStack() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
-      {/* 🔐 AUTH: Wrap Stack with AuthGate to control access */}
-      <AuthGate>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "fade",
-            animationDuration: 200,
-          }}
-        >
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              animation: "none",
-            }}
-          />
-          <Stack.Screen
-            name="customize"
-            options={{
-              animation: "flip",
+      <OnboardingGate>
+        <AuthGate>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "fade",
               animationDuration: 200,
             }}
-          />
-        </Stack>
-      </AuthGate>
+          >
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                animation: "none",
+              }}
+            />
+            <Stack.Screen
+              name="customize"
+              options={{
+                animation: "flip",
+                animationDuration: 200,
+              }}
+            />
+            <Stack.Screen
+              name="onboarding"
+              options={{
+                animation: "fade",
+                animationDuration: 300,
+                gestureEnabled: false,
+              }}
+            />
+          </Stack>
+        </AuthGate>
+      </OnboardingGate>
     </View>
   );
 }
@@ -88,17 +124,19 @@ function RootStack() {
 export default function RootLayout() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <AnimationProvider>
-          {/* 🔐 AUTH: Wrap DbProvider with AuthProvider */}
-          <AuthProvider>
-            <DbProvider>
-              <StatusBar style="auto" />
-              <RootStack />
-            </DbProvider>
-          </AuthProvider>
-        </AnimationProvider>
-      </ThemeProvider>
+      {/* 🎯 WRAP EVERYTHING WITH GestureHandlerRootView */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider>
+          <AnimationProvider>
+            <AuthProvider>
+              <DbProvider>
+                <StatusBar style="auto" />
+                <RootStack />
+              </DbProvider>
+            </AuthProvider>
+          </AnimationProvider>
+        </ThemeProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }
