@@ -1,3 +1,4 @@
+// src/components/OnboardingSlide.tsx
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { MotiView } from "moti";
@@ -18,16 +19,12 @@ export default function OnboardingSlide({
     <MotiView
       key={`slide-${slideIndex}`}
       from={{
-        opacity: 0,
-        translateX: 50,
+        opacity: 1, // Changed from 0 to 1
+        translateX: 0, // Changed from 50 to 0
       }}
       animate={{
         opacity: 1,
         translateX: 0,
-      }}
-      exit={{
-        opacity: 0,
-        translateX: -50,
       }}
       transition={{
         type: "timing",
