@@ -41,8 +41,7 @@ export default function Slide6GetStarted() {
           ]}
         >
           Use your master password to encrypt all your data into a single secure
-          image. Customize themes, fonts, and animations anytime from the
-          Customize tab.
+          image.
         </Text>
 
         <View
