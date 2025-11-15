@@ -1,5 +1,5 @@
 // app/onboarding.tsx
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -49,7 +49,7 @@ export default function OnboardingScreen() {
   const { colors, fontConfig } = useTheme();
 
   const translateX = useSharedValue(0);
-  const isTransitioning = useRef(false);
+  const isTransitioning = useSharedValue(false); // Changed from useRef to useSharedValue
 
   const isFirstSlide = currentSlide === 0;
   const isLastSlide = currentSlide === SLIDES.length - 1;
@@ -69,9 +69,9 @@ export default function OnboardingScreen() {
   };
 
   const animateToSlide = (newIndex: number, direction: "next" | "prev") => {
-    if (isTransitioning.current) return;
+    if (isTransitioning.value) return; // Changed from .current to .value
     
-    isTransitioning.current = true;
+    isTransitioning.value = true; // Changed from .current to .value
     const targetX = direction === "next" ? -SCREEN_WIDTH : SCREEN_WIDTH;
     
     translateX.value = withTiming(
@@ -82,7 +82,7 @@ export default function OnboardingScreen() {
           runOnJS(setCurrentSlide)(newIndex);
           translateX.value = direction === "next" ? SCREEN_WIDTH : -SCREEN_WIDTH;
           translateX.value = withTiming(0, { duration: 300 }, () => {
-            isTransitioning.current = false;
+            isTransitioning.value = false; // Changed from .current to .value
           });
         }
       }
@@ -112,12 +112,12 @@ export default function OnboardingScreen() {
     .activeOffsetX([-10, 10])
     .failOffsetY([-10, 10])
     .onUpdate((event) => {
-      if (!isTransitioning.current && Math.abs(event.translationX) > Math.abs(event.translationY)) {
+      if (!isTransitioning.value && Math.abs(event.translationX) > Math.abs(event.translationY)) {
         translateX.value = event.translationX;
       }
     })
     .onEnd((event) => {
-      if (isTransitioning.current) return;
+      if (isTransitioning.value) return; // Changed from .current to .value
 
       const SWIPE_THRESHOLD = 50;
       const velocity = event.velocityX;
