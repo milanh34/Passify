@@ -7,7 +7,6 @@ export default function TabsLayout() {
   const { colors, fontConfig } = useTheme();
   const segments = useSegments();
 
-  // Check if we're on the accounts screen
   const isOnAccounts = segments[segments.length - 1] === "accounts";
 
   return (
@@ -39,7 +38,6 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Manage",
-          // Custom icon - highlighted when focused OR on accounts
           tabBarIcon: ({ color, focused }) => (
             <Ionicons 
               name={(focused || isOnAccounts) ? "grid" : "grid-outline"} 
@@ -47,7 +45,6 @@ export default function TabsLayout() {
               color={(focused || isOnAccounts) ? colors.accent : color} 
             />
           ),
-          // Custom label - highlighted when focused OR on accounts
           tabBarLabel: ({ focused }) => (
             <Text
               style={{

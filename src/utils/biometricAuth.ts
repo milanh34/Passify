@@ -1,7 +1,9 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Platform } from 'react-native';
 
+
 export type BiometricType = 'fingerprint' | 'facial' | 'iris' | 'none';
+
 
 export interface BiometricCapability {
   isAvailable: boolean;
@@ -10,9 +12,7 @@ export interface BiometricCapability {
   isEnrolled: boolean;
 }
 
-/**
- * Check if biometric authentication is available on the device
- */
+
 export async function checkBiometricCapability(): Promise<BiometricCapability> {
   try {
     const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -27,7 +27,7 @@ export async function checkBiometricCapability(): Promise<BiometricCapability> {
       };
     }
 
-    // Get supported authentication types
+
     const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
     
     let biometricType: BiometricType = 'none';
@@ -38,6 +38,7 @@ export async function checkBiometricCapability(): Promise<BiometricCapability> {
     } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)) {
       biometricType = 'iris';
     }
+
 
     return {
       isAvailable: true,
@@ -56,9 +57,7 @@ export async function checkBiometricCapability(): Promise<BiometricCapability> {
   }
 }
 
-/**
- * Prompt user for biometric authentication
- */
+
 export async function authenticateWithBiometric(): Promise<{
   success: boolean;
   error?: string;
@@ -73,15 +72,17 @@ export async function authenticateWithBiometric(): Promise<{
       };
     }
 
-    // Get biometric type name for prompt
+
     const biometricName = getBiometricTypeName(capability.biometricType);
+
 
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: `Unlock Passify with ${biometricName}`,
       cancelLabel: 'Use PIN',
-      disableDeviceFallback: true, // We handle fallback ourselves
+      disableDeviceFallback: true,
       fallbackLabel: 'Use PIN',
     });
+
 
     if (result.success) {
       return { success: true };
@@ -102,9 +103,7 @@ export async function authenticateWithBiometric(): Promise<{
   }
 }
 
-/**
- * Get user-friendly biometric type name
- */
+
 export function getBiometricTypeName(type: BiometricType): string {
   switch (type) {
     case 'facial':
@@ -118,9 +117,7 @@ export function getBiometricTypeName(type: BiometricType): string {
   }
 }
 
-/**
- * Get appropriate icon name for biometric type
- */
+
 export function getBiometricIcon(type: BiometricType): string {
   switch (type) {
     case 'facial':

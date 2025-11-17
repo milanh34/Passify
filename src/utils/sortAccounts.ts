@@ -1,7 +1,3 @@
-/**
- * Sorting utilities for accounts
- */
-
 export interface Account {
   id: string;
   name: string;
@@ -12,6 +8,7 @@ export interface Account {
   [key: string]: any;
 }
 
+
 export type AccountSortOption =
   | 'name_asc'
   | 'name_desc'
@@ -20,11 +17,13 @@ export type AccountSortOption =
   | 'recent_modified'
   | 'oldest_modified';
 
+
 export interface AccountSortConfig {
   id: AccountSortOption;
   label: string;
   icon: string;
 }
+
 
 export const ACCOUNT_SORT_OPTIONS: AccountSortConfig[] = [
   { id: 'name_asc', label: 'Name (A → Z)', icon: 'arrow-up-outline' },
@@ -35,21 +34,18 @@ export const ACCOUNT_SORT_OPTIONS: AccountSortConfig[] = [
   { id: 'oldest_modified', label: 'Oldest Modified', icon: 'timer-outline' },
 ];
 
-/**
- * Get identifier field value (email or username) for sorting
- */
+
 function getIdentifier(account: Account): string {
   return account.email || account.username || account.name || '';
 }
 
-/**
- * Sort accounts based on selected option
- */
+
 export function sortAccounts(
   accounts: Account[],
   sortOption: AccountSortOption
 ): Account[] {
   const sorted = [...accounts];
+
 
   switch (sortOption) {
     case 'name_asc':
@@ -59,6 +55,7 @@ export function sortAccounts(
         return aId.localeCompare(bId);
       });
 
+
     case 'name_desc':
       return sorted.sort((a, b) => {
         const aId = getIdentifier(a).toLowerCase();
@@ -66,42 +63,45 @@ export function sortAccounts(
         return bId.localeCompare(aId);
       });
 
+
     case 'recent_added':
       return sorted.sort((a, b) => {
         const aTime = a.createdAt || 0;
         const bTime = b.createdAt || 0;
-        return bTime - aTime; // Newest first
+        return bTime - aTime;
       });
+
 
     case 'oldest_added':
       return sorted.sort((a, b) => {
         const aTime = a.createdAt || 0;
         const bTime = b.createdAt || 0;
-        return aTime - bTime; // Oldest first
+        return aTime - bTime;
       });
+
 
     case 'recent_modified':
       return sorted.sort((a, b) => {
         const aTime = a.updatedAt || 0;
         const bTime = b.updatedAt || 0;
-        return bTime - aTime; // Newest first
+        return bTime - aTime;
       });
+
 
     case 'oldest_modified':
       return sorted.sort((a, b) => {
         const aTime = a.updatedAt || 0;
         const bTime = b.updatedAt || 0;
-        return aTime - bTime; // Oldest first
+        return aTime - bTime;
       });
+
 
     default:
       return sorted;
   }
 }
 
-/**
- * Get short label for current sort option
- */
+
 export function getAccountSortLabel(sortOption: AccountSortOption): string {
   const option = ACCOUNT_SORT_OPTIONS.find((o) => o.id === sortOption);
   return option?.label || 'Sort';

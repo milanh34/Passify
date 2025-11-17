@@ -20,17 +20,19 @@ import {
   updateLastActivity,
 } from '../utils/inactivityTracker';
 
+
 const AUTH_PREFERENCES_KEY = '@Passify:auth_preferences';
+
 
 export interface AuthPreferences {
   biometricEnabled: boolean;
-  inactivityTimeout: InactivityTimeout; // minutes (0 = never)
+  inactivityTimeout: InactivityTimeout;
   lastUnlockTime: number;
   lastUnlockMethod: 'biometric' | 'pin' | 'none';
 }
 
+
 interface AuthContextType {
-  // State
   isLocked: boolean;
   isAuthEnabled: boolean;
   biometricCapability: BiometricCapability | null;
@@ -38,7 +40,7 @@ interface AuthContextType {
   isPINConfigured: boolean;
   isInitialized: boolean;
 
-  // Actions
+
   unlock: (method: 'biometric' | 'pin') => Promise<void>;
   lock: () => void;
   setBiometricEnabled: (enabled: boolean) => Promise<void>;
@@ -47,7 +49,9 @@ interface AuthContextType {
   checkPINStatus: () => Promise<void>;
 }
 
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 
 const DEFAULT_PREFERENCES: AuthPreferences = {
   biometricEnabled: false,
@@ -55,6 +59,7 @@ const DEFAULT_PREFERENCES: AuthPreferences = {
   lastUnlockTime: Date.now(),
   lastUnlockMethod: 'none',
 };
+
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLocked, setIsLocked] = useState(true);
@@ -66,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const appState = useRef(AppState.currentState);
 
-  // Load preferences from storage
+
   const loadPreferences = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem(AUTH_PREFERENCES_KEY);
@@ -79,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Save preferences to storage
+
   const savePreferences = useCallback(async (newPrefs: AuthPreferences) => {
     try {
       await AsyncStorage.setItem(AUTH_PREFERENCES_KEY, JSON.stringify(newPrefs));
@@ -89,35 +94,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Check if authentication is enabled (biometric or PIN)
+
   const isAuthEnabled = (preferences.biometricEnabled && biometricCapability?.isAvailable) || isPINConfigured;
 
-  // Initialize on mount
+
   useEffect(() => {
     const initialize = async () => {
       console.log('🔐 Initializing AuthContext...');
       
-      // Load preferences
       await loadPreferences();
       
-      // Check biometric capability
       const capability = await checkBiometricCapability();
       setBiometricCapability(capability);
       
-      // Check PIN status
       const hasPIN = await isPINSet();
       setIsPINConfigured(hasPIN);
 
-      // Determine initial lock state
+
       const stored = await AsyncStorage.getItem(AUTH_PREFERENCES_KEY);
       const savedPrefs = stored ? JSON.parse(stored) : DEFAULT_PREFERENCES;
       
-      // Lock if auth is enabled
       if ((savedPrefs.biometricEnabled && capability.isAvailable) || hasPIN) {
         setIsLocked(true);
       } else {
         setIsLocked(false);
       }
+
 
       setIsInitialized(true);
       console.log('✅ AuthContext initialized:', {
@@ -127,10 +129,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
+
     initialize();
   }, [loadPreferences]);
 
-  // Handle app state changes for inactivity
+
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
@@ -139,7 +142,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           appState.current.match(/inactive|background/) &&
           nextAppState === 'active'
         ) {
-          // App came to foreground - check inactivity
           console.log('🔍 App returned to foreground, checking inactivity...');
           
           if (isAuthEnabled && !isLocked) {
@@ -151,16 +153,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+
         appState.current = nextAppState;
       }
     );
+
 
     return () => {
       subscription.remove();
     };
   }, [isAuthEnabled, isLocked, preferences.inactivityTimeout]);
 
-  // Unlock app
+
   const unlock = useCallback(
     async (method: 'biometric' | 'pin') => {
       const newPrefs: AuthPreferences = {
@@ -176,7 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [preferences, savePreferences]
   );
 
-  // Lock app
+
   const lock = useCallback(() => {
     if (isAuthEnabled) {
       setIsLocked(true);
@@ -184,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthEnabled]);
 
-  // Toggle biometric authentication
+
   const setBiometricEnabled = useCallback(
     async (enabled: boolean) => {
       const newPrefs: AuthPreferences = {
@@ -193,7 +197,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       await savePreferences(newPrefs);
       
-      // If disabling biometric and no PIN, unlock immediately
       if (!enabled && !isPINConfigured) {
         setIsLocked(false);
       }
@@ -201,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [preferences, savePreferences, isPINConfigured]
   );
 
-  // Set inactivity timeout
+
   const setInactivityTimeout = useCallback(
     async (minutes: InactivityTimeout) => {
       const newPrefs: AuthPreferences = {
@@ -213,22 +216,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [preferences, savePreferences]
   );
 
-  // Refresh biometric capability
+
   const refreshBiometricCapability = useCallback(async () => {
     const capability = await checkBiometricCapability();
     setBiometricCapability(capability);
   }, []);
 
-  // Check PIN status
+
   const checkPINStatus = useCallback(async () => {
     const hasPIN = await isPINSet();
     setIsPINConfigured(hasPIN);
     
-    // If no auth methods available, unlock
     if (!hasPIN && !preferences.biometricEnabled) {
       setIsLocked(false);
     }
   }, [preferences.biometricEnabled]);
+
 
   const value: AuthContextType = {
     isLocked,
@@ -245,8 +248,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkPINStatus,
   };
 
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);

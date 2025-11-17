@@ -1,8 +1,3 @@
-/**
- * Search Suggestions Dropdown (Simplified - No History)
- * Displays platform/account name suggestions only
- */
-
 import React from 'react';
 import {
   View,
@@ -15,12 +10,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { useTheme } from '../context/ThemeContext';
 
+
 interface SearchSuggestionsDropdownProps {
   visible: boolean;
   suggestions: string[];
   onSelectSuggestion: (query: string) => void;
   maxHeight?: number;
 }
+
 
 export default function SearchSuggestionsDropdown({
   visible,
@@ -30,7 +27,9 @@ export default function SearchSuggestionsDropdown({
 }: SearchSuggestionsDropdownProps) {
   const { colors, fontConfig } = useTheme();
 
+
   if (!visible) return null;
+
 
   return (
     <MotiView
@@ -85,6 +84,7 @@ export default function SearchSuggestionsDropdown({
     </MotiView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

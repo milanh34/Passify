@@ -10,6 +10,7 @@ import { useAnimation } from "../../src/context/AnimationContext";
 import ImportTab from "../../src/components/transfer/ImportTab";
 import ExportTab from "../../src/components/transfer/ExportTab";
 
+
 export default function TransferScreen() {
   const { colors, fontConfig } = useTheme();
   const insets = useSafeAreaInsets();
@@ -17,11 +18,13 @@ export default function TransferScreen() {
   const { TAB_ANIMATION } = useAnimation();
   const [activeTab, setActiveTab] = useState<"import" | "export">("import");
 
+
   useFocusEffect(
     React.useCallback(() => {
       setAnimationKey((prev) => prev + 1);
     }, [])
   );
+
 
   return (
     <LinearGradient colors={colors.bg} style={styles.root}>
@@ -35,7 +38,6 @@ export default function TransferScreen() {
         }}
         style={[styles.container, { paddingTop: insets.top + 20 }]}
       >
-        {/* Tab Switcher - Smaller with Icons */}
         <View
           style={[
             styles.tabContainer,
@@ -72,6 +74,7 @@ export default function TransferScreen() {
             </Text>
           </Pressable>
 
+
           <Pressable
             onPress={() => setActiveTab("export")}
             style={[
@@ -100,7 +103,7 @@ export default function TransferScreen() {
           </Pressable>
         </View>
 
-        {/* Tab Content with Animation */}
+
         <AnimatePresence exitBeforeEnter>
           {activeTab === "import" ? (
             <MotiView
@@ -131,6 +134,7 @@ export default function TransferScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   container: { flex: 1, paddingHorizontal: 20 },
@@ -144,13 +148,13 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     flexDirection: "row",
-    paddingVertical: 10, // Smaller
+    paddingVertical: 10,
     borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
   tabText: {
-    fontSize: 14, // Smaller
+    fontSize: 14,
   },
 });

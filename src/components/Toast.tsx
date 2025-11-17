@@ -4,12 +4,14 @@ import { MotiView, AnimatePresence } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 
+
 interface ToastProps {
   message: string;
   visible: boolean;
   type?: "success" | "error" | "info" | "warning";
   duration?: number;
 }
+
 
 export default function Toast({
   message,
@@ -19,7 +21,7 @@ export default function Toast({
 }: ToastProps) {
   const { colors, fontConfig } = useTheme();
 
-  // Get colors and icons based on type
+
   const getToastStyle = () => {
     switch (type) {
       case "error":
@@ -50,7 +52,9 @@ export default function Toast({
     }
   };
 
+
   const { bgColor, borderColor, icon } = getToastStyle();
+
 
   return (
     <AnimatePresence>
@@ -96,6 +100,7 @@ export default function Toast({
     </AnimatePresence>
   );
 }
+
 
 const styles = StyleSheet.create({
   toast: {

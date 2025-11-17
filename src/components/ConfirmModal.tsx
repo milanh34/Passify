@@ -13,7 +13,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { useTheme } from "../context/ThemeContext";
 
+
 const { width } = Dimensions.get("window");
+
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -25,6 +27,7 @@ interface ConfirmModalProps {
   onCancel: () => void;
   type?: "info" | "warning" | "danger";
 }
+
 
 export default function ConfirmModal({
   visible,
@@ -38,6 +41,7 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   const { colors, fontConfig } = useTheme();
 
+
   const iconName =
     type === "danger"
       ? "alert-circle"
@@ -45,12 +49,14 @@ export default function ConfirmModal({
       ? "warning"
       : "information-circle";
 
+
   const iconColor =
     type === "danger"
       ? colors.danger
       : type === "warning"
       ? "#FF9800"
       : colors.accent;
+
 
   return (
     <Modal
@@ -60,7 +66,6 @@ export default function ConfirmModal({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      {/* ✅ FIX: Dark overlay + BlurView */}
       <View style={styles.darkOverlay}>
         <BlurView
           intensity={Platform.OS === "ios" ? 30 : 10}
@@ -68,6 +73,7 @@ export default function ConfirmModal({
           style={styles.blurOverlay}
         >
           <Pressable style={styles.backdrop} onPress={onCancel} />
+
 
           <MotiView
             from={{ opacity: 0, scale: 0.9 }}
@@ -78,7 +84,6 @@ export default function ConfirmModal({
               { backgroundColor: colors.card, borderColor: colors.cardBorder },
             ]}
           >
-            {/* Icon */}
             <View
               style={[
                 styles.iconContainer,
@@ -88,7 +93,7 @@ export default function ConfirmModal({
               <Ionicons name={iconName} size={48} color={iconColor} />
             </View>
 
-            {/* Title */}
+
             <Text
               style={[
                 styles.title,
@@ -98,7 +103,7 @@ export default function ConfirmModal({
               {title}
             </Text>
 
-            {/* Message */}
+
             <Text
               style={[
                 styles.message,
@@ -108,7 +113,7 @@ export default function ConfirmModal({
               {message}
             </Text>
 
-            {/* Buttons */}
+
             <View style={styles.buttonContainer}>
               <Pressable
                 onPress={onCancel}
@@ -132,6 +137,7 @@ export default function ConfirmModal({
                   {cancelText}
                 </Text>
               </Pressable>
+
 
               <Pressable
                 onPress={onConfirm}
@@ -162,10 +168,11 @@ export default function ConfirmModal({
   );
 }
 
+
 const styles = StyleSheet.create({
   darkOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)", // ✅ Dark background
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   blurOverlay: {
     flex: 1,

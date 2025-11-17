@@ -1,6 +1,7 @@
 import { ThrottledProgress } from '../types/progress';
 
 
+
 export interface ImageHeader {
   magic: number;
   version: number;
@@ -13,11 +14,13 @@ export interface ImageHeader {
 }
 
 
+
 const MAGIC_NUMBER = 0x504D4947;
 const VERSION = 2;
 const MODE_1X1 = 1;
 const HEADER_SIZE = 32;
 const BYTES_PER_PIXEL = 4;
+
 
 
 export function packHeader(header: ImageHeader): Uint8Array {
@@ -35,6 +38,7 @@ export function packHeader(header: ImageHeader): Uint8Array {
   
   return buffer;
 }
+
 
 
 export function unpackHeader(bytes: Uint8Array): ImageHeader {
@@ -69,6 +73,7 @@ export function unpackHeader(bytes: Uint8Array): ImageHeader {
 }
 
 
+
 export function calculateChecksum(data: Uint8Array): number {
   let sum = 0;
   for (let i = 0; i < data.length; i++) {
@@ -76,6 +81,7 @@ export function calculateChecksum(data: Uint8Array): number {
   }
   return sum;
 }
+
 
 
 export function calculateDimensions(dataLength: number): { width: number; height: number } {
@@ -87,6 +93,7 @@ export function calculateDimensions(dataLength: number): { width: number; height
 }
 
 
+
 export function encodeToPixels(
   data: Uint8Array,
   width: number,
@@ -96,16 +103,12 @@ export function encodeToPixels(
   const pixelBuffer = new Uint8Array(width * height * 4);
   const totalBytes = data.length;
   
-  // Fill with random noise
   for (let i = 0; i < pixelBuffer.length; i++) {
     pixelBuffer[i] = Math.floor(Math.random() * 256);
   }
   
-  // FIXED: Calculate update interval for 1% increments (100 updates total)
-  // Update at least every 1% of total bytes processed
   const updateInterval = Math.max(1, Math.floor(totalBytes / 100));
   
-  // Encode data
   let byteIndex = 0;
   for (let pixelIndex = 0; pixelIndex < Math.ceil(totalBytes / 4); pixelIndex++) {
     const offset = pixelIndex * 4;
@@ -114,16 +117,15 @@ export function encodeToPixels(
       pixelBuffer[offset + channel] = data[byteIndex++];
     }
     
-    // Update progress every 1% (100 times instead of every 1024 bytes)
     if (progress && byteIndex % updateInterval === 0) {
       progress.update('pack', byteIndex, totalBytes);
     }
   }
   
-  // Ensure final 100% update
   progress?.update('pack', totalBytes, totalBytes);
   return pixelBuffer;
 }
+
 
 
 export function decodeFromPixels(
@@ -133,8 +135,6 @@ export function decodeFromPixels(
 ): Uint8Array {
   const data = new Uint8Array(dataLength);
   
-  // FIXED: Calculate update interval for 1% increments (100 updates total)
-  // Update at least every 1% of total bytes processed
   const updateInterval = Math.max(1, Math.floor(dataLength / 100));
   
   let byteIndex = 0;
@@ -146,16 +146,15 @@ export function decodeFromPixels(
       data[byteIndex++] = pixelBuffer[offset + channel];
     }
     
-    // Update progress every 1% (100 times instead of every 1024 bytes)
     if (progress && byteIndex % updateInterval === 0) {
       progress.update('unpack', byteIndex, dataLength);
     }
   }
   
-  // Ensure final 100% update
   progress?.update('unpack', dataLength, dataLength);
   return data;
 }
+
 
 
 export const BLOCK_CONSTANTS = {

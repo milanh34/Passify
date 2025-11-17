@@ -1,4 +1,3 @@
-// app/customize.tsx
 import {
   View,
   Text,
@@ -35,6 +34,7 @@ import {
 } from "../src/utils/inactivityTracker";
 import { resetOnboarding } from "../src/utils/onboardingState";
 
+
 export default function Customize() {
   const {
     mode,
@@ -59,13 +59,15 @@ export default function Customize() {
     checkPINStatus,
   } = useAuth();
 
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [renderKey, setRenderKey] = useState(0);
 
-  // Security state
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<
@@ -78,22 +80,26 @@ export default function Customize() {
   const [oldPIN, setOldPIN] = useState("");
   const [showOldPINModal, setShowOldPINModal] = useState(false);
 
-  // Tutorial replay modal state
+
   const [showReplayTutorialModal, setShowReplayTutorialModal] = useState(false);
   const [showRemovePINModal, setShowRemovePINModal] = useState(false);
+
 
   useEffect(() => {
     setRenderKey((prev) => prev + 1);
   }, [colors, fontConfig]);
+
 
   useEffect(() => {
     refreshBiometricCapability();
     checkPINStatus();
   }, []);
 
+
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
+
 
   const showToastMessage = (
     message: string,
@@ -107,6 +113,7 @@ export default function Customize() {
     }, 3000);
   };
 
+
   const handleBiometricToggle = async (value: boolean) => {
     if (value && !biometricCapability?.isAvailable) {
       showToastMessage(
@@ -116,6 +123,7 @@ export default function Customize() {
       return;
     }
 
+
     if (value && !isPINConfigured) {
       showToastMessage(
         "Please set up a PIN first as a fallback",
@@ -123,6 +131,7 @@ export default function Customize() {
       );
       return;
     }
+
 
     await setBiometricEnabled(value);
     showToastMessage(
@@ -133,21 +142,26 @@ export default function Customize() {
     );
   };
 
+
   const handleSetupPIN = () => {
     setPinModalMode("setup");
     setPinModalVisible(true);
   };
 
+
   const handleChangePIN = () => {
     setShowOldPINModal(true);
   };
+
 
   const handleOldPINSubmit = async (pin: string): Promise<boolean> => {
     const isValid = await isPINSet();
     if (!isValid) return false;
 
+
     const { verifyPIN } = await import("../src/utils/pinCode");
     const verified = await verifyPIN(pin);
+
 
     if (verified) {
       setOldPIN(pin);
@@ -157,8 +171,10 @@ export default function Customize() {
       return true;
     }
 
+
     return false;
   };
+
 
   const handlePINSubmit = async (pin: string): Promise<boolean> => {
     try {
@@ -194,9 +210,11 @@ export default function Customize() {
     }
   };
 
+
   const handleRemovePIN = () => {
     setShowRemovePINModal(true);
   };
+
 
   const confirmRemovePIN = async () => {
     const success = await removePIN();
@@ -210,6 +228,7 @@ export default function Customize() {
     setShowRemovePINModal(false);
   };
 
+
   const handleTimeoutChange = async (minutes: InactivityTimeout) => {
     await setInactivityTimeout(minutes);
     showToastMessage(
@@ -217,6 +236,7 @@ export default function Customize() {
       "success"
     );
   };
+
 
   const handleTestBiometric = async () => {
     if (!biometricCapability?.isAvailable) {
@@ -227,6 +247,7 @@ export default function Customize() {
       return;
     }
 
+
     const result = await authenticateWithBiometric();
     if (result.success) {
       showToastMessage("Biometric authentication successful!", "success");
@@ -235,15 +256,18 @@ export default function Customize() {
     }
   };
 
+
   const handleReplayTutorial = () => {
     setShowReplayTutorialModal(true);
   };
+
 
   const confirmReplayTutorial = async () => {
     setShowReplayTutorialModal(false);
     await resetOnboarding();
     router.replace("/onboarding");
   };
+
 
   if (!fontsLoaded) {
     return (
@@ -254,11 +278,12 @@ export default function Customize() {
     );
   }
 
+
   return (
     <LinearGradient colors={colors.bg} style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header */}
+
       <View
         key={`header-${renderKey}`}
         style={[
@@ -287,11 +312,11 @@ export default function Customize() {
         <View style={{ width: 40 }} />
       </View>
 
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}
       >
-        {/* Color Theme Section */}
         <View style={styles.section} key={`color-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("theme")}
@@ -327,6 +352,7 @@ export default function Customize() {
             />
           </Pressable>
 
+
           {expandedSection === "theme" && (
             <MotiView
               key={`theme-${renderKey}`}
@@ -358,7 +384,7 @@ export default function Customize() {
           )}
         </View>
 
-        {/* Font Family Section */}
+
         <View style={[styles.section, { marginTop: 20 }]} key={`font-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("font")}
@@ -394,6 +420,7 @@ export default function Customize() {
             />
           </Pressable>
 
+
           {expandedSection === "font" && (
             <MotiView
               key={`font-${renderKey}`}
@@ -418,7 +445,7 @@ export default function Customize() {
           )}
         </View>
 
-        {/* Animation Section */}
+
         <View style={[styles.section, { marginTop: 20 }]} key={`animation-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("animation")}
@@ -456,6 +483,7 @@ export default function Customize() {
             />
           </Pressable>
 
+
           {expandedSection === "animation" && (
             <MotiView
               key={`animation-${renderKey}`}
@@ -480,7 +508,7 @@ export default function Customize() {
           )}
         </View>
 
-        {/* Security Section */}
+
         <View style={[styles.section, { marginTop: 20 }]} key={`security-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("security")}
@@ -518,6 +546,7 @@ export default function Customize() {
             />
           </Pressable>
 
+
           {expandedSection === "security" && (
             <MotiView
               key={`security-${renderKey}`}
@@ -526,7 +555,6 @@ export default function Customize() {
               transition={{ type: "timing", duration: 300 }}
               style={styles.securityContent}
             >
-              {/* Biometric Toggle */}
               <View
                 style={[
                   styles.securityRow,
@@ -578,7 +606,7 @@ export default function Customize() {
                 />
               </View>
 
-              {/* Test Biometric Button */}
+
               {biometricCapability?.isAvailable && (
                 <Pressable
                   onPress={handleTestBiometric}
@@ -607,7 +635,7 @@ export default function Customize() {
                 </Pressable>
               )}
 
-              {/* PIN Setup/Change */}
+
               <View
                 style={[
                   styles.securityRow,
@@ -636,6 +664,7 @@ export default function Customize() {
                   </View>
                 </View>
               </View>
+
 
               <View style={styles.securityButtonGroup}>
                 {!isPINConfigured ? (
@@ -719,7 +748,7 @@ export default function Customize() {
                 )}
               </View>
 
-              {/* Auto-lock Timeout */}
+
               <View
                 style={[
                   styles.securityRow,
@@ -752,6 +781,7 @@ export default function Customize() {
                   </View>
                 </View>
               </View>
+
 
               <View style={styles.timeoutGrid}>
                 {([1, 5, 10, 30, 0] as const).map((minutes) => (
@@ -795,7 +825,7 @@ export default function Customize() {
                 ))}
               </View>
 
-              {/* Last Unlock Info */}
+
               {preferences.lastUnlockTime > 0 && (
                 <View
                   style={[
@@ -839,7 +869,7 @@ export default function Customize() {
           )}
         </View>
 
-        {/* Tutorial & Help Section */}
+
         <View style={[styles.section, { marginTop: 20 }]} key={`tutorial-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("tutorial")}
@@ -876,6 +906,7 @@ export default function Customize() {
               color={colors.accent}
             />
           </Pressable>
+
 
           {expandedSection === "tutorial" && (
             <MotiView
@@ -918,6 +949,7 @@ export default function Customize() {
                 </View>
               </View>
 
+
               <Pressable
                 onPress={handleReplayTutorial}
                 style={[
@@ -943,7 +975,7 @@ export default function Customize() {
         </View>
       </ScrollView>
 
-      {/* PIN Modals */}
+
       <PINInputModal
         visible={showOldPINModal}
         onSubmit={handleOldPINSubmit}
@@ -952,6 +984,7 @@ export default function Customize() {
         subtitle="Enter your current PIN to change it"
         mode="unlock"
       />
+
 
       <PINInputModal
         visible={pinModalVisible}
@@ -969,7 +1002,7 @@ export default function Customize() {
         mode={pinModalMode}
       />
 
-      {/* Confirm Modals */}
+
       <ConfirmModal
         visible={showReplayTutorialModal}
         title="Replay Tutorial?"
@@ -980,6 +1013,7 @@ export default function Customize() {
         onConfirm={confirmReplayTutorial}
         onCancel={() => setShowReplayTutorialModal(false)}
       />
+
 
       <ConfirmModal
         visible={showRemovePINModal}
@@ -992,13 +1026,13 @@ export default function Customize() {
         onCancel={() => setShowRemovePINModal(false)}
       />
 
-      {/* Toast */}
+
       <Toast visible={showToast} message={toastMessage} type={toastType} />
     </LinearGradient>
   );
 }
 
-// Helper function to get icons for different animation types
+
 function getAnimationIcon(id: string): string {
   const iconMap: Record<string, string> = {
     slideright: "arrow-forward",
@@ -1015,6 +1049,7 @@ function getAnimationIcon(id: string): string {
   };
   return iconMap[id] || "flash-outline";
 }
+
 
 function ThemeOption({
   label,
@@ -1074,6 +1109,7 @@ function ThemeOption({
   );
 }
 
+
 function FontOption({
   label,
   active,
@@ -1120,6 +1156,7 @@ function FontOption({
   );
 }
 
+
 function AnimationOption({
   label,
   icon,
@@ -1161,6 +1198,7 @@ function AnimationOption({
     </Pressable>
   );
 }
+
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

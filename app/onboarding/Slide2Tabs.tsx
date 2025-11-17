@@ -1,12 +1,13 @@
-// app/onboarding/Slide2Tabs.tsx
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
+
 export default function Slide2Tabs() {
   const { colors, fontConfig } = useTheme();
+
 
   return (
     <OnboardingSlide slideIndex={1}>
@@ -20,6 +21,7 @@ export default function Slide2Tabs() {
           Explore the Four Tabs
         </Text>
 
+
         <Text
           style={[
             styles.subtitle,
@@ -29,7 +31,7 @@ export default function Slide2Tabs() {
           Each tab has a specific purpose:
         </Text>
 
-        {/* Manage Tab */}
+
         <TabCard
           icon="grid"
           title="Manage"
@@ -39,7 +41,7 @@ export default function Slide2Tabs() {
           fontConfig={fontConfig}
         />
 
-        {/* Transfer Tab */}
+
         <TabCard
           icon="swap-horizontal"
           title="Transfer"
@@ -52,6 +54,7 @@ export default function Slide2Tabs() {
     </OnboardingSlide>
   );
 }
+
 
 function TabCard({
   icon,
@@ -98,6 +101,7 @@ function TabCard({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

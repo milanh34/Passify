@@ -1,17 +1,17 @@
-// app/onboarding/Slide6GetStarted.tsx
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
+
 export default function Slide6GetStarted() {
   const { colors, fontConfig } = useTheme();
+
 
   return (
     <OnboardingSlide slideIndex={5}>
       <View style={styles.container}>
-        {/* Success Icon */}
         <View
           style={[
             styles.successIcon,
@@ -25,6 +25,7 @@ export default function Slide6GetStarted() {
           />
         </View>
 
+
         <Text
           style={[
             styles.title,
@@ -33,6 +34,7 @@ export default function Slide6GetStarted() {
         >
           You're All Set!
         </Text>
+
 
         <Text
           style={[
@@ -43,6 +45,7 @@ export default function Slide6GetStarted() {
           Use your master password to encrypt all your data into a single secure
           image.
         </Text>
+
 
         <View
           style={[
@@ -64,6 +67,7 @@ export default function Slide6GetStarted() {
           </Text>
         </View>
 
+
         <Text
           style={[
             styles.cta,
@@ -76,6 +80,7 @@ export default function Slide6GetStarted() {
     </OnboardingSlide>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

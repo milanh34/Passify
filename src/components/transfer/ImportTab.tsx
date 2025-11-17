@@ -16,7 +16,9 @@ import { parseTransferText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 import ConflictModal from "./ConflictModal";
 
+
 type ConflictResolution = "update" | "skip";
+
 
 interface ConflictDecision {
   platformId: string;
@@ -25,10 +27,12 @@ interface ConflictDecision {
   newData: any;
 }
 
+
 export default function ImportTab() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
   const router = useRouter();
+
 
   const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,7 +41,7 @@ export default function ImportTab() {
   const [isGuideExpanded, setIsGuideExpanded] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
 
-  // Conflict resolution state
+
   const [conflictModalVisible, setConflictModalVisible] = useState(false);
   const [currentConflict, setCurrentConflict] = useState<{
     platformName: string;
@@ -46,11 +50,10 @@ export default function ImportTab() {
     identifierField: string;
   } | null>(null);
   
-  // Use ref for immediate synchronous access
   const globalResolutionRef = useRef<ConflictResolution | null>(null);
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
 
-  // Helper to show toast
+
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     setToastMessage(message);
     setToastType(type);
@@ -58,7 +61,7 @@ export default function ImportTab() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Extract email/username from account data
+
   const getIdentifierField = (account: any): { field: string; value: string } | null => {
     if (account.email) return { field: "email", value: account.email };
     if (account.gmail) return { field: "gmail", value: account.gmail };
@@ -66,10 +69,11 @@ export default function ImportTab() {
     return null;
   };
 
-  // Extract name from email
+
   const getNameFromEmail = (account: any): string => {
     const identifier = getIdentifierField(account);
     if (!identifier) return "";
+
 
     const email = identifier.value;
     const atIndex = email.indexOf("@");
@@ -79,7 +83,7 @@ export default function ImportTab() {
     return email;
   };
 
-  // Check if account exists
+
   const findExistingAccount = (
     platformId: string,
     newAccount: any
@@ -87,7 +91,9 @@ export default function ImportTab() {
     const accounts = database[platformId] || [];
     const identifier = getIdentifierField(newAccount);
 
+
     if (!identifier) return null;
+
 
     const existing = accounts.find((acc: any) => {
       const existingIdentifier = getIdentifierField(acc);
@@ -98,10 +104,11 @@ export default function ImportTab() {
       );
     });
 
+
     return existing ? { account: existing, field: identifier.field } : null;
   };
 
-  // Show conflict modal and wait for resolution
+
   const askUserForResolution = (
     platformName: string,
     existingAccount: any,
@@ -117,7 +124,6 @@ export default function ImportTab() {
       });
       setConflictModalVisible(true);
       
-      // Store the resolve function in the ref
       resolutionCallbackRef.current = (action: ConflictResolution) => {
         resolve(action);
         resolutionCallbackRef.current = null;
@@ -125,21 +131,19 @@ export default function ImportTab() {
     });
   };
 
-  // Handle user's decision in modal
+
   const handleDecision = (action: ConflictResolution, applyToAll: boolean) => {
-    // Set global resolution in ref for immediate access
     if (applyToAll) {
       globalResolutionRef.current = action;
     }
     
-    // Close modal
     setConflictModalVisible(false);
     
-    // Call the resolution callback
     if (resolutionCallbackRef.current) {
       resolutionCallbackRef.current(action);
     }
   };
+
 
   const handleImport = async () => {
     if (!inputText.trim()) {
@@ -147,12 +151,15 @@ export default function ImportTab() {
       return;
     }
 
+
     setIsProcessing(true);
-    globalResolutionRef.current = null; // Reset global resolution
+    globalResolutionRef.current = null;
+
 
     try {
       const parsedData = parseTransferText(inputText);
       const platformNames = Object.keys(parsedData);
+
 
       if (platformNames.length === 0) {
         showToastMessage("Could not parse the text. Please check the format", "error");
@@ -160,51 +167,53 @@ export default function ImportTab() {
         return;
       }
 
-      // Phase 1: Collect all operations and resolve conflicts
+
       const newAccountsToAdd: Array<{ platformId: string; data: any }> = [];
       const decisionsToApply: ConflictDecision[] = [];
+
 
       for (const platformName of platformNames) {
         const accounts = parsedData[platformName];
         const titleCaseName = toTitleCase(platformName);
         const platformId = platformName.toLowerCase().replace(/\s+/g, "_");
 
-        // Check if platform exists
+
         const platformExists = !!database[platformId];
 
+
         if (!platformExists) {
-          // Create new platform
           await addPlatform(platformId);
         }
+
 
         const newFields = new Set<string>();
         accounts.forEach((acc) => {
           Object.keys(acc).forEach((field) => newFields.add(field));
         });
 
-        // Get existing schema or create default
+
         const existingSchema = schemas[platformId] || [];
         const mergedFields = new Set([
           ...existingSchema,
           ...Array.from(newFields),
         ]);
 
-        // Build final schema with proper ordering
+
         const finalSchema: string[] = [];
 
-        // Ensure 'name' is first
+
         if (mergedFields.has("name")) {
           finalSchema.push("name");
           mergedFields.delete("name");
         }
 
-        // Ensure 'password' is second
+
         if (mergedFields.has("password")) {
           finalSchema.push("password");
           mergedFields.delete("password");
         }
 
-        // Add all other fields from existing schema first (preserve order)
+
         existingSchema.forEach((field) => {
           if (
             field !== "name" &&
@@ -216,50 +225,47 @@ export default function ImportTab() {
           }
         });
 
-        // Add any new fields from import at the end
+
         mergedFields.forEach((field) => {
           if (field !== "id") {
-            // Never add 'id' to schema
             finalSchema.push(field);
           }
         });
 
-        // Only update schema if there are new fields or it's a new platform
+
         if (!platformExists || finalSchema.length !== existingSchema.length) {
           await updatePlatformSchema(platformId, finalSchema);
         }
 
-        // Process each account
+
         for (let i = 0; i < accounts.length; i++) {
           const accountData = { ...accounts[i] };
 
-          // Generate name from email if not provided
+
           if (!accountData.name) {
             const emailName = getNameFromEmail(accountData);
             accountData.name = emailName || `Account ${i + 1}`;
           }
 
-          // Ensure password field exists
+
           if (!accountData.password) {
             accountData.password = "";
           }
 
-          // Store the title case platform name in each account
+
           accountData.platform = titleCaseName;
 
-          // Check for existing account
+
           const existingData = findExistingAccount(platformId, accountData);
 
+
           if (existingData) {
-            // Conflict detected - decide what to do
             let action: ConflictResolution;
 
-            // Check ref for immediate value
+
             if (globalResolutionRef.current) {
-              // Use global resolution if set
               action = globalResolutionRef.current;
             } else {
-              // Ask user for this specific conflict
               action = await askUserForResolution(
                 titleCaseName,
                 existingData.account,
@@ -268,7 +274,7 @@ export default function ImportTab() {
               );
             }
 
-            // Store the decision
+
             decisionsToApply.push({
               platformId,
               accountId: existingData.account.id,
@@ -276,24 +282,23 @@ export default function ImportTab() {
               newData: accountData,
             });
           } else {
-            // No conflict - mark for addition
             newAccountsToAdd.push({ platformId, data: accountData });
           }
         }
       }
 
-      // Phase 2: Apply all decisions
+
       let totalAccounts = 0;
       let updatedAccounts = 0;
       let skippedAccounts = 0;
 
-      // Add new accounts
+
       for (const item of newAccountsToAdd) {
         await addAccount(item.platformId, item.data);
         totalAccounts++;
       }
 
-      // Apply conflict resolutions
+
       for (const decision of decisionsToApply) {
         if (decision.action === "update") {
           await updateAccount(decision.platformId, decision.accountId, decision.newData);
@@ -303,16 +308,18 @@ export default function ImportTab() {
         }
       }
 
-      // Show success message
+
       const messages = [];
       if (totalAccounts > 0) messages.push(`${totalAccounts} new`);
       if (updatedAccounts > 0) messages.push(`${updatedAccounts} updated`);
       if (skippedAccounts > 0) messages.push(`${skippedAccounts} skipped`);
 
+
       showToastMessage(
         `Import complete: ${messages.join(", ")} account(s) from ${platformNames.length} platform(s)`,
         "success"
       );
+
 
       setInputText("");
     } catch (error) {
@@ -324,9 +331,11 @@ export default function ImportTab() {
     }
   };
 
+
   const handleClear = () => {
     setInputText("");
   };
+
 
   return (
     <>
@@ -334,7 +343,6 @@ export default function ImportTab() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <Ionicons name="cloud-upload" size={36} color={colors.accent} />
           <Text
@@ -355,7 +363,7 @@ export default function ImportTab() {
           </Text>
         </View>
 
-        {/* Expandable Guide */}
+
         <Pressable
           onPress={() => setIsGuideExpanded(!isGuideExpanded)}
           style={[
@@ -384,6 +392,7 @@ export default function ImportTab() {
             />
           </View>
 
+
           <AnimatePresence>
             {isGuideExpanded && (
               <MotiView
@@ -405,6 +414,7 @@ export default function ImportTab() {
                     • Two blank lines between accounts{"\n"}
                     • Three blank lines between platforms
                   </Text>
+
 
                   <View
                     style={[
@@ -441,7 +451,7 @@ export default function ImportTab() {
           </AnimatePresence>
         </Pressable>
 
-        {/* Text Input */}
+
         <View
           style={[
             styles.inputCard,
@@ -469,7 +479,7 @@ export default function ImportTab() {
           />
         </View>
 
-        {/* Action Buttons */}
+
         <View style={styles.buttonRow}>
           <Pressable
             onPress={handleClear}
@@ -489,6 +499,7 @@ export default function ImportTab() {
               Clear
             </Text>
           </Pressable>
+
 
           <Pressable
             onPress={handleImport}
@@ -517,17 +528,19 @@ export default function ImportTab() {
         </View>
       </ScrollView>
 
-      {/* Conflict Resolution Modal */}
+
       <ConflictModal
         visible={conflictModalVisible}
         conflict={currentConflict}
         onDecision={handleDecision}
       />
 
+
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </>
   );
 }
+
 
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 30 },

@@ -6,6 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 import { toTitleCase } from "../utils/transferParser";
 import * as Clipboard from "expo-clipboard";
 
+
 interface DecodedDataDisplayProps {
   decodedData: {
     database: Record<string, any[]>;
@@ -14,12 +15,14 @@ interface DecodedDataDisplayProps {
   onCopyField?: (value: string) => void;
 }
 
+
 export default function DecodedDataDisplay({ decodedData, onCopyField }: DecodedDataDisplayProps) {
   const { colors, fontConfig } = useTheme();
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+
 
   const togglePlatform = (platformId: string) => {
     setExpandedPlatforms((prev) => {
@@ -33,6 +36,7 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     });
   };
 
+
   const toggleAccount = (accountId: string) => {
     setExpandedAccounts((prev) => {
       const newSet = new Set(prev);
@@ -45,12 +49,14 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     });
   };
 
+
   const copyToClipboard = async (text: string, key: string) => {
     await Clipboard.setStringAsync(text || "");
     setCopiedField(key);
     setTimeout(() => setCopiedField((k) => (k === key ? null : k)), 1000);
     if (onCopyField) onCopyField(text);
   };
+
 
   const togglePasswordVisibility = (fieldKey: string) => {
     setVisiblePasswords((prev) => ({
@@ -59,12 +65,13 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     }));
   };
 
-  // Sort platforms alphabetically
+
   const sortedPlatforms = Object.keys(decodedData.database).sort((a, b) => {
     const nameA = toTitleCase(a.replace(/_/g, " "));
     const nameB = toTitleCase(b.replace(/_/g, " "));
     return nameA.localeCompare(nameB);
   });
+
 
   return (
     <View style={styles.container}>
@@ -77,11 +84,13 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
         Decoded Accounts
       </Text>
 
+
       {sortedPlatforms.map((platformId, platformIndex) => {
         const accounts = decodedData.database[platformId];
         const platformName = toTitleCase(platformId.replace(/_/g, " "));
         const isPlatformExpanded = expandedPlatforms.has(platformId);
         const schema = decodedData.schemas[platformId] || ["name", "password"];
+
 
         return (
           <MotiView
@@ -138,12 +147,13 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                 />
               </View>
 
-              {/* Expanded Accounts */}
+
               {isPlatformExpanded && (
                 <View style={styles.accountsList}>
                   {accounts.map((account: any, accountIndex: number) => {
                     const accountKey = `${platformId}-${account.id || accountIndex}`;
                     const isAccountExpanded = expandedAccounts.has(accountKey);
+
 
                     return (
                       <View
@@ -176,7 +186,7 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                           />
                         </Pressable>
 
-                        {/* Expanded Account Details */}
+
                         {isAccountExpanded && (
                           <View style={styles.accountDetails}>
                             {schema
@@ -185,9 +195,11 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                 const value = account[fieldName];
                                 if (!value) return null;
 
+
                                 const fieldKey = `${accountKey}-${fieldName}`;
                                 const isPassword = fieldName.toLowerCase().includes("password");
                                 const isVisible = visiblePasswords[fieldKey];
+
 
                                 return (
                                   <View key={fieldName} style={styles.fieldRow}>
@@ -256,6 +268,7 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

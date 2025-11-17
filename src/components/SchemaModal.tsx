@@ -4,32 +4,34 @@ import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 
-// Define a type for a field with a stable ID
+
 type SchemaField = {
   id: string;
   value: string;
 };
 
+
 export default function SchemaModal({ 
   visible, 
-  currentSchema, // CHANGED: Accept currentSchema instead of initialSchema
+  currentSchema,
   onClose, 
   onSave 
 }: { 
   visible: boolean; 
-  currentSchema: string[]; // CHANGED: Renamed prop
+  currentSchema: string[];
   onClose: () => void; 
   onSave: (fields: string[]) => void; 
 }) {
   const { colors, fontConfig } = useTheme();
   const [fields, setFields] = useState<SchemaField[]>([]);
 
+
   useEffect(() => {
-    if (visible && currentSchema) { // ADDED: Check if currentSchema exists
-      // Convert the initial schema strings into objects with stable IDs
+    if (visible && currentSchema) {
       setFields(currentSchema.map((value, index) => ({ id: `${index}-${Date.now()}`, value })));
     }
-  }, [visible, currentSchema]); // CHANGED: Use currentSchema
+  }, [visible, currentSchema]);
+
 
   const update = (id: string, newValue: string) => {
     setFields((currentFields) =>
@@ -37,22 +39,25 @@ export default function SchemaModal({
     );
   };
 
+
   const addField = () => {
     setFields((currentFields) => [...currentFields, { id: `new-${Date.now()}`, value: "" }]);
   };
+
 
   const remove = (id: string) => {
     setFields((currentFields) => currentFields.filter((field) => field.id !== id));
   };
 
+
   const handleSave = () => {
-    // Convert back to an array of strings before saving
     const validFields = fields.map(f => f.value.trim()).filter(Boolean);
     if (validFields.length > 0) {
       onSave(validFields);
     }
     onClose();
   };
+
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -108,6 +113,7 @@ export default function SchemaModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },

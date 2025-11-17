@@ -2,15 +2,18 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
+
 interface State {
   hasError: boolean;
   error: Error | null;
 }
+
 
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -21,22 +24,20 @@ export default class ErrorBoundary extends Component<Props, State> {
     };
   }
 
+
   static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
     return {
       hasError: true,
       error,
     };
   }
 
+
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console (not red screen)
     console.error('🔴 Error caught by boundary:', error);
     console.error('🔴 Error info:', errorInfo);
-    
-    // You can also log to an error reporting service here
-    // Example: Sentry.captureException(error);
   }
+
 
   handleReset = () => {
     this.setState({
@@ -45,12 +46,13 @@ export default class ErrorBoundary extends Component<Props, State> {
     });
   };
 
+
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
+
 
       return (
         <View style={styles.container}>
@@ -67,9 +69,11 @@ export default class ErrorBoundary extends Component<Props, State> {
       );
     }
 
+
     return this.props.children;
   }
 }
+
 
 const styles = StyleSheet.create({
   container: {

@@ -5,11 +5,13 @@ import { MotiView } from 'moti';
 import { useTheme } from '../context/ThemeContext';
 import { getBiometricIcon, getBiometricTypeName, BiometricType } from '../utils/biometricAuth';
 
+
 interface BiometricPromptProps {
   biometricType: BiometricType;
   onPress: () => void;
   isLoading?: boolean;
 }
+
 
 export default function BiometricPrompt({
   biometricType,
@@ -19,6 +21,7 @@ export default function BiometricPrompt({
   const { colors, fontConfig } = useTheme();
   const iconName = getBiometricIcon(biometricType);
   const typeName = getBiometricTypeName(biometricType);
+
 
   return (
     <MotiView
@@ -55,6 +58,7 @@ export default function BiometricPrompt({
           />
         </MotiView>
 
+
         <Text
           style={[
             styles.promptTitle,
@@ -66,6 +70,7 @@ export default function BiometricPrompt({
         >
           {isLoading ? 'Authenticating...' : `Unlock with ${typeName}`}
         </Text>
+
 
         <Text
           style={[
@@ -82,6 +87,7 @@ export default function BiometricPrompt({
     </MotiView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme } from "react-native";
 
-// Fonts
+
 import { useFonts as useInter, Inter_400Regular, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useFonts as useLexend, Lexend_400Regular, Lexend_700Bold } from "@expo-google-fonts/lexend";
 import { useFonts as useOpenSans, OpenSans_400Regular, OpenSans_700Bold } from "@expo-google-fonts/open-sans";
@@ -14,6 +14,7 @@ import { useFonts as useSourceSerif, SourceSerif4_400Regular, SourceSerif4_700Bo
 import { useFonts as useIbmPlex, IBMPlexSans_400Regular, IBMPlexSans_700Bold } from "@expo-google-fonts/ibm-plex-sans";
 import { useFonts as useJetBrains, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from "@expo-google-fonts/jetbrains-mono";
 import { useFonts as useSpaceGrotesk, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
+
 
 type ThemeColors = {
   name: string;
@@ -34,6 +35,7 @@ type ThemeColors = {
   modalBorder: string;
   isDark: boolean;
 };
+
 
 const THEMES: Record<string, ThemeColors> = {
   light: {
@@ -341,6 +343,7 @@ const THEMES: Record<string, ThemeColors> = {
   },
 };
 
+
 const FONTS = {
   Inter: { label: "Inter", regular: "Inter_400Regular", bold: "Inter_700Bold" },
   Lexend: { label: "Lexend", regular: "Lexend_400Regular", bold: "Lexend_700Bold" },
@@ -355,12 +358,15 @@ const FONTS = {
   SpaceGrotesk: { label: "Space Grotesk", regular: "SpaceGrotesk_400Regular", bold: "SpaceGrotesk_700Bold" },
 };
 
+
 type ThemeName = keyof typeof THEMES;
 type FontName = keyof typeof FONTS;
 type ThemeMode = ThemeName | "system";
 
+
 const THEME_KEY = "@PM:themeV3";
 const FONT_KEY = "@PM:fontV3";
+
 
 type ThemeContextValue = {
   mode: ThemeMode;
@@ -374,14 +380,16 @@ type ThemeContextValue = {
   fontsLoaded: boolean;
 };
 
+
 const ThemeCtx = createContext<ThemeContextValue | null>(null);
+
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const system = useColorScheme();
   const [mode, setMode] = useState<ThemeMode>("system");
   const [font, setFont] = useState<FontName>("Inter");
 
-  // Load fonts
+
   const [interLoaded] = useInter({ Inter_400Regular, Inter_700Bold });
   const [lexendLoaded] = useLexend({ Lexend_400Regular, Lexend_700Bold });
   const [openLoaded] = useOpenSans({ OpenSans_400Regular, OpenSans_700Bold });
@@ -393,6 +401,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [plexLoaded] = useIbmPlex({ IBMPlexSans_400Regular, IBMPlexSans_700Bold });
   const [jetLoaded] = useJetBrains({ JetBrainsMono_400Regular, JetBrainsMono_700Bold });
   const [spaceLoaded] = useSpaceGrotesk({ SpaceGrotesk_400Regular, SpaceGrotesk_700Bold });
+
 
   const fontsLoaded =
     interLoaded &&
@@ -407,6 +416,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     jetLoaded &&
     spaceLoaded;
 
+
   useEffect(() => {
     Promise.all([AsyncStorage.getItem(THEME_KEY), AsyncStorage.getItem(FONT_KEY)]).then(
       ([t, f]) => {
@@ -416,20 +426,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+
   const changeTheme = (newMode: ThemeMode) => {
     setMode(newMode);
     AsyncStorage.setItem(THEME_KEY, newMode);
   };
+
 
   const changeFont = (newFont: FontName) => {
     setFont(newFont);
     AsyncStorage.setItem(FONT_KEY, newFont);
   };
 
+
   const currentThemeName: ThemeName =
     mode === "system" ? ((system || "light") as ThemeName) : (mode as ThemeName);
   const colors = THEMES[currentThemeName];
   const fontConfig = FONTS[font];
+
 
   const value = useMemo(
     () => ({
@@ -446,8 +460,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [mode, font, colors, fontConfig, fontsLoaded]
   );
 
+
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
+
 
 export function useTheme() {
   const ctx = useContext(ThemeCtx);

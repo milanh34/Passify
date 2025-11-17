@@ -1,9 +1,3 @@
-/**
- * Icon Mapping Constants
- * Pre-mapped platform icons using expo-vector-icons
- * Expanded with financial services, identity documents, and crypto platforms
- */
-
 export interface IconMapping {
     platform: string;
     displayName: string;
@@ -14,8 +8,8 @@ export interface IconMapping {
     keywords: string[];
 }
 
+
 export const PLATFORM_ICONS: Record<string, IconMapping> = {
-    // YOUR EXISTING PLATFORMS
     google: {
         platform: 'google',
         displayName: 'Google',
@@ -413,7 +407,7 @@ export const PLATFORM_ICONS: Record<string, IconMapping> = {
         keywords: ['amazon', 'shopping', 'ecommerce'],
     },
 
-    // 🆕 NEW ADDITIONS - FINANCIAL SERVICES & CRYPTO
+
     aws: {
         platform: 'aws',
         displayName: 'AWS',
@@ -496,7 +490,7 @@ export const PLATFORM_ICONS: Record<string, IconMapping> = {
         keywords: ['kraken', 'crypto', 'exchange', 'trading'],
     },
 
-    // 🆕 BANKING & FINANCIAL INSTITUTIONS
+
     bankaccount: {
         platform: 'bankaccount',
         displayName: 'Bank Account',
@@ -570,7 +564,7 @@ export const PLATFORM_ICONS: Record<string, IconMapping> = {
         keywords: ['phonepe', 'payment', 'upi', 'wallet', 'india'],
     },
 
-    // 🆕 IDENTITY DOCUMENTS & GOVERNMENT IDs
+
     aadhar: {
         platform: 'aadhar',
         displayName: 'Aadhar',
@@ -644,7 +638,7 @@ export const PLATFORM_ICONS: Record<string, IconMapping> = {
         keywords: ['national', 'id', 'identity', 'card', 'government'],
     },
 
-    // 🆕 INVESTMENT & TRADING PLATFORMS
+
     groww: {
         platform: 'groww',
         displayName: 'Groww',
@@ -682,7 +676,7 @@ export const PLATFORM_ICONS: Record<string, IconMapping> = {
         keywords: ['sharekhan', 'trading', 'stocks', 'broker', 'invest'],
     },
 
-    // EXISTING PLATFORMS (keeping all your original ones)
+
     twitter: {
         platform: 'twitter',
         displayName: 'Twitter / X',
@@ -1126,7 +1120,7 @@ export const PLATFORM_ICONS: Record<string, IconMapping> = {
     },
 };
 
-// Helper arrays for categorization
+
 export const ICON_CATEGORIES = [
     { id: 'social', label: 'Social Media', icon: 'people' },
     { id: 'communication', label: 'Communication', icon: 'chatbubbles' },
@@ -1145,7 +1139,7 @@ export const ICON_CATEGORIES = [
     { id: 'other', label: 'Other', icon: 'apps' },
 ] as const;
 
-// Predefined color palette
+
 export const ICON_COLOR_PALETTE = [
     { name: 'Red', value: '#F44336' },
     { name: 'Pink', value: '#E91E63' },
@@ -1169,17 +1163,17 @@ export const ICON_COLOR_PALETTE = [
     { name: 'Black', value: '#000000' },
 ];
 
-// Get all platform icons as array
+
 export const getAllPlatformIcons = (): IconMapping[] => {
     return Object.values(PLATFORM_ICONS);
 };
 
-// Get icons by category
+
 export const getIconsByCategory = (category: IconMapping['category']): IconMapping[] => {
     return getAllPlatformIcons().filter(icon => icon.category === category);
 };
 
-// Get platform count
+
 export const getPlatformCount = (): number => {
     return Object.keys(PLATFORM_ICONS).length;
 };

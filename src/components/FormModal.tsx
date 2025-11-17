@@ -4,15 +4,20 @@ import { MotiView } from "moti";
 import { MotiPressable } from "moti/interactions";
 import { useTheme } from "../context/ThemeContext";
 
+
 type Field = { name: string; label: string; secure?: boolean };
+
 
 export default function FormModal({ visible, onClose, onSubmit, title, fields, initialData = {} }: { visible: boolean; onClose: () => void; onSubmit: (data: Record<string, string>) => void; title: string; fields: Field[]; initialData?: Record<string, any>; }) {
   const { colors, fontConfig } = useTheme();
   const [data, setData] = useState<Record<string, string>>({});
 
+
   useEffect(() => { if (visible) setData(initialData as any); }, [visible, initialData]);
 
+
   const handleSave = () => onSubmit(data);
+
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -52,6 +57,7 @@ export default function FormModal({ visible, onClose, onSubmit, title, fields, i
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },

@@ -5,23 +5,25 @@ import { DbProvider } from "../src/context/DbContext";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { StatusBar } from "expo-status-bar";
 import { View, LogBox, ActivityIndicator } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler"; // 🎯 ADD THIS
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ErrorBoundary from "../src/components/ErrorBoundary";
 import BiometricUnlockScreen from "./screens/BiometricUnlockScreen";
 import { useState, useEffect } from "react";
 import { useRouter, useSegments, useRootNavigationState } from "expo-router";
 import { isOnboardingComplete } from "../src/utils/onboardingState";
 
+
 LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
 ]);
 
-// 🎓 ONBOARDING: Component to check and redirect to onboarding
+
 function OnboardingGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
   const navigationState = useRootNavigationState();
   const [isChecking, setIsChecking] = useState(true);
+
 
   useEffect(() => {
     if (!navigationState?.key) return;
@@ -29,10 +31,12 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
     checkOnboarding();
   }, [navigationState?.key]);
 
+
   const checkOnboarding = async () => {
     try {
       const completed = await isOnboardingComplete();
       setIsChecking(false);
+
 
       if (!completed && segments[0] !== "onboarding") {
         setTimeout(() => {
@@ -45,17 +49,20 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
     }
   };
 
+
   if (isChecking || !navigationState?.key) {
     return null;
   }
 
+
   return <>{children}</>;
 }
 
-// 🔐 AUTH: Component to handle lock/unlock state
+
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLocked, isInitialized } = useAuth();
   const { colors } = useTheme();
+
 
   if (!isInitialized) {
     return (
@@ -72,15 +79,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+
   if (isLocked) {
     return <BiometricUnlockScreen />;
   }
 
+
   return <>{children}</>;
 }
 
+
 function RootStack() {
   const { colors } = useTheme();
+
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
@@ -121,10 +132,10 @@ function RootStack() {
   );
 }
 
+
 export default function RootLayout() {
   return (
     <ErrorBoundary>
-      {/* 🎯 WRAP EVERYTHING WITH GestureHandlerRootView */}
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
           <AnimationProvider>

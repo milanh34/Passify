@@ -11,12 +11,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { ACCOUNT_SORT_OPTIONS, AccountSortOption } from '../utils/sortAccounts';
 
+
 interface AccountSortModalProps {
   visible: boolean;
   currentSort: AccountSortOption;
   onSelect: (option: AccountSortOption) => void;
   onClose: () => void;
 }
+
 
 export default function AccountSortModal({
   visible,
@@ -26,10 +28,12 @@ export default function AccountSortModal({
 }: AccountSortModalProps) {
   const { colors, fontConfig } = useTheme();
 
+
   const handleSelect = (option: AccountSortOption) => {
     onSelect(option);
     onClose();
   };
+
 
   return (
     <Modal
@@ -43,7 +47,6 @@ export default function AccountSortModal({
           style={[styles.modalContent, { backgroundColor: colors.card }]}
           onStartShouldSetResponder={() => true}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Ionicons name="funnel-outline" size={24} color={colors.accent} />
             <Text
@@ -59,7 +62,7 @@ export default function AccountSortModal({
             </Pressable>
           </View>
 
-          {/* Sort Options */}
+
           <ScrollView style={styles.optionsList}>
             {ACCOUNT_SORT_OPTIONS.map((option) => {
               const isSelected = currentSort === option.id;
@@ -114,6 +117,7 @@ export default function AccountSortModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   overlay: {

@@ -1,4 +1,3 @@
-// app/onboarding.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -22,7 +21,7 @@ import { useTheme } from "../src/context/ThemeContext";
 import { saveOnboardingState } from "../src/utils/onboardingState";
 import ConfirmModal from "../src/components/ConfirmModal";
 
-// Import all slides
+
 import Slide1Welcome from "./onboarding/Slide1Welcome";
 import Slide2Tabs from "./onboarding/Slide2Tabs";
 import Slide3SecurityTools from "./onboarding/Slide3SecurityTools";
@@ -30,7 +29,9 @@ import Slide4ManageAccounts from "./onboarding/Slide4ManageAccounts";
 import Slide5Tips from "./onboarding/Slide5Tips";
 import Slide6GetStarted from "./onboarding/Slide6GetStarted";
 
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 
 const SLIDES = [
   Slide1Welcome,
@@ -41,6 +42,7 @@ const SLIDES = [
   Slide6GetStarted,
 ];
 
+
 export default function OnboardingScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showSkipModal, setShowSkipModal] = useState(false);
@@ -48,11 +50,14 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { colors, fontConfig } = useTheme();
 
+
   const translateX = useSharedValue(0);
-  const isTransitioning = useSharedValue(false); // Changed from useRef to useSharedValue
+  const isTransitioning = useSharedValue(false);
+
 
   const isFirstSlide = currentSlide === 0;
   const isLastSlide = currentSlide === SLIDES.length - 1;
+
 
   const handleNext = () => {
     if (isLastSlide) {
@@ -62,16 +67,18 @@ export default function OnboardingScreen() {
     }
   };
 
+
   const handlePrevious = () => {
     if (!isFirstSlide) {
       animateToSlide(currentSlide - 1, "prev");
     }
   };
 
+
   const animateToSlide = (newIndex: number, direction: "next" | "prev") => {
-    if (isTransitioning.value) return; // Changed from .current to .value
+    if (isTransitioning.value) return;
     
-    isTransitioning.value = true; // Changed from .current to .value
+    isTransitioning.value = true;
     const targetX = direction === "next" ? -SCREEN_WIDTH : SCREEN_WIDTH;
     
     translateX.value = withTiming(
@@ -82,16 +89,18 @@ export default function OnboardingScreen() {
           runOnJS(setCurrentSlide)(newIndex);
           translateX.value = direction === "next" ? SCREEN_WIDTH : -SCREEN_WIDTH;
           translateX.value = withTiming(0, { duration: 300 }, () => {
-            isTransitioning.value = false; // Changed from .current to .value
+            isTransitioning.value = false;
           });
         }
       }
     );
   };
 
+
   const handleSkipAll = () => {
     setShowSkipModal(true);
   };
+
 
   const handleComplete = async () => {
     try {
@@ -107,7 +116,7 @@ export default function OnboardingScreen() {
     }
   };
 
-  // Pan gesture with proper vertical scroll detection
+
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-10, 10])
@@ -117,30 +126,30 @@ export default function OnboardingScreen() {
       }
     })
     .onEnd((event) => {
-      if (isTransitioning.value) return; // Changed from .current to .value
+      if (isTransitioning.value) return;
+
 
       const SWIPE_THRESHOLD = 50;
       const velocity = event.velocityX;
 
-      // Swipe left (next slide)
+
       if (
         (event.translationX < -SWIPE_THRESHOLD || velocity < -500) &&
         !isLastSlide
       ) {
         runOnJS(handleNext)();
       }
-      // Swipe right (previous slide)
       else if (
         (event.translationX > SWIPE_THRESHOLD || velocity > 500) &&
         !isFirstSlide
       ) {
         runOnJS(handlePrevious)();
       }
-      // Reset position
       else {
         translateX.value = withTiming(0, { duration: 200 });
       }
     });
+
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -148,11 +157,12 @@ export default function OnboardingScreen() {
     };
   });
 
+
   const CurrentSlideComponent = SLIDES[currentSlide];
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
-      {/* Header */}
       <View
         style={[
           styles.header,
@@ -163,7 +173,6 @@ export default function OnboardingScreen() {
           },
         ]}
       >
-        {/* Progress Indicator */}
         <Text
           style={[
             styles.slideCounter,
@@ -173,7 +182,7 @@ export default function OnboardingScreen() {
           {currentSlide + 1} / {SLIDES.length}
         </Text>
 
-        {/* Skip Button */}
+
         {!isLastSlide && (
           <Pressable
             onPress={handleSkipAll}
@@ -198,14 +207,14 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-      {/* Slide Content with Swipe Support */}
+
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.slideContainer, animatedStyle]}>
           <CurrentSlideComponent key={`slide-${currentSlide}`} />
         </Animated.View>
       </GestureDetector>
 
-      {/* Progress Dots - Fixed positioning */}
+
       <View style={[styles.dotContainer, { backgroundColor: colors.bg[0] }]}>
         {SLIDES.map((_, index) => (
           <MotiView
@@ -226,14 +235,13 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Navigation Buttons */}
+
       <View
         style={[
           styles.footer,
           { paddingBottom: insets.bottom + 20, backgroundColor: colors.bg[0] },
         ]}
       >
-        {/* Previous Button */}
         <Pressable
           onPress={handlePrevious}
           disabled={isFirstSlide}
@@ -270,7 +278,7 @@ export default function OnboardingScreen() {
           </Text>
         </Pressable>
 
-        {/* Next / Get Started Button */}
+
         <Pressable
           onPress={handleNext}
           style={({ pressed }) => [
@@ -300,7 +308,7 @@ export default function OnboardingScreen() {
         </Pressable>
       </View>
 
-      {/* Skip Confirmation Modal */}
+
       <ConfirmModal
         visible={showSkipModal}
         title="Skip Tutorial?"
@@ -317,6 +325,7 @@ export default function OnboardingScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

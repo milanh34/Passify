@@ -7,24 +7,28 @@ import React, {
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 const initialData = require("../../assets/database.json");
+
 
 const DB_KEY = "@PM:database";
 const SCHEMA_KEY = "@PM:schemas";
 const METADATA_KEY = "@PM:platform_metadata";
 
+
 type Account = { id: string; name: string; createdAt?: number; updatedAt?: number; [k: string]: any };
 type Database = Record<string, Account[]>;
 type Schemas = Record<string, string[]>;
 
-// 🎨 ICONS: Extended platform metadata type with icon support
+
 type PlatformMetadata = {
   createdAt: number;
   updatedAt: number;
-  icon?: string | null; // Icon key from iconMapping (e.g., "gmail", "github")
-  iconColor?: string | null; // Hex color for icon (e.g., "#4285F4")
+  icon?: string | null;
+  iconColor?: string | null;
 };
 type PlatformsMetadata = Record<string, PlatformMetadata>;
+
 
 const defaultSchemas: Schemas = {
   google: ["name", "email", "password"],
@@ -32,13 +36,16 @@ const defaultSchemas: Schemas = {
   github: ["name", "username", "email", "password"],
 };
 
+
 const Ctx = createContext<any>(null);
+
 
 export function DbProvider({ children }: { children: React.ReactNode }) {
   const [database, setDatabase] = useState<Database>({});
   const [schemas, setSchemas] = useState<Schemas>({});
   const [platformsMetadata, setPlatformsMetadata] = useState<PlatformsMetadata>({});
   const [isDbLoading, setIsDbLoading] = useState(true);
+
 
   useEffect(() => {
     const load = async () => {
@@ -52,25 +59,28 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
         const scVal = sc[1] ? JSON.parse(sc[1]) : defaultSchemas;
         const metaVal = meta[1] ? JSON.parse(meta[1]) : {};
 
+
         const now = Date.now();
 
-        // 🎨 ICONS: Import findBestMatchingIcon at top of file
+
         const { findBestMatchingIcon } = require("../utils/iconLibrary");
 
-        // Migrate platforms to have metadata
+
         const updatedMeta = { ...metaVal };
         let needsMetaUpdate = false;
 
+
         Object.keys(dbVal).forEach((key) => {
           if (!updatedMeta[key]) {
-            // 🎨 ICONS: Auto-assign icon based on platform name
             const accounts = dbVal[key] || [];
             const platformName =
               accounts.length > 0 && accounts[0].platform
                 ? accounts[0].platform
                 : key.replace(/_/g, " ");
 
+
             const iconMatch = findBestMatchingIcon(platformName);
+
 
             updatedMeta[key] = {
               createdAt: now - Math.floor(Math.random() * 86400000 * 30),
@@ -80,14 +90,15 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
             };
             needsMetaUpdate = true;
           } else if (updatedMeta[key].icon === undefined) {
-            // 🎨 ICONS: Migrate existing platforms - auto-assign icon if not set
             const accounts = dbVal[key] || [];
             const platformName =
               accounts.length > 0 && accounts[0].platform
                 ? accounts[0].platform
                 : key.replace(/_/g, " ");
 
+
             const iconMatch = findBestMatchingIcon(platformName);
+
 
             updatedMeta[key] = {
               ...updatedMeta[key],
@@ -98,7 +109,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
           }
         });
 
-        // Migrate accounts to have timestamps
+
         let needsDbUpdate = false;
         Object.keys(dbVal).forEach((platformKey) => {
           const accounts = dbVal[platformKey] || [];
@@ -119,8 +130,10 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
           });
         });
 
+
         setDatabase(dbVal);
         setSchemas(scVal);
+
 
         if (needsMetaUpdate) {
           setPlatformsMetadata(updatedMeta);
@@ -128,6 +141,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
         } else {
           setPlatformsMetadata(metaVal);
         }
+
 
         if (!db[1] || needsDbUpdate)
           await AsyncStorage.setItem(DB_KEY, JSON.stringify(dbVal));
@@ -141,6 +155,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
 
+
   useEffect(() => {
     if (!isDbLoading) {
       AsyncStorage.multiSet([
@@ -151,15 +166,18 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }
   }, [database, schemas, platformsMetadata, isDbLoading]);
 
+
   const addPlatform = (key: string, displayName?: string) => {
     const platformKey = key.toLowerCase().replace(/\s+/g, "_");
     if (database[platformKey]) return;
 
+
     const now = Date.now();
 
-    // 🎨 ICONS: Auto-assign icon based on platform name
+
     const { findBestMatchingIcon } = require("../utils/iconLibrary");
     const iconMatch = findBestMatchingIcon(displayName || key);
+
 
     setDatabase((db) => ({ ...db, [platformKey]: [] }));
     setSchemas((s) => ({ ...s, [platformKey]: ["name", "password"] }));
@@ -174,15 +192,18 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+
   const updatePlatformName = (oldKey: string, newName: string) => {
     const newKey = newName.toLowerCase().replace(/\s+/g, "_");
     if (database[newKey] || oldKey === newKey) return;
 
+
     const now = Date.now();
 
-    // 🎨 ICONS: Auto-reassign icon based on new platform name
+
     const { findBestMatchingIcon } = require("../utils/iconLibrary");
     const iconMatch = findBestMatchingIcon(newName);
+
 
     setDatabase((db) => {
       const { [oldKey]: accounts, ...rest } = db;
@@ -193,10 +214,12 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       return { ...rest, [newKey]: updatedAccounts };
     });
 
+
     setSchemas((s) => {
       const { [oldKey]: sch, ...rest } = s;
       return { ...rest, [newKey]: sch || ["name", "password"] };
     });
+
 
     setPlatformsMetadata((m) => {
       const { [oldKey]: oldMeta, ...rest } = m;
@@ -205,15 +228,15 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
         [newKey]: {
           createdAt: oldMeta?.createdAt || now,
           updatedAt: now,
-          icon: iconMatch?.platform || null, // 🎨 ICONS: Use new icon based on new name
-          iconColor: iconMatch?.defaultColor || null, // 🎨 ICONS: Use new color based on new name
+          icon: iconMatch?.platform || null,
+          iconColor: iconMatch?.defaultColor || null,
         },
       };
     });
   };
 
 
-  // 🎨 ICONS: New method to update platform icon and color
+
   const updatePlatformIcon = (platformKey: string, icon: string | null, iconColor?: string | null) => {
     const now = Date.now();
     setPlatformsMetadata((m) => ({
@@ -226,6 +249,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       },
     }));
   };
+
 
   const deletePlatform = (key: string) => {
     setDatabase((db) => {
@@ -242,9 +266,11 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+
   const addAccount = (platformKey: string, payload: Omit<Account, "id" | "createdAt" | "updatedAt">) => {
     const now = Date.now();
     const id = `acc_${now}_${Math.floor(Math.random() * 9999)}`;
+
 
     setDatabase((db) => ({
       ...db,
@@ -254,7 +280,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       ],
     }));
 
-    // Update platform's updatedAt timestamp
+
     setPlatformsMetadata((m) => ({
       ...m,
       [platformKey]: {
@@ -263,6 +289,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       },
     }));
   };
+
 
   const updateAccount = (platformKey: string, id: string, updated: Account) => {
     const now = Date.now();
@@ -273,7 +300,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       ),
     }));
 
-    // Update platform's updatedAt timestamp
+
     setPlatformsMetadata((m) => ({
       ...m,
       [platformKey]: {
@@ -282,6 +309,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       },
     }));
   };
+
 
   const deleteAccount = (platformKey: string, id: string) => {
     const now = Date.now();
@@ -290,7 +318,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       [platformKey]: (db[platformKey] || []).filter((a) => a.id !== id),
     }));
 
-    // Update platform's updatedAt timestamp
+
     setPlatformsMetadata((m) => ({
       ...m,
       [platformKey]: {
@@ -300,15 +328,18 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+
   const updatePlatformSchema = (platformKey: string, newSchema: string[]) => {
     const filtered = Array.from(
       new Set(newSchema.map((s) => s.trim()).filter(Boolean))
     );
 
+
     setSchemas((s) => ({
       ...s,
       [platformKey]: filtered.length ? filtered : ["name", "password"],
     }));
+
 
     setDatabase((db) => {
       const updated = (db[platformKey] || []).map((acc) => {
@@ -327,6 +358,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+
   const value = useMemo(
     () => ({
       database,
@@ -335,7 +367,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       isDbLoading,
       addPlatform,
       updatePlatformName,
-      updatePlatformIcon, // 🎨 ICONS: Export new method
+      updatePlatformIcon,
       deletePlatform,
       addAccount,
       updateAccount,
@@ -345,8 +377,10 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     [database, schemas, platformsMetadata, isDbLoading]
   );
 
+
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
+
 
 export function useDb() {
   const ctx = useContext(Ctx);

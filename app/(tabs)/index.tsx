@@ -10,13 +10,13 @@ import {
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { MotiView } from "moti"; // ✅ Already imported
+import { MotiView } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { useAuth } from "../../src/context/AuthContext";
 import { useInactivityTracker } from "../../src/utils/inactivityTracker";
-import { useAnimation } from "../../src/context/AnimationContext"; // ✅ NEW: Import animation
+import { useAnimation } from "../../src/context/AnimationContext";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal";
@@ -29,7 +29,9 @@ import { searchPlatforms, debounce } from "../../src/utils/searchFilter";
 import { sortPlatforms, SortOption } from "../../src/utils/sortPlatforms";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 const SORT_PREFERENCE_KEY = "@PM:sort_preference";
+
 
 export default function ManageScreen() {
   const { colors, fontConfig, fontsLoaded } = useTheme();
@@ -44,17 +46,17 @@ export default function ManageScreen() {
   } = useDb();
   const insets = useSafeAreaInsets();
 
-  // 🔐 AUTH: Get auth state and initialize inactivity tracker
+
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
-  // ✅ NEW: Get TAB_ANIMATION
+
   const { TAB_ANIMATION } = useAnimation();
 
-  // ✅ NEW: Animation key state
+
   const [animationKey, setAnimationKey] = useState(0);
 
-  // Modal states
+
   const [platformModal, setPlatformModal] = useState<{
     visible: boolean;
     editing?: { key: string; name: string };
@@ -64,35 +66,35 @@ export default function ManageScreen() {
     item?: any;
   }>({ visible: false });
 
-  // Selection mode states
+
   const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(
     new Set()
   );
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
-  // Toast state
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<
     "success" | "error" | "info" | "warning"
   >("success");
 
-  // Search state
+
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Sort state
+
   const [sortOption, setSortOption] = useState<SortOption>("recent");
   const [sortModalVisible, setSortModalVisible] = useState(false);
 
-  // Refresh state
+
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load sort preference on mount
+
   useFocusEffect(
     useCallback(() => {
-      // ✅ NEW: Trigger animation on focus
       setAnimationKey((prev) => prev + 1);
+
 
       const loadSortPreference = async () => {
         try {
@@ -106,18 +108,18 @@ export default function ManageScreen() {
       };
       loadSortPreference();
 
-      // Reset selection mode on screen focus
+
       setIsSelectionMode(false);
       setSelectedPlatforms(new Set());
 
-      // 🔐 AUTH: Update activity when screen is focused
+
       if (isAuthEnabled) {
         updateActivity();
       }
     }, [isAuthEnabled, updateActivity])
   );
 
-  // Debounced search query update
+
   const debouncedSetQuery = useMemo(
     () =>
       debounce((query: string) => {
@@ -126,27 +128,25 @@ export default function ManageScreen() {
     []
   );
 
-  // Handle search input change
+
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     debouncedSetQuery(text);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Clear search
+
   const handleClearSearch = () => {
     setSearchQuery("");
     setDebouncedQuery("");
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Handle sort selection
+
   const handleSortSelect = async (option: SortOption) => {
     setSortOption(option);
     try {
@@ -154,28 +154,25 @@ export default function ManageScreen() {
     } catch (error) {
       console.error("Failed to save sort preference:", error);
     }
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Pull to refresh
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Clear search and exit selection mode
     handleClearSearch();
     setIsSelectionMode(false);
     setSelectedPlatforms(new Set());
     await new Promise((resolve) => setTimeout(resolve, 500));
     setRefreshing(false);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Helper to show toast
+
   const showToastMessage = (
     message: string,
     type: "success" | "error" | "info" | "warning" = "success"
@@ -186,7 +183,7 @@ export default function ManageScreen() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Build platforms array with metadata
+
   const platforms = useMemo(() => {
     return Object.keys(database).map((key) => {
       const accounts = database[key];
@@ -199,25 +196,24 @@ export default function ManageScreen() {
         name: platformName,
         count: accounts.length,
         createdAt: platformsMetadata?.[key]?.createdAt || 0,
-        // 🎨 ICONS: Include icon metadata
         icon: platformsMetadata?.[key]?.icon || null,
         iconColor: platformsMetadata?.[key]?.iconColor || null,
       };
     });
   }, [database, platformsMetadata]);
 
-  // Apply search filter
+
   const searchResults = useMemo(() => {
     return searchPlatforms(platforms, database, debouncedQuery);
   }, [platforms, database, debouncedQuery]);
 
-  // Apply sort to filtered results
+
   const sortedPlatforms = useMemo(() => {
     const platformsToSort = searchResults.map((result) => result.platform);
     return sortPlatforms(platformsToSort, sortOption, platformsMetadata);
   }, [searchResults, sortOption, platformsMetadata]);
 
-  // Create a map for quick lookup of search match types
+
   const searchMatchMap = useMemo(() => {
     const map = new Map<
       string,
@@ -232,10 +228,11 @@ export default function ManageScreen() {
     return map;
   }, [searchResults]);
 
-  // Save platform
+
   const savePlatform = (data: Record<string, any>) => {
     const name = data.name?.trim();
     if (!name) return;
+
 
     if (platformModal.editing) {
       updatePlatformName(platformModal.editing.key, name);
@@ -245,31 +242,28 @@ export default function ManageScreen() {
       showToastMessage("Platform added successfully");
     }
     setPlatformModal({ visible: false });
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Long press handler to enter selection mode
+
   const handleLongPress = (platformKey: string) => {
     setIsSelectionMode(true);
     setSelectedPlatforms(new Set([platformKey]));
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Toggle selection in selection mode, or navigate normally
+
   const handlePlatformPress = (platformKey: string, platformName: string) => {
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
 
+
     if (!isSelectionMode) {
-      // Check if there are matched accounts from search
       const matchInfo = searchMatchMap.get(platformKey);
       const hasMatchedAccounts =
         debouncedQuery.trim() &&
@@ -277,7 +271,7 @@ export default function ManageScreen() {
         matchInfo.matchedAccounts &&
         matchInfo.matchedAccounts.length > 0;
 
-      // Navigate with or without search context
+
       if (hasMatchedAccounts) {
         const matchedIds = matchInfo.matchedAccounts!.map((acc) => acc.id);
         router.push({
@@ -296,7 +290,6 @@ export default function ManageScreen() {
         });
       }
     } else {
-      // Selection mode - toggle selection
       setSelectedPlatforms((prev) => {
         const newSet = new Set(prev);
         if (newSet.has(platformKey)) {
@@ -304,7 +297,6 @@ export default function ManageScreen() {
         } else {
           newSet.add(platformKey);
         }
-        // Exit selection mode if no items selected
         if (newSet.size === 0) {
           setIsSelectionMode(false);
         }
@@ -313,27 +305,25 @@ export default function ManageScreen() {
     }
   };
 
-  // Select all platforms (filtered results)
+
   const selectAllPlatforms = () => {
     const allKeys = sortedPlatforms.map((p) => p.key);
     setSelectedPlatforms(new Set(allKeys));
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Deselect all
+
   const deselectAllPlatforms = () => {
     setSelectedPlatforms(new Set());
     setIsSelectionMode(false);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Delete selected platforms
+
   const handleDeleteSelected = () => {
     setDeleteModal({
       visible: true,
@@ -343,26 +333,23 @@ export default function ManageScreen() {
         count: selectedPlatforms.size,
       },
     });
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Exit selection mode
+
   const exitSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedPlatforms(new Set());
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Execute delete
+
   const executeDelete = () => {
     if (deleteModal.item?.type === "multiple") {
-      // Delete multiple platforms
       const count = deleteModal.item.count;
       deleteModal.item.keys.forEach((key: string) => {
         deletePlatform(key);
@@ -370,16 +357,15 @@ export default function ManageScreen() {
       exitSelectionMode();
       showToastMessage(`Successfully deleted ${count} platform(s)`, "success");
     } else if (deleteModal.item?.key) {
-      // Delete single platform
       deletePlatform(deleteModal.item.key);
       showToastMessage("Platform deleted successfully", "success");
     }
     setDeleteModal({ visible: false });
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
+
 
   if (isDbLoading || !fontsLoaded) {
     return (
@@ -397,6 +383,7 @@ export default function ManageScreen() {
     );
   }
 
+
   return (
     <View
       style={{
@@ -405,7 +392,6 @@ export default function ManageScreen() {
         paddingTop: insets.top,
       }}
     >
-      {/* ✅ NEW: Animated wrapper */}
       <MotiView
         key={animationKey}
         from={TAB_ANIMATION.from}
@@ -416,7 +402,6 @@ export default function ManageScreen() {
         }}
         style={{ flex: 1 }}
       >
-        {/* Header */}
         <View style={styles.headerRow}>
           <Text
             style={{
@@ -428,7 +413,6 @@ export default function ManageScreen() {
             {isSelectionMode ? `${selectedPlatforms.size} Selected` : "Manage"}
           </Text>
           {isSelectionMode ? (
-            // Show Select All / Deselect All based on selection
             selectedPlatforms.size === sortedPlatforms.length ? (
               <Pressable
                 onPress={deselectAllPlatforms}
@@ -514,7 +498,7 @@ export default function ManageScreen() {
           )}
         </View>
 
-        {/* Search Bar */}
+
         {!isSelectionMode && (
           <View style={styles.searchSortRow}>
             <View style={styles.searchContainer}>
@@ -541,7 +525,7 @@ export default function ManageScreen() {
           </View>
         )}
 
-        {/* Result count */}
+
         {!isSelectionMode && debouncedQuery.trim() && (
           <Text
             style={{
@@ -554,7 +538,7 @@ export default function ManageScreen() {
           </Text>
         )}
 
-        {/* Platform List */}
+
         <FlatList
           data={sortedPlatforms}
           keyExtractor={(i) => i.key}
@@ -576,6 +560,7 @@ export default function ManageScreen() {
               matchInfo.matchedAccounts &&
               matchInfo.matchedAccounts.length > 0;
 
+
             return (
               <Pressable
                 onPress={() => handlePlatformPress(item.key, item.name)}
@@ -593,7 +578,6 @@ export default function ManageScreen() {
                   },
                 ]}
               >
-                {/* Selection indicator */}
                 {isSelectionMode && (
                   <View style={styles.selectionIndicator}>
                     <Ionicons
@@ -612,9 +596,9 @@ export default function ManageScreen() {
                   </View>
                 )}
 
+
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
-                    {/* 🎨 ICONS: Use PlatformIcon instead of generic folder icon */}
                     <PlatformIcon
                       platformName={item.name}
                       iconKey={item.icon}
@@ -641,7 +625,6 @@ export default function ManageScreen() {
                       >
                         {item.count} account{item.count !== 1 ? "s" : ""}
                       </Text>
-                      {/* Matching accounts indicator */}
                       {showAccountMatchIndicator && (
                         <Text
                           style={{
@@ -662,7 +645,7 @@ export default function ManageScreen() {
                     </View>
                   </View>
 
-                  {/* Action buttons - only show when NOT in selection mode */}
+
                   {!isSelectionMode && (
                     <View style={styles.actions}>
                       <Pressable
@@ -672,7 +655,6 @@ export default function ManageScreen() {
                             visible: true,
                             editing: item,
                           });
-                          // 🔐 AUTH: Update activity on user interaction
                           if (isAuthEnabled) {
                             updateActivity();
                           }
@@ -693,7 +675,6 @@ export default function ManageScreen() {
                             visible: true,
                             item,
                           });
-                          // 🔐 AUTH: Update activity on user interaction
                           if (isAuthEnabled) {
                             updateActivity();
                           }
@@ -740,10 +721,9 @@ export default function ManageScreen() {
         />
       </MotiView>
 
-      {/* FAB buttons */}
+
       {isSelectionMode && selectedPlatforms.size > 0 ? (
         <>
-          {/* Delete button when in selection mode */}
           <View style={{ ...styles.fabContainer, bottom: insets.bottom + 90 }}>
             <FAB
               onPress={handleDeleteSelected}
@@ -751,7 +731,6 @@ export default function ManageScreen() {
               color={colors.danger}
             />
           </View>
-          {/* Cancel button */}
           <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
             <FAB
               onPress={exitSelectionMode}
@@ -761,12 +740,10 @@ export default function ManageScreen() {
           </View>
         </>
       ) : (
-        /* Normal add button */
         <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
           <FAB
             onPress={() => {
               setPlatformModal({ visible: true });
-              // 🔐 AUTH: Update activity on user interaction
               if (isAuthEnabled) {
                 updateActivity();
               }
@@ -777,7 +754,7 @@ export default function ManageScreen() {
         </View>
       )}
 
-      {/* Modals */}
+
       <FormModal
         visible={platformModal.visible}
         onClose={() => setPlatformModal({ visible: false })}
@@ -813,6 +790,7 @@ export default function ManageScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 18 },

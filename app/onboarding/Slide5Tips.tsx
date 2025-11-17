@@ -1,12 +1,13 @@
-// app/onboarding/Slide5Tips.tsx
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
+
 export default function Slide5Tips() {
   const { colors, fontConfig } = useTheme();
+
 
   const customizations = [
     {
@@ -31,6 +32,7 @@ export default function Slide5Tips() {
     },
   ];
 
+
   return (
     <OnboardingSlide slideIndex={4}>
       <ScrollView
@@ -48,6 +50,7 @@ export default function Slide5Tips() {
             Personalize Your Experience
           </Text>
 
+
           <Text
             style={[
               styles.subtitle,
@@ -56,6 +59,7 @@ export default function Slide5Tips() {
           >
             Customize the app to suit your style and preferences:
           </Text>
+
 
           <View style={styles.customizationsContainer}>
             {customizations.map((item, index) => (
@@ -70,6 +74,7 @@ export default function Slide5Tips() {
             ))}
           </View>
 
+
           <Text
             style={[
               styles.note,
@@ -83,6 +88,7 @@ export default function Slide5Tips() {
     </OnboardingSlide>
   );
 }
+
 
 function CustomizationCard({
   icon,
@@ -128,6 +134,7 @@ function CustomizationCard({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   scrollContent: {

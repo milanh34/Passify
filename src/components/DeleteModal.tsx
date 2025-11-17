@@ -4,6 +4,7 @@ import { MotiView } from "moti";
 import { MotiPressable } from "moti/interactions";
 import { useTheme } from "../context/ThemeContext";
 
+
 interface DeleteModalProps {
   visible: boolean;
   onClose: () => void;
@@ -12,8 +13,10 @@ interface DeleteModalProps {
   description: string;
 }
 
+
 export default function DeleteModal({ visible, onClose, onConfirm, title, description }: DeleteModalProps) {
   const { colors, fontConfig } = useTheme();
+
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -41,6 +44,7 @@ export default function DeleteModal({ visible, onClose, onConfirm, title, descri
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },

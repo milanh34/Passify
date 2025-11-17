@@ -18,6 +18,7 @@ import BiometricPrompt from '../../src/components/BiometricPrompt';
 import PINInputModal from '../../src/components/PINInputModal';
 import Toast from '../../src/components/Toast';
 
+
 export default function BiometricUnlockScreen() {
   const { colors, fontConfig } = useTheme();
   const {
@@ -28,11 +29,13 @@ export default function BiometricUnlockScreen() {
   } = useAuth();
   const insets = useSafeAreaInsets();
 
+
   const [showPINModal, setShowPINModal] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('error');
+
 
   const showToastMessage = (
     message: string,
@@ -44,7 +47,7 @@ export default function BiometricUnlockScreen() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Auto-trigger biometric on mount if enabled and available
+
   useEffect(() => {
     if (
       preferences.biometricEnabled &&
@@ -55,6 +58,7 @@ export default function BiometricUnlockScreen() {
     }
   }, []);
 
+
   const handleBiometricAuth = async () => {
     if (!biometricCapability?.isAvailable) {
       showToastMessage('Biometric authentication not available', 'error');
@@ -62,15 +66,16 @@ export default function BiometricUnlockScreen() {
       return;
     }
 
+
     setIsAuthenticating(true);
     const result = await authenticateWithBiometric();
     setIsAuthenticating(false);
+
 
     if (result.success) {
       await unlock('biometric');
     } else {
       if (result.error === 'Authentication cancelled') {
-        // User cancelled - show PIN option
         if (isPINConfigured) {
           setShowPINModal(true);
         } else {
@@ -78,7 +83,6 @@ export default function BiometricUnlockScreen() {
         }
       } else {
         showToastMessage(result.error || 'Authentication failed', 'error');
-        // Offer PIN fallback
         if (isPINConfigured) {
           setTimeout(() => {
             setShowPINModal(true);
@@ -87,6 +91,7 @@ export default function BiometricUnlockScreen() {
       }
     }
   };
+
 
   const handlePINSubmit = async (pin: string): Promise<boolean> => {
     const isValid = await verifyPIN(pin);
@@ -98,6 +103,7 @@ export default function BiometricUnlockScreen() {
     return false;
   };
 
+
   const handleUsePIN = () => {
     if (!isPINConfigured) {
       showToastMessage('No PIN configured. Please use biometric.', 'warning');
@@ -106,7 +112,9 @@ export default function BiometricUnlockScreen() {
     setShowPINModal(true);
   };
 
+
   const canUseBiometric = preferences.biometricEnabled && biometricCapability?.isAvailable;
+
 
   return (
     <View
@@ -124,7 +132,7 @@ export default function BiometricUnlockScreen() {
         backgroundColor={colors.bg[0]}
       />
 
-      {/* Logo and Title */}
+
       <MotiView
         from={{ opacity: 0, translateY: -30 }}
         animate={{ opacity: 1, translateY: 0 }}
@@ -143,6 +151,7 @@ export default function BiometricUnlockScreen() {
           <Ionicons name="key" size={48} color={colors.accent} />
         </View>
 
+
         <Text
           style={[
             styles.title,
@@ -154,6 +163,7 @@ export default function BiometricUnlockScreen() {
         >
           Passify
         </Text>
+
 
         <Text
           style={[
@@ -168,7 +178,7 @@ export default function BiometricUnlockScreen() {
         </Text>
       </MotiView>
 
-      {/* Biometric Prompt */}
+
       {canUseBiometric && (
         <View style={styles.biometricContainer}>
           <BiometricPrompt
@@ -179,7 +189,7 @@ export default function BiometricUnlockScreen() {
         </View>
       )}
 
-      {/* Fallback Options */}
+
       <View style={styles.fallbackContainer}>
         {canUseBiometric && isPINConfigured && (
           <Pressable
@@ -212,6 +222,7 @@ export default function BiometricUnlockScreen() {
           </Pressable>
         )}
 
+
         {!canUseBiometric && isPINConfigured && (
           <Pressable
             onPress={() => setShowPINModal(true)}
@@ -237,6 +248,7 @@ export default function BiometricUnlockScreen() {
           </Pressable>
         )}
 
+
         {!canUseBiometric && !isPINConfigured && (
           <View style={styles.errorState}>
             <Ionicons name="alert-circle" size={48} color={colors.danger} />
@@ -256,7 +268,7 @@ export default function BiometricUnlockScreen() {
         )}
       </View>
 
-      {/* Last Unlock Info */}
+
       {preferences.lastUnlockTime > 0 && (
         <MotiView
           from={{ opacity: 0 }}
@@ -278,7 +290,7 @@ export default function BiometricUnlockScreen() {
         </MotiView>
       )}
 
-      {/* PIN Modal */}
+
       <PINInputModal
         visible={showPINModal}
         onSubmit={handlePINSubmit}
@@ -288,7 +300,7 @@ export default function BiometricUnlockScreen() {
         mode="unlock"
       />
 
-      {/* Toast */}
+
       <Toast
         visible={showToast}
         message={toastMessage}
@@ -297,6 +309,7 @@ export default function BiometricUnlockScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

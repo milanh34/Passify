@@ -1,12 +1,13 @@
-// app/onboarding/Slide1Welcome.tsx
 import React from "react";
 import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
+
 export default function Slide1Welcome() {
   const { colors, fontConfig } = useTheme();
+
 
   return (
     <OnboardingSlide slideIndex={0}>
@@ -16,7 +17,6 @@ export default function Slide1Welcome() {
         bounces={false}
       >
         <View style={styles.container}>
-          {/* App Icon */}
           <View style={styles.iconContainer}>
             <Image
               source={require("../../assets/images/icon.png")}
@@ -24,6 +24,7 @@ export default function Slide1Welcome() {
               resizeMode="contain"
             />
           </View>
+
 
           <Text
             style={[
@@ -33,6 +34,7 @@ export default function Slide1Welcome() {
           >
             Welcome to Passify
           </Text>
+
 
           <Text
             style={[
@@ -44,7 +46,7 @@ export default function Slide1Welcome() {
             across multiple platforms with powerful search and sorting capabilities.
           </Text>
 
-          {/* Key Features Preview */}
+
           <View style={styles.featuresGrid}>
             <FeatureItem
               icon="lock-closed"
@@ -68,6 +70,7 @@ export default function Slide1Welcome() {
             />
           </View>
 
+
           <Text
             style={[
               styles.securityNote,
@@ -81,6 +84,7 @@ export default function Slide1Welcome() {
     </OnboardingSlide>
   );
 }
+
 
 function FeatureItem({
   icon,
@@ -106,6 +110,7 @@ function FeatureItem({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   scrollContent: {

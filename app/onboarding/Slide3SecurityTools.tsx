@@ -1,12 +1,13 @@
-// app/onboarding/Slide3SecurityTools.tsx
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
+
 export default function Slide3SecurityTools() {
   const { colors, fontConfig } = useTheme();
+
 
   return (
     <OnboardingSlide slideIndex={2}>
@@ -20,6 +21,7 @@ export default function Slide3SecurityTools() {
           Security & Encoding Tools
         </Text>
 
+
         <Text
           style={[
             styles.subtitle,
@@ -29,7 +31,7 @@ export default function Slide3SecurityTools() {
           Advanced features for data security:
         </Text>
 
-        {/* Encoder Tab */}
+
         <TabCard
           icon="lock-closed"
           title="Encoder"
@@ -39,7 +41,7 @@ export default function Slide3SecurityTools() {
           fontConfig={fontConfig}
         />
 
-        {/* Decoder Tab */}
+
         <TabCard
           icon="key"
           title="Decoder"
@@ -52,6 +54,7 @@ export default function Slide3SecurityTools() {
     </OnboardingSlide>
   );
 }
+
 
 function TabCard({
   icon,
@@ -98,6 +101,7 @@ function TabCard({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

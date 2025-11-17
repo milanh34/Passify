@@ -14,6 +14,7 @@ import { generateExportText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 import * as Clipboard from "expo-clipboard";
 
+
 type Selection = {
   [platformId: string]: {
     selected: boolean;
@@ -21,9 +22,11 @@ type Selection = {
   };
 };
 
+
 export default function ExportTab() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
+
 
   const [selection, setSelection] = useState<Selection>({});
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(
@@ -34,9 +37,10 @@ export default function ExportTab() {
   const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
   const [exportedText, setExportedText] = useState("");
 
+
   const platformIds = Object.keys(database);
 
-  // Helper to show toast
+
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     setToastMessage(message);
     setToastType(type);
@@ -44,52 +48,58 @@ export default function ExportTab() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Toggle platform selection
+
   const togglePlatform = (platformId: string) => {
     setSelection((prev) => {
       const newSelection = { ...prev };
       const isSelected = prev[platformId]?.selected || false;
 
+
       if (!newSelection[platformId]) {
         newSelection[platformId] = { selected: false, accounts: {} };
       }
 
+
       newSelection[platformId].selected = !isSelected;
 
-      // Also toggle all accounts
+
       const accounts = database[platformId] || [];
       accounts.forEach((acc: any) => {
         newSelection[platformId].accounts[acc.id] = !isSelected;
       });
 
+
       return newSelection;
     });
   };
 
-  // Toggle account selection
+
   const toggleAccount = (platformId: string, accountId: string) => {
     setSelection((prev) => {
       const newSelection = { ...prev };
+
 
       if (!newSelection[platformId]) {
         newSelection[platformId] = { selected: false, accounts: {} };
       }
 
+
       const isSelected = prev[platformId]?.accounts[accountId] || false;
       newSelection[platformId].accounts[accountId] = !isSelected;
 
-      // Check if all accounts are selected
+
       const accounts = database[platformId] || [];
       const allSelected = accounts.every(
         (acc: any) => newSelection[platformId].accounts[acc.id]
       );
       newSelection[platformId].selected = allSelected;
 
+
       return newSelection;
     });
   };
 
-  // Toggle platform expansion
+
   const toggleExpanded = (platformId: string) => {
     setExpandedPlatforms((prev) => {
       const newSet = new Set(prev);
@@ -102,7 +112,7 @@ export default function ExportTab() {
     });
   };
 
-  // Select all
+
   const selectAll = () => {
     const newSelection: Selection = {};
     platformIds.forEach((platformId) => {
@@ -119,46 +129,52 @@ export default function ExportTab() {
     setSelection(newSelection);
   };
 
-  // Deselect all
+
   const deselectAll = () => {
     setSelection({});
-    setExportedText(""); // Clear preview when deselecting
+    setExportedText("");
   };
 
-  // Handle export
+
   const handleExport = async () => {
-    // Filter selected data
     const selectedData: any = {};
+
 
     for (const platformId of platformIds) {
       const platformSelection = selection[platformId];
       if (!platformSelection) continue;
 
+
       const selectedAccounts = (database[platformId] || []).filter(
         (acc: any) => platformSelection.accounts[acc.id]
       );
 
+
       if (selectedAccounts.length > 0) {
-        // Get platform name from first account or use toTitleCase
         const platformName =
           selectedAccounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
         selectedData[platformName] = selectedAccounts;
       }
     }
 
+
     if (Object.keys(selectedData).length === 0) {
       showToastMessage("Please select at least one account to export", "warning");
       return;
     }
+
 
     try {
       const exportText = generateExportText(selectedData, schemas);
       
       setExportedText(exportText);
 
+
       showToastMessage("Data exported successfully!", "success");
 
+
       setSelection({});
+
 
     } catch (error) {
       console.error("Export error:", error);
@@ -166,7 +182,7 @@ export default function ExportTab() {
     }
   };
 
-  // Copy to clipboard
+
   const handleCopyExport = async () => {
     if (exportedText) {
       await Clipboard.setStringAsync(exportedText);
@@ -174,7 +190,7 @@ export default function ExportTab() {
     }
   };
 
-  // Count selected
+
   const countSelected = () => {
     let count = 0;
     Object.values(selection).forEach((platform) => {
@@ -183,7 +199,9 @@ export default function ExportTab() {
     return count;
   };
 
+
   const selectedCount = countSelected();
+
 
   return (
     <>
@@ -191,7 +209,6 @@ export default function ExportTab() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <Ionicons name="cloud-upload" size={36} color={colors.accent} />
           <Text
@@ -212,7 +229,7 @@ export default function ExportTab() {
           </Text>
         </View>
 
-        {/* Select All/Deselect All */}
+
         <View style={styles.buttonRow}>
           <Pressable
             onPress={selectAll}
@@ -231,6 +248,7 @@ export default function ExportTab() {
               Select All
             </Text>
           </Pressable>
+
 
           <Pressable
             onPress={deselectAll}
@@ -251,7 +269,7 @@ export default function ExportTab() {
           </Pressable>
         </View>
 
-        {/* Platform List */}
+
         {platformIds.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="folder-open-outline" size={64} color={colors.muted} />
@@ -271,6 +289,7 @@ export default function ExportTab() {
             const isExpanded = expandedPlatforms.has(platformId);
             const isPlatformSelected = selection[platformId]?.selected || false;
 
+
             return (
               <MotiView
                 key={platformId}
@@ -287,7 +306,6 @@ export default function ExportTab() {
                   },
                 ]}
               >
-                {/* Platform Header */}
                 <Pressable
                   onPress={() => toggleExpanded(platformId)}
                   style={styles.platformHeader}
@@ -310,6 +328,7 @@ export default function ExportTab() {
                       )}
                     </Pressable>
 
+
                     <View>
                       <Text
                         style={[
@@ -330,6 +349,7 @@ export default function ExportTab() {
                     </View>
                   </View>
 
+
                   <Ionicons
                     name={isExpanded ? "chevron-up" : "chevron-down"}
                     size={20}
@@ -337,7 +357,7 @@ export default function ExportTab() {
                   />
                 </Pressable>
 
-                {/* Accounts List */}
+
                 <AnimatePresence>
                   {isExpanded && (
                     <MotiView
@@ -350,6 +370,7 @@ export default function ExportTab() {
                         {accounts.map((account: any, index: number) => {
                           const isSelected =
                             selection[platformId]?.accounts[account.id] || false;
+
 
                           return (
                             <MotiView
@@ -392,6 +413,7 @@ export default function ExportTab() {
                                   )}
                                 </Pressable>
 
+
                                 <Text
                                   style={[
                                     styles.accountName,
@@ -416,7 +438,7 @@ export default function ExportTab() {
           })
         )}
 
-        {/* Export Preview - Show after export */}
+
         {exportedText && (
           <MotiView
             from={{ opacity: 0, scale: 0.95 }}
@@ -474,7 +496,7 @@ export default function ExportTab() {
         )}
       </ScrollView>
 
-      {/* Export Button */}
+
       {selectedCount > 0 && (
         <MotiView
           from={{ opacity: 0, translateY: 50 }}
@@ -502,13 +524,15 @@ export default function ExportTab() {
         </MotiView>
       )}
 
+
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </>
   );
 }
 
+
 const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 30 }, // Reduced from 100
+  scrollContent: { paddingBottom: 30 },
   header: { alignItems: "center", marginVertical: 12, gap: 6 },
   title: { fontSize: 24, marginTop: 6 },
   subtitle: { fontSize: 13, textAlign: "center", paddingHorizontal: 20 },

@@ -4,13 +4,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import SearchSuggestionsDropdown from "./SearchSuggestionsDropdown";
 
+
 interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
   onClear: () => void;
   placeholder?: string;
-  suggestions?: string[]; // Simple array of suggestions
+  suggestions?: string[];
 }
+
 
 export default function SearchBar({
   value,
@@ -24,11 +26,12 @@ export default function SearchBar({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  // Filter suggestions based on current input
+
   const filteredSuggestions = useMemo(() => {
     if (!value || value.trim().length === 0) {
-      return suggestions.slice(0, 10); // Show first 10 when empty
+      return suggestions.slice(0, 10);
     }
+
 
     const lowerQuery = value.toLowerCase().trim();
     return suggestions
@@ -36,26 +39,24 @@ export default function SearchBar({
       .slice(0, 10);
   }, [value, suggestions]);
 
-  // Toggle suggestions when search icon is clicked
+
   const toggleSuggestions = () => {
     if (showSuggestions) {
-      // If suggestions are showing, hide them and blur
       setShowSuggestions(false);
       Keyboard.dismiss();
     } else {
-      // If suggestions are hidden, show them and focus
       setShowSuggestions(true);
       inputRef.current?.focus();
     }
   };
 
-  // Handle focus - auto show suggestions
+
   const handleFocus = () => {
     setIsFocused(true);
     setShowSuggestions(true);
   };
 
-  // Handle blur - auto hide suggestions
+
   const handleBlur = () => {
     setTimeout(() => {
       setIsFocused(false);
@@ -63,19 +64,20 @@ export default function SearchBar({
     }, 150);
   };
 
-  // Handle suggestion selection
+
   const handleSelectSuggestion = (query: string) => {
     onChangeText(query);
     setShowSuggestions(false);
     Keyboard.dismiss();
   };
 
-  // Handle clear
+
   const handleClear = () => {
     onClear();
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
+
 
   return (
     <View style={styles.container}>
@@ -88,7 +90,6 @@ export default function SearchBar({
           },
         ]}
       >
-        {/* Search icon as toggle button */}
         <Pressable
           onPress={toggleSuggestions}
           style={styles.searchIconButton}
@@ -100,6 +101,7 @@ export default function SearchBar({
             color={isFocused ? colors.accent : colors.muted}
           />
         </Pressable>
+
 
         <TextInput
           ref={inputRef}
@@ -127,7 +129,7 @@ export default function SearchBar({
         )}
       </View>
 
-      {/* Suggestions Dropdown */}
+
       <SearchSuggestionsDropdown
         visible={showSuggestions && filteredSuggestions.length > 0}
         suggestions={filteredSuggestions}
@@ -136,6 +138,7 @@ export default function SearchBar({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

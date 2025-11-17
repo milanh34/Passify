@@ -11,8 +11,8 @@ import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
-import { useAuth } from "../../src/context/AuthContext"; // 🔐 AUTH: Import useAuth
-import { useInactivityTracker } from "../../src/utils/inactivityTracker"; // 🔐 AUTH: Import inactivity tracker
+import { useAuth } from "../../src/context/AuthContext";
+import { useInactivityTracker } from "../../src/utils/inactivityTracker";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import SchemaModal from "../../src/components/SchemaModal";
@@ -61,7 +61,6 @@ export default function AccountsScreen() {
 } = useDb();
   const insets = useSafeAreaInsets();
 
-  // 🔐 AUTH: Get auth state and initialize inactivity tracker
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
@@ -99,24 +98,19 @@ export default function AccountsScreen() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
 
-  // Multi-select state
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(
     new Set()
   );
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
-  // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Sort state
   const [sortOption, setSortOption] = useState<AccountSortOption>("recent_added");
   const [sortModalVisible, setSortModalVisible] = useState(false);
 
-  // Refresh state
   const [refreshing, setRefreshing] = useState(false);
 
-  // Highlight state for matched accounts from search
   const [highlightedAccountIds, setHighlightedAccountIds] = useState<Set<string>>(new Set());
   const [showHighlightBanner, setShowHighlightBanner] = useState(false);
 
@@ -128,7 +122,6 @@ export default function AccountsScreen() {
       setIsSelectionMode(false);
       setSelectedAccounts(new Set());
 
-      // Load sort preference
       const loadSortPreference = async () => {
         try {
           const saved = await AsyncStorage.getItem(ACCOUNT_SORT_PREFERENCE_KEY);
@@ -141,7 +134,6 @@ export default function AccountsScreen() {
       };
       loadSortPreference();
 
-      // Handle matched accounts from navigation params
       if (matchedIdsParam && searchQueryParam) {
         try {
           const ids = JSON.parse(matchedIdsParam);
@@ -155,14 +147,12 @@ export default function AccountsScreen() {
         setShowHighlightBanner(false);
       }
 
-      // 🔐 AUTH: Update activity when screen is focused
       if (isAuthEnabled) {
         updateActivity();
       }
     }, [matchedIdsParam, searchQueryParam, isAuthEnabled, updateActivity])
   );
 
-  // Debounced search query update
   const debouncedSetQuery = useMemo(
     () =>
       debounceSearch((query: string) => {
@@ -171,32 +161,26 @@ export default function AccountsScreen() {
     []
   );
 
-  // Handle search input change
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     debouncedSetQuery(text);
-    // Clear highlights when user starts searching locally
     if (highlightedAccountIds.size > 0) {
       setHighlightedAccountIds(new Set());
       setShowHighlightBanner(false);
     }
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Clear search
   const handleClearSearch = () => {
     setSearchQuery("");
     setDebouncedQuery("");
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Handle sort selection
   const handleSortSelect = async (option: AccountSortOption) => {
     setSortOption(option);
     try {
@@ -204,16 +188,13 @@ export default function AccountsScreen() {
     } catch (error) {
       console.error("Failed to save account sort preference:", error);
     }
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Pull to refresh
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Clear search, highlights, and exit selection mode
     handleClearSearch();
     setIsSelectionMode(false);
     setSelectedAccounts(new Set());
@@ -223,7 +204,6 @@ export default function AccountsScreen() {
     setShowHighlightBanner(false);
     await new Promise((resolve) => setTimeout(resolve, 500));
     setRefreshing(false);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -233,22 +213,18 @@ export default function AccountsScreen() {
   return accounts.map(acc => acc.name).filter(name => name && name.trim());
 }, [accounts]);
 
-  // Dismiss highlight banner
   const dismissHighlightBanner = () => {
     setShowHighlightBanner(false);
     setHighlightedAccountIds(new Set());
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Apply search filter
   const filteredAccounts = useMemo(() => {
     return searchAccounts(accounts, debouncedQuery);
   }, [accounts, debouncedQuery]);
 
-  // Apply sort to filtered results
   const sortedAccounts = useMemo(() => {
     return sortAccounts(filteredAccounts, sortOption);
   }, [filteredAccounts, sortOption]);
@@ -265,28 +241,22 @@ export default function AccountsScreen() {
     }, 2500);
   };
 
-  // Long press to enter selection mode
   const handleLongPress = (accountId: string) => {
     setIsSelectionMode(true);
     setSelectedAccounts(new Set([accountId]));
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Toggle selection or expand card
   const handleCardPress = (accountId: string) => {
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
 
     if (!isSelectionMode) {
-      // Normal tap - toggle card expansion
       toggleCard(accountId);
     } else {
-      // Selection mode - toggle selection
       setSelectedAccounts((prev) => {
         const newSet = new Set(prev);
         if (newSet.has(accountId)) {
@@ -295,7 +265,6 @@ export default function AccountsScreen() {
           newSet.add(accountId);
         }
 
-        // Exit selection mode if no items selected
         if (newSet.size === 0) {
           setIsSelectionMode(false);
         }
@@ -305,37 +274,30 @@ export default function AccountsScreen() {
     }
   };
 
-  // Select all accounts (filtered results)
   const selectAllAccounts = () => {
     const allIds = sortedAccounts.map((acc) => acc.id);
     setSelectedAccounts(new Set(allIds));
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Deselect all
   const deselectAllAccounts = () => {
     setSelectedAccounts(new Set());
     setIsSelectionMode(false);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Exit selection mode
   const exitSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedAccounts(new Set());
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // Delete selected accounts
   const handleDeleteSelected = () => {
     setDeleteModal({
       visible: true,
@@ -345,7 +307,6 @@ export default function AccountsScreen() {
         count: selectedAccounts.size,
       },
     });
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -354,13 +315,11 @@ export default function AccountsScreen() {
   useEffect(() => {
     const handleSettingsPress = () => {
       setSchemaModal(true);
-      // 🔐 AUTH: Update activity on user interaction
       if (isAuthEnabled) {
         updateActivity();
       }
     };
 
-    // 🎨 ICONS: Get platform icon data
     const platformMeta = platformKey
       ? platformsMetadata[String(platformKey)]
       : null;
@@ -374,7 +333,6 @@ export default function AccountsScreen() {
       headerStyle: { height: 60 + insets.top },
       headerTitleStyle: { color: colors.text, fontFamily: fontConfig.bold },
 
-      // 🎨 ICONS: Custom header title with icon
       headerTitle: () => (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <PlatformIcon
@@ -400,7 +358,6 @@ export default function AccountsScreen() {
         <Pressable
           onPress={() => {
             nav.goBack();
-            // 🔐 AUTH: Update activity on user interaction
             if (isAuthEnabled) {
               updateActivity();
             }
@@ -428,7 +385,6 @@ export default function AccountsScreen() {
           }}
         >
           {isSelectionMode ? (
-            // Show Select All / Deselect All in selection mode
             selectedAccounts.size === sortedAccounts.length ? (
               <Pressable
                 onPress={deselectAllAccounts}
@@ -493,7 +449,6 @@ export default function AccountsScreen() {
               </Pressable>
             )
           ) : (
-            // Normal settings button
             <Pressable
               onPress={handleSettingsPress}
               style={{
@@ -527,7 +482,6 @@ export default function AccountsScreen() {
     updateActivity,
   ]);
 
-
   if (!fontsLoaded)
     return <View style={[styles.root, { backgroundColor: colors.bg[0] }]} />;
 
@@ -535,7 +489,6 @@ export default function AccountsScreen() {
     await Clipboard.setStringAsync(text || "");
     setCopiedField(key);
     setTimeout(() => setCopiedField((k) => (k === key ? null : k)), 1000);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -564,7 +517,6 @@ export default function AccountsScreen() {
     }
 
     setDeleteModal({ visible: false });
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -589,7 +541,6 @@ export default function AccountsScreen() {
     }
 
     setAccModal({ visible: false });
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -602,7 +553,6 @@ export default function AccountsScreen() {
     }
 
     setSchemaModal(false);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
@@ -615,7 +565,6 @@ export default function AccountsScreen() {
         { backgroundColor: colors.bg[0], paddingTop: insets.top + 60 },
       ]}
     >
-      {/* Highlight Banner */}
       {showHighlightBanner && highlightedAccountIds.size > 0 && (
         <View
           style={[
@@ -645,7 +594,6 @@ export default function AccountsScreen() {
         </View>
       )}
 
-      {/* Search & Sort Bar */}
       {!isSelectionMode && (
         <>
           <View style={styles.searchSortRow}>
@@ -678,7 +626,6 @@ export default function AccountsScreen() {
             </Pressable>
           </View>
 
-          {/* Result count */}
           {debouncedQuery.trim() && (
             <Text
               style={[
@@ -692,7 +639,6 @@ export default function AccountsScreen() {
         </>
       )}
 
-      {/* Account List */}
       <FlatList
         key={animationKey}
         data={sortedAccounts}
@@ -744,7 +690,6 @@ export default function AccountsScreen() {
                 ]}
                 android_ripple={{ color: colors.accent + "22" }}
               >
-                {/* Selection indicator */}
                 {isSelectionMode && (
                   <View style={styles.selectionIndicator}>
                     <Ionicons
@@ -763,7 +708,6 @@ export default function AccountsScreen() {
                   </View>
                 )}
 
-                {/* Header */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
                     <Ionicons
@@ -808,7 +752,6 @@ export default function AccountsScreen() {
                   )}
                 </View>
 
-                {/* Expanded Content */}
                 <AnimatePresence>
                   {isExpanded && !isSelectionMode && (
                     <MotiView
@@ -870,7 +813,6 @@ export default function AccountsScreen() {
                                             ...prev,
                                             [fieldKey]: !prev[fieldKey],
                                           }));
-                                          // 🔐 AUTH: Update activity on user interaction
                                           if (isAuthEnabled) {
                                             updateActivity();
                                           }
@@ -920,12 +862,10 @@ export default function AccountsScreen() {
                             );
                           })}
 
-                        {/* Edit/Delete Buttons */}
                         <View style={styles.cardActions}>
                           <Pressable
                             onPress={() => {
                               setAccModal({ visible: true, editing: item });
-                              // 🔐 AUTH: Update activity on user interaction
                               if (isAuthEnabled) {
                                 updateActivity();
                               }
@@ -960,7 +900,6 @@ export default function AccountsScreen() {
                           <Pressable
                             onPress={() => {
                               setDeleteModal({ visible: true, item });
-                              // 🔐 AUTH: Update activity on user interaction
                               if (isAuthEnabled) {
                                 updateActivity();
                               }
@@ -1023,10 +962,8 @@ export default function AccountsScreen() {
         }
       />
 
-      {/* FAB buttons */}
       {isSelectionMode && selectedAccounts.size > 0 ? (
         <>
-          {/* Delete button when in selection mode */}
           <View style={[styles.fabContainer, { bottom: insets.bottom + 90 }]}>
             <FAB
               onPress={handleDeleteSelected}
@@ -1034,7 +971,6 @@ export default function AccountsScreen() {
               color={colors.danger}
             />
           </View>
-          {/* Cancel button */}
           <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
             <FAB
               onPress={exitSelectionMode}
@@ -1044,12 +980,10 @@ export default function AccountsScreen() {
           </View>
         </>
       ) : (
-        /* Normal add button */
         <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
           <FAB
             onPress={() => {
               setAccModal({ visible: true });
-              // 🔐 AUTH: Update activity on user interaction
               if (isAuthEnabled) {
                 updateActivity();
               }
@@ -1060,7 +994,6 @@ export default function AccountsScreen() {
         </View>
       )}
 
-      {/* Modals */}
       <FormModal
         visible={accModal.visible}
         onClose={() => setAccModal({ visible: false })}

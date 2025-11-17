@@ -4,6 +4,7 @@ import { MaterialIcons, MaterialCommunityIcons, FontAwesome, FontAwesome5, Ionic
 import { getPlatformIcon, getPlatformInitials, getContrastColor } from '../utils/iconLibrary';
 import { useTheme } from '../context/ThemeContext';
 
+
 interface PlatformIconProps {
   platformName: string;
   iconKey?: string | null;
@@ -12,6 +13,7 @@ interface PlatformIconProps {
   showFallback?: boolean;
   style?: ViewStyle;
 }
+
 
 export default function PlatformIcon({
   platformName,
@@ -23,24 +25,24 @@ export default function PlatformIcon({
 }: PlatformIconProps) {
   const { colors, fontConfig } = useTheme();
 
-  // Try to get icon mapping
+
   const iconMapping = iconKey ? getPlatformIcon(iconKey) : null;
   
-  // Use provided color or default from mapping or theme accent
   const displayColor = iconColor || iconMapping?.defaultColor || colors.accent;
   
-  // Icon size (slightly smaller than container)
   const iconSize = Math.floor(size * 0.6);
 
-  // Render icon from library
+
   const renderLibraryIcon = () => {
     if (!iconMapping) return null;
+
 
     const iconProps = {
       name: iconMapping.iconName as any,
       size: iconSize,
       color: displayColor,
     };
+
 
     switch (iconMapping.library) {
       case 'MaterialIcons':
@@ -64,13 +66,15 @@ export default function PlatformIcon({
     }
   };
 
-  // Render fallback with initials
+
   const renderFallback = () => {
     if (!showFallback) return null;
+
 
     const initials = getPlatformInitials(platformName);
     const textColor = getContrastColor(displayColor);
     const fontSize = Math.floor(size * 0.35);
+
 
     return (
       <View
@@ -100,7 +104,9 @@ export default function PlatformIcon({
     );
   };
 
+
   const icon = renderLibraryIcon();
+
 
   return (
     <View style={[styles.container, { width: size, height: size }, style]}>
@@ -112,7 +118,7 @@ export default function PlatformIcon({
               width: size,
               height: size,
               borderRadius: size / 2,
-              backgroundColor: displayColor + '20', // 20% opacity background
+              backgroundColor: displayColor + '20',
             },
           ]}
         >
@@ -124,6 +130,7 @@ export default function PlatformIcon({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

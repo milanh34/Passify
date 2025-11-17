@@ -1,7 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 const ONBOARDING_KEY = "@PM:onboarding_state";
-const ONBOARDING_VERSION = 1; // Increment when onboarding content changes
+const ONBOARDING_VERSION = 1;
+
 
 export interface OnboardingState {
   onboardingComplete: boolean;
@@ -11,21 +13,19 @@ export interface OnboardingState {
   skippedSlides?: number[];
 }
 
+
 const DEFAULT_STATE: OnboardingState = {
   onboardingComplete: false,
   onboardingVersion: ONBOARDING_VERSION,
 };
 
-/**
- * Load onboarding state from AsyncStorage
- */
+
 export async function loadOnboardingState(): Promise<OnboardingState> {
   try {
     const stored = await AsyncStorage.getItem(ONBOARDING_KEY);
     if (stored) {
       const parsed: OnboardingState = JSON.parse(stored);
       
-      // Check if onboarding version has changed
       if (parsed.onboardingVersion !== ONBOARDING_VERSION) {
         console.log("Onboarding version changed, resetting state");
         return DEFAULT_STATE;
@@ -40,9 +40,7 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
   }
 }
 
-/**
- * Save onboarding state to AsyncStorage
- */
+
 export async function saveOnboardingState(state: OnboardingState): Promise<void> {
   try {
     await AsyncStorage.setItem(ONBOARDING_KEY, JSON.stringify(state));
@@ -51,9 +49,7 @@ export async function saveOnboardingState(state: OnboardingState): Promise<void>
   }
 }
 
-/**
- * Mark onboarding as complete
- */
+
 export async function completeOnboarding(): Promise<void> {
   const state: OnboardingState = {
     onboardingComplete: true,
@@ -63,17 +59,13 @@ export async function completeOnboarding(): Promise<void> {
   await saveOnboardingState(state);
 }
 
-/**
- * Check if onboarding has been completed
- */
+
 export async function isOnboardingComplete(): Promise<boolean> {
   const state = await loadOnboardingState();
   return state.onboardingComplete;
 }
 
-/**
- * Reset onboarding state (for replay from Settings)
- */
+
 export async function resetOnboarding(): Promise<void> {
   await saveOnboardingState({
     ...DEFAULT_STATE,
@@ -81,9 +73,7 @@ export async function resetOnboarding(): Promise<void> {
   });
 }
 
-/**
- * Skip onboarding
- */
+
 export async function skipOnboarding(): Promise<void> {
   await completeOnboarding();
 }

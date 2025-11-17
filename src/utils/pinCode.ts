@@ -1,8 +1,10 @@
 import * as SecureStore from 'expo-secure-store';
 import * as Crypto from 'expo-crypto';
 
+
 const PIN_KEY = 'Passify_user_pin';
-const SALT = 'PassifySecurePIN2025'; // In production, generate unique salt per user
+const SALT = 'PassifySecurePIN2025';
+
 
 export interface PINValidation {
   isValid: boolean;
@@ -11,9 +13,7 @@ export interface PINValidation {
   isNumeric: boolean;
 }
 
-/**
- * Validate PIN format (4-6 digits)
- */
+
 export function validatePINFormat(pin: string): PINValidation {
   const minLength = 4;
   const maxLength = 6;
@@ -23,6 +23,7 @@ export function validatePINFormat(pin: string): PINValidation {
     pin.length <= maxLength && 
     isNumeric;
 
+
   return {
     isValid,
     minLength,
@@ -31,9 +32,7 @@ export function validatePINFormat(pin: string): PINValidation {
   };
 }
 
-/**
- * Hash PIN before storing using expo-crypto SHA256
- */
+
 async function hashPIN(pin: string): Promise<string> {
   try {
     const combined = pin + SALT;
@@ -48,15 +47,14 @@ async function hashPIN(pin: string): Promise<string> {
   }
 }
 
-/**
- * Store PIN securely
- */
+
 export async function storePIN(pin: string): Promise<boolean> {
   try {
     const validation = validatePINFormat(pin);
     if (!validation.isValid) {
       throw new Error('Invalid PIN format');
     }
+
 
     const hashedPIN = await hashPIN(pin);
     await SecureStore.setItemAsync(PIN_KEY, hashedPIN);
@@ -67,15 +65,14 @@ export async function storePIN(pin: string): Promise<boolean> {
   }
 }
 
-/**
- * Verify PIN against stored value
- */
+
 export async function verifyPIN(pin: string): Promise<boolean> {
   try {
     const storedHash = await SecureStore.getItemAsync(PIN_KEY);
     if (!storedHash) {
-      return false; // No PIN set
+      return false;
     }
+
 
     const inputHash = await hashPIN(pin);
     return inputHash === storedHash;
@@ -85,9 +82,7 @@ export async function verifyPIN(pin: string): Promise<boolean> {
   }
 }
 
-/**
- * Check if PIN is set
- */
+
 export async function isPINSet(): Promise<boolean> {
   try {
     const storedHash = await SecureStore.getItemAsync(PIN_KEY);
@@ -98,9 +93,7 @@ export async function isPINSet(): Promise<boolean> {
   }
 }
 
-/**
- * Remove stored PIN
- */
+
 export async function removePIN(): Promise<boolean> {
   try {
     await SecureStore.deleteItemAsync(PIN_KEY);
@@ -111,15 +104,12 @@ export async function removePIN(): Promise<boolean> {
   }
 }
 
-/**
- * Change PIN (requires old PIN verification)
- */
+
 export async function changePIN(oldPIN: string, newPIN: string): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
-    // Verify old PIN
     const isOldValid = await verifyPIN(oldPIN);
     if (!isOldValid) {
       return {
@@ -128,7 +118,7 @@ export async function changePIN(oldPIN: string, newPIN: string): Promise<{
       };
     }
 
-    // Validate new PIN
+
     const validation = validatePINFormat(newPIN);
     if (!validation.isValid) {
       return {
@@ -137,7 +127,7 @@ export async function changePIN(oldPIN: string, newPIN: string): Promise<{
       };
     }
 
-    // Store new PIN
+
     const stored = await storePIN(newPIN);
     if (!stored) {
       return {
@@ -145,6 +135,7 @@ export async function changePIN(oldPIN: string, newPIN: string): Promise<{
         error: 'Failed to save new PIN',
       };
     }
+
 
     return { success: true };
   } catch (error: any) {

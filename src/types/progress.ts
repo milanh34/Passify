@@ -11,6 +11,7 @@ export type ProgressPhase =
   | 'parseJSON'
   | 'done';
 
+
 export interface ProgressUpdate {
   phase: ProgressPhase;
   processedBytes: number;
@@ -18,15 +19,13 @@ export interface ProgressUpdate {
   percent: number;
 }
 
+
 export type ProgressCallback = (update: ProgressUpdate) => void;
 
-/**
- * Throttled progress callback wrapper
- * Limits updates to ~60fps to prevent UI jank
- */
+
 export class ThrottledProgress {
   private lastUpdate = 0;
-  private readonly minInterval = 16; // ~60fps
+  private readonly minInterval = 16;
   private callback: ProgressCallback;
   
   constructor(callback: ProgressCallback) {
@@ -37,7 +36,6 @@ export class ThrottledProgress {
     const now = Date.now();
     const percent = totalBytes > 0 ? Math.min(100, (processedBytes / totalBytes) * 100) : 0;
     
-    // Always send the final 100% update
     if (percent >= 100 || now - this.lastUpdate >= this.minInterval) {
       this.callback({ phase, processedBytes, totalBytes, percent });
       this.lastUpdate = now;

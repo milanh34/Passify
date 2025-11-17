@@ -12,6 +12,7 @@ import { MotiView, AnimatePresence } from 'moti';
 import { useTheme } from '../context/ThemeContext';
 import { validatePINFormat } from '../utils/pinCode';
 
+
 interface PINInputModalProps {
   visible: boolean;
   onSubmit: (pin: string) => Promise<boolean>;
@@ -22,6 +23,7 @@ interface PINInputModalProps {
   minLength?: number;
   maxLength?: number;
 }
+
 
 export default function PINInputModal({
   visible,
@@ -38,7 +40,7 @@ export default function PINInputModal({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset state when modal opens/closes
+
   useEffect(() => {
     if (visible) {
       setPin('');
@@ -47,26 +49,30 @@ export default function PINInputModal({
     }
   }, [visible]);
 
+
   const handleNumberPress = (num: number) => {
     if (pin.length < maxLength) {
       const newPin = pin + num.toString();
       setPin(newPin);
       setError('');
 
-      // Auto-submit when max length reached (unlock mode only)
+
       if (mode === 'unlock' && newPin.length === maxLength) {
         handleSubmit(newPin);
       }
     }
   };
 
+
   const handleBackspace = () => {
     setPin(pin.slice(0, -1));
     setError('');
   };
 
+
   const handleSubmit = async (pinToSubmit?: string) => {
     const currentPin = pinToSubmit || pin;
+
 
     if (currentPin.length < minLength) {
       setError(`PIN must be at least ${minLength} digits`);
@@ -74,7 +80,7 @@ export default function PINInputModal({
       return;
     }
 
-    // Validate format
+
     const validation = validatePINFormat(currentPin);
     if (!validation.isValid) {
       setError(`PIN must be ${minLength}-${maxLength} digits`);
@@ -82,9 +88,11 @@ export default function PINInputModal({
       return;
     }
 
+
     setIsLoading(true);
     const success = await onSubmit(currentPin);
     setIsLoading(false);
+
 
     if (!success) {
       setError('Incorrect PIN. Try again.');
@@ -92,6 +100,7 @@ export default function PINInputModal({
       Vibration.vibrate([100, 50, 100]);
     }
   };
+
 
   const renderKeypad = () => {
     const keys = [
@@ -101,6 +110,7 @@ export default function PINInputModal({
       ['', 0, 'backspace'],
     ];
 
+
     return (
       <View style={styles.keypad}>
         {keys.map((row, rowIndex) => (
@@ -109,6 +119,7 @@ export default function PINInputModal({
               if (key === '') {
                 return <View key={keyIndex} style={styles.keyButton} />;
               }
+
 
               if (key === 'backspace') {
                 return (
@@ -133,6 +144,7 @@ export default function PINInputModal({
                   </Pressable>
                 );
               }
+
 
               return (
                 <Pressable
@@ -168,6 +180,7 @@ export default function PINInputModal({
     );
   };
 
+
   const renderPINDots = () => {
     return (
       <View style={styles.pinDotsContainer}>
@@ -192,6 +205,7 @@ export default function PINInputModal({
       </View>
     );
   };
+
 
   return (
     <Modal
@@ -218,7 +232,6 @@ export default function PINInputModal({
             },
           ]}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Ionicons
               name="lock-closed-outline"
@@ -249,10 +262,10 @@ export default function PINInputModal({
             </Text>
           </View>
 
-          {/* PIN Dots */}
+
           {renderPINDots()}
 
-          {/* Error Message */}
+
           <AnimatePresence>
             {error && (
               <MotiView
@@ -278,10 +291,10 @@ export default function PINInputModal({
             )}
           </AnimatePresence>
 
-          {/* Keypad */}
+
           {renderKeypad()}
 
-          {/* Actions */}
+
           <View style={styles.actions}>
             {mode !== 'unlock' && (
               <Pressable
@@ -310,6 +323,7 @@ export default function PINInputModal({
               </Pressable>
             )}
 
+
             {onCancel && (
               <Pressable
                 onPress={onCancel}
@@ -335,6 +349,7 @@ export default function PINInputModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   modalOverlay: {

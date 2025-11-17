@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useDb } from '../../src/context/DbContext';
-import { useAuth } from '../../src/context/AuthContext'; // 🔐 AUTH: Import useAuth
-import { useInactivityTracker } from '../../src/utils/inactivityTracker'; // 🔐 AUTH: Import inactivity tracker
+import { useAuth } from '../../src/context/AuthContext';
+import { useInactivityTracker } from '../../src/utils/inactivityTracker';
 import ProgressBar from '../../src/components/ProgressBar';
 import Toast from '../../src/components/Toast';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,20 +34,22 @@ import { ThrottledProgress, ProgressUpdate } from '../../src/types/progress';
 import { useAnimation } from '../../src/context/AnimationContext';
 import { MotiView } from 'moti';
 
+
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
 
-  // ✅ NEW: Get TAB_ANIMATION
+
   const { TAB_ANIMATION } = useAnimation();
 
-  // ✅ NEW: Animation key state
+
   const [animationKey, setAnimationKey] = useState(0);
 
-  // 🔐 AUTH: Get auth state and initialize inactivity tracker
+
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
+
 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +62,7 @@ export default function EncoderScreen() {
   const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
   const [downloadModalVisible, setDownloadModalVisible] = useState(false);
 
+
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
     phase: 'stringify',
     processedBytes: 0,
@@ -68,8 +71,10 @@ export default function EncoderScreen() {
   });
   const [showProgress, setShowProgress] = useState(false);
 
+
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
+
 
   useEffect(() => {
     return () => {
@@ -78,17 +83,18 @@ export default function EncoderScreen() {
     };
   }, []);
 
-  // 🔐 AUTH: Update activity on screen focus
+
   useFocusEffect(
     React.useCallback(() => {
-      // ✅ NEW: Trigger animation on focus
       setAnimationKey((prev) => prev + 1);
+
 
       if (isAuthEnabled && !isProcessingRef.current) {
         updateActivity();
       }
     }, [isAuthEnabled, updateActivity])
   );
+
 
   const showToastMessage = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
     if (!isMountedRef.current) return;
@@ -99,6 +105,7 @@ export default function EncoderScreen() {
       if (isMountedRef.current) setShowToast(false);
     }, 3000);
   };
+
 
   const cleanup = () => {
     isProcessingRef.current = false;
@@ -114,11 +121,13 @@ export default function EncoderScreen() {
     }
   };
 
+
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
       console.log('🛑 Cancelling ongoing encode...');
       cleanup();
     }
+
 
     setRefreshing(true);
     setPassword('');
@@ -133,16 +142,17 @@ export default function EncoderScreen() {
       percent: 0,
     });
 
+
     await new Promise((r) => setTimeout(r, 300));
     if (isMountedRef.current) setRefreshing(false);
 
-    // 🔐 AUTH: Update activity on refresh
+
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  // FIXED: Progress callback that properly updates state
+
   const onProgress = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
       console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
@@ -150,35 +160,40 @@ export default function EncoderScreen() {
     }
   };
 
+
   const handleEncode = async () => {
     if (!password.trim()) {
       showToastMessage("Please enter a password", "error");
       return;
     }
 
+
     if (isProcessingRef.current) {
       showToastMessage("Encoding already in progress", "error");
       return;
     }
 
-    // 🔐 AUTH: Update activity before starting long operation
+
     if (isAuthEnabled) {
       updateActivity();
     }
+
 
     isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
 
+
     try {
-      // Stage 1: Stringify
       let dataToEncrypt: string;
       let dataBytes: Uint8Array;
+
 
       try {
         dataToEncrypt = JSON.stringify({ database, schemas });
         const encoder = new TextEncoder();
         dataBytes = encoder.encode(dataToEncrypt);
+
 
         onProgress({
           phase: "stringify",
@@ -190,10 +205,11 @@ export default function EncoderScreen() {
         throw new Error(`Failed to serialize data: ${error.message}`);
       }
 
+
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
 
-      // Stage 2: Encrypt
+
       let encryptedBytes: Uint8Array;
       try {
         encryptedBytes = await encryptData(dataToEncrypt, password, onProgress);
@@ -201,13 +217,14 @@ export default function EncoderScreen() {
         throw new Error(`Encryption failed: ${error.message}`);
       }
 
+
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
 
-      // Calculate dimensions
+
       const { width, height } = calculateDimensions(encryptedBytes.length);
 
-      // Pack header
+
       let fullData: Uint8Array;
       try {
         const header = {
@@ -221,6 +238,7 @@ export default function EncoderScreen() {
           reserved: 0,
         };
 
+
         const headerBytes = packHeader(header);
         fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
         fullData.set(headerBytes);
@@ -229,9 +247,10 @@ export default function EncoderScreen() {
         throw new Error(`Failed to create image header: ${error.message}`);
       }
 
+
       if (!isProcessingRef.current) return;
 
-      // Stage 3: Encode to pixels
+
       let pixels: Uint8Array;
       try {
         const progress = new ThrottledProgress(onProgress);
@@ -241,12 +260,14 @@ export default function EncoderScreen() {
         throw new Error(`Failed to encode pixels: ${error.message}`);
       }
 
+
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
 
-      // Stage 4: Save as PNG
+
       let pngUri: string;
       const generatedFilename = `passify_backup_${Date.now()}.png`;
+
 
       try {
         pngUri = await savePixelsAsPNG(
@@ -267,9 +288,10 @@ export default function EncoderScreen() {
         throw new Error(`Failed to save image: ${error.message}`);
       }
 
+
       if (!isProcessingRef.current) return;
 
-      // Success
+
       if (isMountedRef.current) {
         setImageUri(pngUri);
         setFilename(generatedFilename);
@@ -284,6 +306,7 @@ export default function EncoderScreen() {
     } catch (error: any) {
       console.error("🔴 Encoding error:", error);
 
+
       if (isMountedRef.current && isProcessingRef.current) {
         const errorMessage =
           error.message || "An unexpected error occurred during encoding";
@@ -295,23 +318,24 @@ export default function EncoderScreen() {
         if (isMountedRef.current) setShowProgress(false);
       }, 1000);
 
-      // 🔐 AUTH: Update activity after long operation completes
+
       if (isAuthEnabled) {
         updateActivity();
       }
     }
   };
 
+
   const handleSharePress = async () => {
     if (!imageUri) return;
     setLoading(true);
     await shareFile(imageUri, 'image/png');
     setLoading(false);
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
+
 
   const handleDownloadPress = () => {
     if (!imageUri) return;
@@ -320,11 +344,11 @@ export default function EncoderScreen() {
     } else {
       handleDownloadConfirm();
     }
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
+
 
   const handleDownloadConfirm = async () => {
     setDownloadModalVisible(false);
@@ -335,11 +359,11 @@ export default function EncoderScreen() {
     if (success) {
       showToastMessage('Download successful!', "info");
     }
-    // 🔐 AUTH: Update activity on user interaction
     if (isAuthEnabled) {
       updateActivity();
     }
   };
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
@@ -371,7 +395,7 @@ export default function EncoderScreen() {
             Create an encrypted backup image from your account data
           </Text>
 
-          {/* Password Input */}
+
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
               Encryption Password
@@ -387,7 +411,6 @@ export default function EncoderScreen() {
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
-                  // 🔐 AUTH: Update activity on text input
                   if (isAuthEnabled) {
                     updateActivity();
                   }
@@ -400,7 +423,6 @@ export default function EncoderScreen() {
               <Pressable
                 onPress={() => {
                   setShowPassword(!showPassword);
-                  // 🔐 AUTH: Update activity on toggle
                   if (isAuthEnabled) {
                     updateActivity();
                   }
@@ -416,7 +438,7 @@ export default function EncoderScreen() {
             </View>
           </View>
 
-          {/* Progress Bar */}
+
           {showProgress && (
             <ProgressBar
               percent={progressUpdate.percent}
@@ -427,7 +449,7 @@ export default function EncoderScreen() {
             />
           )}
 
-          {/* Generate Button */}
+
           <Pressable
             onPress={handleEncode}
             disabled={loading || !password.trim()}
@@ -446,7 +468,7 @@ export default function EncoderScreen() {
             </Text>
           </Pressable>
 
-          {/* Generated Image Preview */}
+
           {imageUri && !loading && (
             <>
               <View style={styles.section}>
@@ -459,7 +481,7 @@ export default function EncoderScreen() {
                 </Text>
               </View>
 
-              {/* Share & Download Buttons */}
+
               <View style={styles.buttonRow}>
                 <Pressable
                   onPress={handleSharePress}
@@ -470,6 +492,7 @@ export default function EncoderScreen() {
                     Share
                   </Text>
                 </Pressable>
+
 
                 <Pressable
                   onPress={handleDownloadPress}
@@ -482,7 +505,7 @@ export default function EncoderScreen() {
                 </Pressable>
               </View>
 
-              {/* Expo Go Info */}
+
               {isExpoGo() && (
                 <Text style={[styles.infoText, { color: colors.danger, fontFamily: fontConfig.regular }]}>
                   ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
@@ -493,7 +516,7 @@ export default function EncoderScreen() {
         </ScrollView>
       </MotiView>
 
-      {/* Download Info Modal for Expo Go */}
+
       <Modal visible={downloadModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
@@ -517,11 +540,11 @@ export default function EncoderScreen() {
               File saved to app directory. Use the Share button to export this file.
             </Text>
 
+
             <View style={styles.modalButtons}>
               <Pressable
                 onPress={() => {
                   setDownloadModalVisible(false);
-                  // 🔐 AUTH: Update activity on modal dismiss
                   if (isAuthEnabled) {
                     updateActivity();
                   }
@@ -537,6 +560,7 @@ export default function EncoderScreen() {
                   OK
                 </Text>
               </Pressable>
+
 
               <Pressable
                 onPress={() => {
@@ -559,11 +583,14 @@ export default function EncoderScreen() {
         </View>
       </Modal>
 
+
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
 
+
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

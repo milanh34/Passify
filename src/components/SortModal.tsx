@@ -11,12 +11,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { SORT_OPTIONS, SortOption } from '../utils/sortPlatforms';
 
+
 interface SortModalProps {
   visible: boolean;
   currentSort: SortOption;
   onSelect: (option: SortOption) => void;
   onClose: () => void;
 }
+
 
 export default function SortModal({
   visible,
@@ -26,10 +28,12 @@ export default function SortModal({
 }: SortModalProps) {
   const { colors, fontConfig } = useTheme();
 
+
   const handleSelect = (option: SortOption) => {
     onSelect(option);
     onClose();
   };
+
 
   return (
     <Modal
@@ -43,7 +47,6 @@ export default function SortModal({
           style={[styles.modalContent, { backgroundColor: colors.card }]}
           onStartShouldSetResponder={() => true}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Ionicons name="funnel-outline" size={24} color={colors.accent} />
             <Text
@@ -59,7 +62,7 @@ export default function SortModal({
             </Pressable>
           </View>
 
-          {/* Sort Options */}
+
           <ScrollView style={styles.optionsList}>
             {SORT_OPTIONS.map((option) => {
               const isSelected = currentSort === option.id;
@@ -114,6 +117,7 @@ export default function SortModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   overlay: {

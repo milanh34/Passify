@@ -1,13 +1,14 @@
-// src/components/OnboardingSlide.tsx
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { MotiView } from "moti";
 import { useTheme } from "../context/ThemeContext";
 
+
 interface OnboardingSlideProps {
   children: React.ReactNode;
   slideIndex: number;
 }
+
 
 export default function OnboardingSlide({
   children,
@@ -15,12 +16,13 @@ export default function OnboardingSlide({
 }: OnboardingSlideProps) {
   const { colors } = useTheme();
 
+
   return (
     <MotiView
       key={`slide-${slideIndex}`}
       from={{
-        opacity: 1, // Changed from 0 to 1
-        translateX: 0, // Changed from 50 to 0
+        opacity: 1,
+        translateX: 0,
       }}
       animate={{
         opacity: 1,
@@ -36,6 +38,7 @@ export default function OnboardingSlide({
     </MotiView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

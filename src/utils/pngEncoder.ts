@@ -1,6 +1,7 @@
 export type PNGProgressCallback = (phase: string, percent: number) => void;
 
 
+
 export async function encodePNG(
   pixels: Uint8Array,
   width: number,
@@ -42,6 +43,7 @@ export async function encodePNG(
 }
 
 
+
 function createIHDR(width: number, height: number): Uint8Array {
   const data = new Uint8Array(13);
   const view = new DataView(data.buffer);
@@ -58,6 +60,7 @@ function createIHDR(width: number, height: number): Uint8Array {
 }
 
 
+
 async function createImageData(
   pixels: Uint8Array,
   width: number,
@@ -67,8 +70,6 @@ async function createImageData(
   const bytesPerRow = width * 4;
   const filteredData = new Uint8Array(height * (bytesPerRow + 1));
   
-  // FIXED: Update every 1% instead of every 5%
-  // Calculate update interval for 1% increments (100 updates total)
   const updateInterval = Math.max(1, Math.floor(height / 100));
   
   for (let y = 0; y < height; y++) {
@@ -78,7 +79,6 @@ async function createImageData(
       y * (bytesPerRow + 1) + 1
     );
     
-    // Update progress every 1% (100 times instead of 20)
     if (onProgress && y % updateInterval === 0) {
       const percent = Math.min(100, Math.floor((y / height) * 100));
       onProgress('Compressing image data', percent);
@@ -89,6 +89,7 @@ async function createImageData(
   
   return deflateStore(filteredData);
 }
+
 
 
 function deflateStore(data: Uint8Array): Uint8Array {
@@ -133,6 +134,7 @@ function deflateStore(data: Uint8Array): Uint8Array {
 }
 
 
+
 function adler32(data: Uint8Array): number {
   let a = 1;
   let b = 0;
@@ -145,6 +147,7 @@ function adler32(data: Uint8Array): number {
   
   return (b << 16) | a;
 }
+
 
 
 function createChunk(type: string, data: Uint8Array): Uint8Array {
@@ -172,6 +175,7 @@ function createChunk(type: string, data: Uint8Array): Uint8Array {
 }
 
 
+
 function crc32(data: Uint8Array): number {
   let crc = 0xFFFFFFFF;
   
@@ -184,6 +188,7 @@ function crc32(data: Uint8Array): number {
   
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
+
 
 
 export function decodePNG(
@@ -243,8 +248,6 @@ export function decodePNG(
   const pixels = new Uint8Array(width * height * 4);
   const bytesPerRow = width * 4;
   
-  // FIXED: Update every 1% instead of every 5%
-  // Calculate update interval for 1% increments (100 updates total)
   const updateInterval = Math.max(1, Math.floor(height / 100));
   
   for (let y = 0; y < height; y++) {
@@ -260,7 +263,6 @@ export function decodePNG(
     
     pixels.set(scanline, y * bytesPerRow);
     
-    // Update progress every 1% (100 times instead of 20)
     if (onProgress && y % updateInterval === 0) {
       const percent = Math.min(100, Math.floor((y / height) * 100));
       onProgress?.('Extracting pixel data', percent);
@@ -271,6 +273,7 @@ export function decodePNG(
   
   return { pixels, width, height };
 }
+
 
 
 function inflateData(compressed: Uint8Array): Uint8Array {

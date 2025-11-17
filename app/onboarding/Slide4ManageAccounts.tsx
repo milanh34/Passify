@@ -1,4 +1,3 @@
-// app/onboarding/Slide4ManageAccounts.tsx
 import React, { useRef, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
@@ -10,11 +9,13 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 
+
 export default function Slide4ManageAccounts() {
   const { colors, fontConfig } = useTheme();
   const [completeScrollBarHeight, setCompleteScrollBarHeight] = useState(1);
   const [visibleScrollBarHeight, setVisibleScrollBarHeight] = useState(0);
   const scrollIndicator = useSharedValue(0);
+
 
   const features = [
     {
@@ -54,15 +55,18 @@ export default function Slide4ManageAccounts() {
     },
   ];
 
+
   const scrollIndicatorSize =
     completeScrollBarHeight > visibleScrollBarHeight
       ? (visibleScrollBarHeight * visibleScrollBarHeight) / completeScrollBarHeight
       : visibleScrollBarHeight;
 
+
   const difference =
     visibleScrollBarHeight > scrollIndicatorSize
       ? visibleScrollBarHeight - scrollIndicatorSize
       : 1;
+
 
   const scrollIndicatorPosition = useAnimatedStyle(() => {
     const position = interpolate(
@@ -71,14 +75,17 @@ export default function Slide4ManageAccounts() {
       [0, difference]
     );
 
+
     return {
       transform: [{ translateY: position }],
     };
   });
 
+
   const handleScroll = (event: any) => {
     scrollIndicator.value = event.nativeEvent.contentOffset.y;
   };
+
 
   return (
     <OnboardingSlide slideIndex={3}>
@@ -92,6 +99,7 @@ export default function Slide4ManageAccounts() {
           Managing Your Accounts
         </Text>
 
+
         <Text
           style={[
             styles.subtitle,
@@ -100,6 +108,7 @@ export default function Slide4ManageAccounts() {
         >
           Complete control over your credentials:
         </Text>
+
 
         <View style={styles.scrollContainer}>
           <ScrollView
@@ -132,7 +141,7 @@ export default function Slide4ManageAccounts() {
             ))}
           </ScrollView>
 
-          {/* Custom Visible Scrollbar */}
+
           <View style={styles.scrollBarContainer}>
             <View
               style={[
@@ -157,6 +166,7 @@ export default function Slide4ManageAccounts() {
     </OnboardingSlide>
   );
 }
+
 
 function FeatureItem({
   icon,
@@ -199,6 +209,7 @@ function FeatureItem({
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

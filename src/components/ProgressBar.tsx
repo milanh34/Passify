@@ -4,8 +4,9 @@ import { useTheme } from '../context/ThemeContext';
 import { ProgressPhase } from '../types/progress';
 
 
+
 interface ProgressBarProps {
-  percent: number; // 0-100
+  percent: number;
   phase: ProgressPhase;
   processedBytes?: number;
   totalBytes?: number;
@@ -13,20 +14,21 @@ interface ProgressBarProps {
 }
 
 
-// FIXED: Enhanced phase labels with better descriptions
+
 const PHASE_LABELS: Record<ProgressPhase, string> = {
   stringify: 'Serializing data',
-  encrypt: 'Encrypting', // ✅ Used during encryption
+  encrypt: 'Encrypting',
   pack: 'Packing into pixels',
   encodePNG: 'Encoding PNG image',
   writeFile: 'Writing file',
   readFile: 'Reading file',
   decodePNG: 'Decoding PNG image',
   unpack: 'Extracting pixel data',
-  decrypt: 'Decrypting', // ✅ Used during decryption (was missing context)
+  decrypt: 'Decrypting',
   parseJSON: 'Parsing data',
   done: 'Complete ✓',
 };
+
 
 
 function formatBytes(bytes: number): string {
@@ -34,6 +36,7 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
+
 
 
 export default function ProgressBar({
@@ -61,7 +64,6 @@ export default function ProgressBar({
     outputRange: ['0%', '100%'],
   });
   
-  // Get the user-friendly phase label
   const phaseLabel = PHASE_LABELS[phase] || 'Processing';
   const showBytes = processedBytes !== undefined && totalBytes !== undefined && totalBytes > 0;
   
@@ -99,6 +101,7 @@ export default function ProgressBar({
     </View>
   );
 }
+
 
 
 const styles = StyleSheet.create({

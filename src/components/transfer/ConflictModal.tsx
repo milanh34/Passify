@@ -4,7 +4,9 @@ import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 
+
 type ConflictResolution = "update" | "skip";
+
 
 interface ConflictModalProps {
   visible: boolean;
@@ -17,6 +19,7 @@ interface ConflictModalProps {
   onDecision: (action: ConflictResolution, applyToAll: boolean) => void;
 }
 
+
 export default function ConflictModal({
   visible,
   conflict,
@@ -24,7 +27,9 @@ export default function ConflictModal({
 }: ConflictModalProps) {
   const { colors, fontConfig } = useTheme();
 
+
   if (!conflict) return null;
+
 
   return (
     <Modal
@@ -58,6 +63,7 @@ export default function ConflictModal({
             </Text>
           </View>
 
+
           <View style={styles.modalContent}>
             <Text
               style={[
@@ -73,6 +79,7 @@ export default function ConflictModal({
               </Text>{" "}
               already exists in {conflict.platformName}.
             </Text>
+
 
             <View
               style={[
@@ -101,6 +108,7 @@ export default function ConflictModal({
               </Text>
             </View>
 
+
             <Text
               style={[
                 styles.modalQuestion,
@@ -110,6 +118,7 @@ export default function ConflictModal({
               What would you like to do?
             </Text>
           </View>
+
 
           <View style={styles.modalButtons}>
             <Pressable
@@ -129,6 +138,7 @@ export default function ConflictModal({
               </Text>
             </Pressable>
 
+
             <Pressable
               onPress={() => onDecision("update", false)}
               style={[
@@ -147,6 +157,7 @@ export default function ConflictModal({
             </Pressable>
           </View>
 
+
           <View style={styles.modalFooter}>
             <Pressable
               onPress={() => onDecision("skip", true)}
@@ -161,6 +172,7 @@ export default function ConflictModal({
                 Skip All Remaining
               </Text>
             </Pressable>
+
 
             <Pressable
               onPress={() => onDecision("update", true)}
@@ -181,6 +193,7 @@ export default function ConflictModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   modalBackdrop: {
