@@ -1,3 +1,5 @@
+// src/components/FAB.tsx
+
 import React from "react";
 import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

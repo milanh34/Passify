@@ -1,3 +1,5 @@
+// src/components/SearchSuggestionsDropdown.tsx
+
 import React from 'react';
 import {
   View,

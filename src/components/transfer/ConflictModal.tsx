@@ -1,3 +1,5 @@
+// src/components/transfer/ConflictModal.tsx
+
 import React from "react";
 import { Modal, View, Text, StyleSheet, Pressable } from "react-native";
 import { MotiView } from "moti";

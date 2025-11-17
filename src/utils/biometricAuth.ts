@@ -1,3 +1,5 @@
+// src/utils/biometricAuth.ts
+
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Platform } from 'react-native';
 

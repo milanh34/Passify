@@ -1,3 +1,5 @@
+// src/utils/sortAccounts.ts
+
 export interface Account {
   id: string;
   name: string;

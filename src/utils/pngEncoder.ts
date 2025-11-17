@@ -1,3 +1,5 @@
+// src/utils/pngEncoder.ts
+
 export type PNGProgressCallback = (phase: string, percent: number) => void;
 
 

@@ -1,3 +1,5 @@
+// src/components/PlatformIcon.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome, FontAwesome5, Ionicons, AntDesign, Entypo, Feather } from '@expo/vector-icons';

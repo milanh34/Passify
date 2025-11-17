@@ -1,3 +1,5 @@
+// app/(tabs)/transfer.tsx
+
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, Text } from "react-native";
 import { useFocusEffect } from "expo-router";

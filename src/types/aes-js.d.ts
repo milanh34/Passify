@@ -1,3 +1,5 @@
+// src/types/aes-js.d.ts
+
 declare module 'aes-js' {
   export namespace utils {
     namespace utf8 {

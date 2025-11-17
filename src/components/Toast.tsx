@@ -1,3 +1,5 @@
+// src/components/Toast.tsx
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MotiView, AnimatePresence } from "moti";

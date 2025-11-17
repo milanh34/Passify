@@ -1,3 +1,5 @@
+// src/components/SchemaModal.tsx
+
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { MotiView } from "moti";

@@ -1,3 +1,5 @@
+// src/components/SearchBar.tsx
+
 import React, { useState, useMemo, useRef } from "react";
 import { View, TextInput, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

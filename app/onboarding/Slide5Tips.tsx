@@ -1,3 +1,5 @@
+// app/onboarding/Slide5Tips.tsx
+
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";

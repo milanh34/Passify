@@ -1,3 +1,5 @@
+// src/components/ErrorBoundary.tsx
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

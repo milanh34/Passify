@@ -1,3 +1,5 @@
+// src/utils/image.ts
+
 import * as FileSystem from 'expo-file-system/legacy';
 import { encodePNG, decodePNG, PNGProgressCallback } from './pngEncoder';
 

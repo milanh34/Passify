@@ -1,3 +1,5 @@
+// src/utils/inactivityTracker.ts
+
 import { useEffect, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

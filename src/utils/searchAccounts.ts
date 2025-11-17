@@ -1,3 +1,5 @@
+// src/utils/searchAccounts.ts
+
 export interface Account {
   id: string;
   name: string;

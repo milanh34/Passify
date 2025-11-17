@@ -1,3 +1,5 @@
+// src/utils/crypto.ts
+
 import * as Crypto from 'expo-crypto';
 import aesjs from 'aes-js';
 import { ThrottledProgress, ProgressCallback, ProgressPhase } from '../types/progress';

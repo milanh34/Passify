@@ -1,3 +1,5 @@
+// src/components/DeleteModal.tsx
+
 import React from "react";
 import { Modal, Pressable, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MotiView } from "moti";

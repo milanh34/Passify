@@ -1,3 +1,5 @@
+// src/components/ProgressBar.tsx
+
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../context/ThemeContext';

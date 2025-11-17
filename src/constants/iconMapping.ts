@@ -1,3 +1,5 @@
+// src/constants/iconMapping.ts
+
 export interface IconMapping {
     platform: string;
     displayName: string;

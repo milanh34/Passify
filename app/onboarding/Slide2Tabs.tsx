@@ -1,3 +1,5 @@
+// app/onboarding/Slide2Tabs.tsx
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";

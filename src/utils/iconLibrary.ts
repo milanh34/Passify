@@ -1,3 +1,5 @@
+// src/utils/iconLibrary.ts
+
 import { PLATFORM_ICONS, IconMapping, getAllPlatformIcons } from '../constants/iconMapping';
 
 

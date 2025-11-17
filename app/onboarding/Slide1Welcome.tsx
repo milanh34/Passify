@@ -1,3 +1,5 @@
+// app/onboarding/Slide1Welcome.tsx
+
 import React from "react";
 import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";

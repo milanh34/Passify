@@ -1,3 +1,5 @@
+// src/types/progress.ts
+
 export type ProgressPhase =
   | 'stringify'
   | 'encrypt'

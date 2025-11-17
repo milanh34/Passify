@@ -1,3 +1,5 @@
+// app/(tabs)/_layout.tsx
+
 import { Tabs, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "react-native";
