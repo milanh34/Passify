@@ -6,9 +6,7 @@ import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 
-
 type ConflictResolution = "update" | "skip";
-
 
 interface ConflictModalProps {
   visible: boolean;
@@ -21,25 +19,13 @@ interface ConflictModalProps {
   onDecision: (action: ConflictResolution, applyToAll: boolean) => void;
 }
 
-
-export default function ConflictModal({
-  visible,
-  conflict,
-  onDecision,
-}: ConflictModalProps) {
+export default function ConflictModal({ visible, conflict, onDecision }: ConflictModalProps) {
   const { colors, fontConfig } = useTheme();
-
 
   if (!conflict) return null;
 
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => {}}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
       <View style={styles.modalBackdrop}>
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
@@ -55,33 +41,21 @@ export default function ConflictModal({
         >
           <View style={styles.modalHeader}>
             <Ionicons name="warning" size={32} color={colors.accent} />
-            <Text
-              style={[
-                styles.modalTitle,
-                { color: colors.text, fontFamily: fontConfig.bold },
-              ]}
-            >
+            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
               Account Already Exists
             </Text>
           </View>
 
-
           <View style={styles.modalContent}>
             <Text
-              style={[
-                styles.modalText,
-                { color: colors.subtext, fontFamily: fontConfig.regular },
-              ]}
+              style={[styles.modalText, { color: colors.subtext, fontFamily: fontConfig.regular }]}
             >
               An account with {conflict.identifierField}{" "}
-              <Text
-                style={{ color: colors.accent, fontFamily: fontConfig.bold }}
-              >
+              <Text style={{ color: colors.accent, fontFamily: fontConfig.bold }}>
                 {conflict.newAccount[conflict.identifierField]}
               </Text>{" "}
               already exists in {conflict.platformName}.
             </Text>
-
 
             <View
               style={[
@@ -110,17 +84,12 @@ export default function ConflictModal({
               </Text>
             </View>
 
-
             <Text
-              style={[
-                styles.modalQuestion,
-                { color: colors.text, fontFamily: fontConfig.bold },
-              ]}
+              style={[styles.modalQuestion, { color: colors.text, fontFamily: fontConfig.bold }]}
             >
               What would you like to do?
             </Text>
           </View>
-
 
           <View style={styles.modalButtons}>
             <Pressable
@@ -140,31 +109,20 @@ export default function ConflictModal({
               </Text>
             </Pressable>
 
-
             <Pressable
               onPress={() => onDecision("update", false)}
-              style={[
-                styles.modalButton,
-                { backgroundColor: colors.accent },
-              ]}
+              style={[styles.modalButton, { backgroundColor: colors.accent }]}
             >
               <Text
-                style={[
-                  styles.modalButtonText,
-                  { color: "#fff", fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.modalButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
               >
                 Update
               </Text>
             </Pressable>
           </View>
 
-
           <View style={styles.modalFooter}>
-            <Pressable
-              onPress={() => onDecision("skip", true)}
-              style={styles.applyAllButton}
-            >
+            <Pressable onPress={() => onDecision("skip", true)} style={styles.applyAllButton}>
               <Text
                 style={[
                   styles.applyAllText,
@@ -175,16 +133,9 @@ export default function ConflictModal({
               </Text>
             </Pressable>
 
-
-            <Pressable
-              onPress={() => onDecision("update", true)}
-              style={styles.applyAllButton}
-            >
+            <Pressable onPress={() => onDecision("update", true)} style={styles.applyAllButton}>
               <Text
-                style={[
-                  styles.applyAllText,
-                  { color: colors.accent, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.applyAllText, { color: colors.accent, fontFamily: fontConfig.bold }]}
               >
                 Update All Remaining
               </Text>
@@ -195,7 +146,6 @@ export default function ConflictModal({
     </Modal>
   );
 }
-
 
 const styles = StyleSheet.create({
   modalBackdrop: {

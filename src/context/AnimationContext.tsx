@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 type AnimationType = {
   from: any;
   animate: any;
@@ -13,14 +12,12 @@ type AnimationType = {
   stiffness?: number;
 };
 
-
 type AnimationPreset = {
   id: string;
   name: string;
   description: string;
   animation: AnimationType;
 };
-
 
 const ANIMATION_PRESETS: AnimationPreset[] = [
   {
@@ -150,7 +147,6 @@ const ANIMATION_PRESETS: AnimationPreset[] = [
   },
 ];
 
-
 type AnimationContextType = {
   currentAnimation: string;
   changeAnimation: (id: string) => void;
@@ -160,18 +156,14 @@ type AnimationContextType = {
   ANIMATION_PRESETS: AnimationPreset[];
 };
 
-
 const AnimationContext = createContext<AnimationContextType | undefined>(undefined);
-
 
 export function AnimationProvider({ children }: { children: React.ReactNode }) {
   const [currentAnimation, setCurrentAnimation] = useState("slide_right");
 
-
   useEffect(() => {
     loadAnimation();
   }, []);
-
 
   const loadAnimation = async () => {
     try {
@@ -182,7 +174,6 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-
   const changeAnimation = async (id: string) => {
     try {
       await AsyncStorage.setItem("@animation_preset", id);
@@ -192,15 +183,12 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-
   const getAnimation = () => {
     const preset = ANIMATION_PRESETS.find((p) => p.id === currentAnimation);
     return preset ? preset.animation : ANIMATION_PRESETS[0].animation;
   };
 
-
   const animation = getAnimation();
-
 
   const TAB_ANIMATION = animation;
   const PAGE_ANIMATION = animation;
@@ -211,7 +199,6 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
     staggerDelay: 80,
     type: "timing" as const,
   };
-
 
   return (
     <AnimationContext.Provider
@@ -228,7 +215,6 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
     </AnimationContext.Provider>
   );
 }
-
 
 export function useAnimation() {
   const context = useContext(AnimationContext);

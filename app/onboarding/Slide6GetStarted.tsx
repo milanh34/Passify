@@ -6,48 +6,25 @@ import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
-
 export default function Slide6GetStarted() {
   const { colors, fontConfig } = useTheme();
-
 
   return (
     <OnboardingSlide slideIndex={5}>
       <View style={styles.container}>
-        <View
-          style={[
-            styles.successIcon,
-            { backgroundColor: `${colors.accent}15` },
-          ]}
-        >
-          <Ionicons
-            name="checkmark-circle"
-            size={80}
-            color={colors.accent}
-          />
+        <View style={[styles.successIcon, { backgroundColor: `${colors.accent}15` }]}>
+          <Ionicons name="checkmark-circle" size={80} color={colors.accent} />
         </View>
 
-
-        <Text
-          style={[
-            styles.title,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
           You're All Set!
         </Text>
 
-
         <Text
-          style={[
-            styles.description,
-            { color: colors.subtext, fontFamily: fontConfig.regular },
-          ]}
+          style={[styles.description, { color: colors.subtext, fontFamily: fontConfig.regular }]}
         >
-          Use your master password to encrypt all your data into a single secure
-          image.
+          Use your master password to encrypt all your data into a single secure image.
         </Text>
-
 
         <View
           style={[
@@ -59,30 +36,18 @@ export default function Slide6GetStarted() {
           ]}
         >
           <Ionicons name="information-circle" size={24} color={colors.accent} />
-          <Text
-            style={[
-              styles.infoText,
-              { color: colors.text, fontFamily: fontConfig.regular },
-            ]}
-          >
+          <Text style={[styles.infoText, { color: colors.text, fontFamily: fontConfig.regular }]}>
             Your data stays on your device. Nothing is synced to external servers.
           </Text>
         </View>
 
-
-        <Text
-          style={[
-            styles.cta,
-            { color: colors.accent, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.cta, { color: colors.accent, fontFamily: fontConfig.bold }]}>
           Tap "Let's Go!" to start securing your passwords
         </Text>
       </View>
     </OnboardingSlide>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

@@ -1,11 +1,17 @@
 // src/components/SearchBar.tsx
 
 import React, { useState, useMemo, useRef } from "react";
-import { View, TextInput, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
+import {
+  View,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import SearchSuggestionsDropdown from "./SearchSuggestionsDropdown";
-
 
 interface SearchBarProps {
   value: string;
@@ -14,7 +20,6 @@ interface SearchBarProps {
   placeholder?: string;
   suggestions?: string[];
 }
-
 
 export default function SearchBar({
   value,
@@ -28,19 +33,16 @@ export default function SearchBar({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-
   const filteredSuggestions = useMemo(() => {
     if (!value || value.trim().length === 0) {
       return suggestions.slice(0, 10);
     }
-
 
     const lowerQuery = value.toLowerCase().trim();
     return suggestions
       .filter((suggestion) => suggestion.toLowerCase().includes(lowerQuery))
       .slice(0, 10);
   }, [value, suggestions]);
-
 
   const toggleSuggestions = () => {
     if (showSuggestions) {
@@ -52,12 +54,10 @@ export default function SearchBar({
     }
   };
 
-
   const handleFocus = () => {
     setIsFocused(true);
     setShowSuggestions(true);
   };
-
 
   const handleBlur = () => {
     setTimeout(() => {
@@ -66,20 +66,17 @@ export default function SearchBar({
     }, 150);
   };
 
-
   const handleSelectSuggestion = (query: string) => {
     onChangeText(query);
     setShowSuggestions(false);
     Keyboard.dismiss();
   };
 
-
   const handleClear = () => {
     onClear();
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
-
 
   return (
     <View style={styles.container}>
@@ -104,7 +101,6 @@ export default function SearchBar({
           />
         </Pressable>
 
-
         <TextInput
           ref={inputRef}
           value={value}
@@ -113,10 +109,7 @@ export default function SearchBar({
           onBlur={handleBlur}
           placeholder={placeholder}
           placeholderTextColor={colors.muted}
-          style={[
-            styles.input,
-            { color: colors.text, fontFamily: fontConfig.regular },
-          ]}
+          style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
           returnKeyType="search"
           clearButtonMode="never"
         />
@@ -131,7 +124,6 @@ export default function SearchBar({
         )}
       </View>
 
-
       <SearchSuggestionsDropdown
         visible={showSuggestions && filteredSuggestions.length > 0}
         suggestions={filteredSuggestions}
@@ -140,7 +132,6 @@ export default function SearchBar({
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

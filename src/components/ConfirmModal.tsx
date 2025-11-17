@@ -1,23 +1,13 @@
 // src/components/ConfirmModal.tsx
 
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Pressable,
-  Dimensions,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, Modal, Pressable, Dimensions, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { useTheme } from "../context/ThemeContext";
 
-
 const { width } = Dimensions.get("window");
-
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -29,7 +19,6 @@ interface ConfirmModalProps {
   onCancel: () => void;
   type?: "info" | "warning" | "danger";
 }
-
 
 export default function ConfirmModal({
   visible,
@@ -43,22 +32,11 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   const { colors, fontConfig } = useTheme();
 
-
   const iconName =
-    type === "danger"
-      ? "alert-circle"
-      : type === "warning"
-      ? "warning"
-      : "information-circle";
-
+    type === "danger" ? "alert-circle" : type === "warning" ? "warning" : "information-circle";
 
   const iconColor =
-    type === "danger"
-      ? colors.danger
-      : type === "warning"
-      ? "#FF9800"
-      : colors.accent;
-
+    type === "danger" ? colors.danger : type === "warning" ? "#FF9800" : colors.accent;
 
   return (
     <Modal
@@ -76,7 +54,6 @@ export default function ConfirmModal({
         >
           <Pressable style={styles.backdrop} onPress={onCancel} />
 
-
           <MotiView
             from={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -86,35 +63,19 @@ export default function ConfirmModal({
               { backgroundColor: colors.card, borderColor: colors.cardBorder },
             ]}
           >
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: `${iconColor}15` },
-              ]}
-            >
+            <View style={[styles.iconContainer, { backgroundColor: `${iconColor}15` }]}>
               <Ionicons name={iconName} size={48} color={iconColor} />
             </View>
 
-
-            <Text
-              style={[
-                styles.title,
-                { color: colors.text, fontFamily: fontConfig.bold },
-              ]}
-            >
+            <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
               {title}
             </Text>
 
-
             <Text
-              style={[
-                styles.message,
-                { color: colors.subtext, fontFamily: fontConfig.regular },
-              ]}
+              style={[styles.message, { color: colors.subtext, fontFamily: fontConfig.regular }]}
             >
               {message}
             </Text>
-
 
             <View style={styles.buttonContainer}>
               <Pressable
@@ -123,23 +84,17 @@ export default function ConfirmModal({
                   styles.button,
                   styles.cancelButton,
                   {
-                    backgroundColor: pressed
-                      ? `${colors.cardBorder}40`
-                      : colors.bg[0],
+                    backgroundColor: pressed ? `${colors.cardBorder}40` : colors.bg[0],
                     borderColor: colors.cardBorder,
                   },
                 ]}
               >
                 <Text
-                  style={[
-                    styles.buttonText,
-                    { color: colors.text, fontFamily: fontConfig.bold },
-                  ]}
+                  style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}
                 >
                   {cancelText}
                 </Text>
               </Pressable>
-
 
               <Pressable
                 onPress={onConfirm}
@@ -147,17 +102,12 @@ export default function ConfirmModal({
                   styles.button,
                   styles.confirmButton,
                   {
-                    backgroundColor: pressed
-                      ? `${iconColor}CC`
-                      : iconColor,
+                    backgroundColor: pressed ? `${iconColor}CC` : iconColor,
                   },
                 ]}
               >
                 <Text
-                  style={[
-                    styles.buttonText,
-                    { color: "#FFFFFF", fontFamily: fontConfig.bold },
-                  ]}
+                  style={[styles.buttonText, { color: "#FFFFFF", fontFamily: fontConfig.bold }]}
                 >
                   {confirmText}
                 </Text>
@@ -169,7 +119,6 @@ export default function ConfirmModal({
     </Modal>
   );
 }
-
 
 const styles = StyleSheet.create({
   darkOverlay: {

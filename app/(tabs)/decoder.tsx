@@ -24,34 +24,35 @@ import DecodedDataDisplay from "../../src/components/DecodedDataDisplay";
 import * as DocumentPicker from "expo-document-picker";
 import * as Clipboard from "expo-clipboard";
 import { decryptData } from "../../src/utils/crypto";
-import { unpackHeader, calculateChecksum, decodeFromPixels, BLOCK_CONSTANTS } from "../../src/utils/blocks";
+import {
+  unpackHeader,
+  calculateChecksum,
+  decodeFromPixels,
+  BLOCK_CONSTANTS,
+} from "../../src/utils/blocks";
 import { loadPNGAsPixels } from "../../src/utils/image";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { generateExportText, toTitleCase } from "../../src/utils/transferParser";
-import { useAnimation } from '../../src/context/AnimationContext';
+import { useAnimation } from "../../src/context/AnimationContext";
 import { MotiView } from "moti";
-
 
 interface DecodedData {
   database: Record<string, any[]>;
   schemas: Record<string, string[]>;
 }
 
-
 export default function DecoderScreen() {
   const { colors, fontConfig } = useTheme();
-  const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
+  const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } =
+    useDb();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
 
   const { TAB_ANIMATION } = useAnimation();
   const [animationKey, setAnimationKey] = useState(0);
 
-
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
-
 
   const [imageUri, setImageUri] = useState("");
   const [password, setPassword] = useState("");
@@ -63,24 +64,20 @@ export default function DecoderScreen() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
 
-
   const [viewMode, setViewMode] = useState<"formatted" | "text">("formatted");
   const [exportText, setExportText] = useState("");
 
-
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
-    phase: 'readFile',
+    phase: "readFile",
     processedBytes: 0,
     totalBytes: 0,
     percent: 0,
   });
   const [showProgress, setShowProgress] = useState(false);
 
-
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
   const progressCallbacksRef = useRef<Set<Function>>(new Set());
-
 
   useEffect(() => {
     return () => {
@@ -90,11 +87,9 @@ export default function DecoderScreen() {
     };
   }, []);
 
-
   useFocusEffect(
     React.useCallback(() => {
       setAnimationKey((prev) => prev + 1);
-
 
       if (isAuthEnabled && !isProcessingRef.current) {
         updateActivity();
@@ -102,8 +97,10 @@ export default function DecoderScreen() {
     }, [isAuthEnabled, updateActivity])
   );
 
-
-  const showToastMessage = (message: string, type: "success" | "error" | "info" | "warning" = "success") => {
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" | "info" | "warning" = "success"
+  ) => {
     if (!isMountedRef.current) return;
     setToastMessage(message);
     setToastType(type);
@@ -115,17 +112,15 @@ export default function DecoderScreen() {
     }, 3000);
   };
 
-
   const cleanup = () => {
     isProcessingRef.current = false;
     progressCallbacksRef.current.clear();
-
 
     if (isMountedRef.current) {
       setLoading(false);
       setShowProgress(false);
       setProgressUpdate({
-        phase: 'readFile',
+        phase: "readFile",
         processedBytes: 0,
         totalBytes: 0,
         percent: 0,
@@ -133,13 +128,11 @@ export default function DecoderScreen() {
     }
   };
 
-
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
-      console.log('🛑 Cancelling ongoing decode...');
+      console.log("🛑 Cancelling ongoing decode...");
       cleanup();
     }
-
 
     setRefreshing(true);
     setImageUri("");
@@ -150,26 +143,22 @@ export default function DecoderScreen() {
     setLoading(false);
     setShowProgress(false);
     setProgressUpdate({
-      phase: 'readFile',
+      phase: "readFile",
       processedBytes: 0,
       totalBytes: 0,
       percent: 0,
     });
 
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     if (isMountedRef.current) {
       setRefreshing(false);
     }
 
-
     if (isAuthEnabled) {
       updateActivity();
     }
   };
-
 
   const handlePickImage = async () => {
     try {
@@ -178,12 +167,10 @@ export default function DecoderScreen() {
         copyToCacheDirectory: true,
       });
 
-
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setImageUri(result.assets[0].uri);
         showToastMessage("Image loaded", "info");
       }
-
 
       if (isAuthEnabled) {
         updateActivity();
@@ -193,7 +180,6 @@ export default function DecoderScreen() {
     }
   };
 
-
   const safeProgressUpdate = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
       console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
@@ -201,40 +187,33 @@ export default function DecoderScreen() {
     }
   };
 
-
   const handleDecode = async () => {
     if (!imageUri) {
       showToastMessage("Please select an image", "error");
       return;
     }
 
-
     if (!password.trim()) {
       showToastMessage("Please enter password", "error");
       return;
     }
-
 
     if (isProcessingRef.current) {
       showToastMessage("A process is already running", "error");
       return;
     }
 
-
     if (isAuthEnabled) {
       updateActivity();
     }
-
 
     isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
     progressCallbacksRef.current.add(safeProgressUpdate);
 
-
     try {
       if (!isProcessingRef.current) return;
-
 
       safeProgressUpdate({
         phase: "readFile",
@@ -243,11 +222,9 @@ export default function DecoderScreen() {
         percent: 0,
       });
 
-
       let pixels: Uint8Array;
       let width: number;
       let height: number;
-
 
       try {
         const result = await loadPNGAsPixels(imageUri, (phase, percent) => {
@@ -267,10 +244,8 @@ export default function DecoderScreen() {
         throw new Error(`Failed to read image file: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       let header;
       try {
@@ -280,14 +255,8 @@ export default function DecoderScreen() {
           }
         });
 
-
-        const headerBytes = decodeFromPixels(
-          pixels,
-          BLOCK_CONSTANTS.HEADER_SIZE,
-          progress
-        );
+        const headerBytes = decodeFromPixels(pixels, BLOCK_CONSTANTS.HEADER_SIZE, progress);
         header = unpackHeader(headerBytes);
-
 
         if (header.width !== width || header.height !== height) {
           throw new Error("Image dimensions don't match header data");
@@ -302,10 +271,8 @@ export default function DecoderScreen() {
         }
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       let encryptedData: Uint8Array;
       try {
@@ -315,7 +282,6 @@ export default function DecoderScreen() {
           }
         });
 
-
         const fullDataLength = BLOCK_CONSTANTS.HEADER_SIZE + header.dataLength;
         const fullData = decodeFromPixels(pixels, fullDataLength, progress);
         encryptedData = fullData.slice(BLOCK_CONSTANTS.HEADER_SIZE);
@@ -323,10 +289,8 @@ export default function DecoderScreen() {
         throw new Error(`Failed to extract encrypted data: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       try {
         safeProgressUpdate({
@@ -336,7 +300,6 @@ export default function DecoderScreen() {
           percent: 100,
         });
 
-
         const checksum = calculateChecksum(encryptedData);
         if (checksum !== header.checksum) {
           throw new Error("Image data is corrupted or has been tampered with");
@@ -345,10 +308,8 @@ export default function DecoderScreen() {
         throw new Error(`Data integrity check failed: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       let decryptedJson: string;
       try {
@@ -365,10 +326,8 @@ export default function DecoderScreen() {
         }
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       let parsed: DecodedData;
       try {
@@ -379,14 +338,11 @@ export default function DecoderScreen() {
           percent: 0,
         });
 
-
         parsed = JSON.parse(decryptedJson);
-
 
         if (!parsed.database || !parsed.schemas) {
           throw new Error("Invalid data format");
         }
-
 
         safeProgressUpdate({
           phase: "parseJSON",
@@ -398,15 +354,12 @@ export default function DecoderScreen() {
         throw new Error(`Failed to parse decrypted data: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       if (isMountedRef.current) {
         setDecodedData(parsed);
         setViewMode("formatted");
-
 
         safeProgressUpdate({
           phase: "done",
@@ -414,7 +367,6 @@ export default function DecoderScreen() {
           totalBytes: 100,
           percent: 100,
         });
-
 
         showToastMessage("Successfully decoded!", "success");
       }
@@ -429,13 +381,11 @@ export default function DecoderScreen() {
     } finally {
       cleanup();
 
-
       setTimeout(() => {
         if (isMountedRef.current) {
           setShowProgress(false);
         }
       }, 1000);
-
 
       if (isAuthEnabled) {
         updateActivity();
@@ -443,50 +393,40 @@ export default function DecoderScreen() {
     }
   };
 
-
   const handleImportToAccounts = async () => {
     if (!decodedData) return;
 
-
     setLoading(true);
-
 
     if (isAuthEnabled) {
       updateActivity();
     }
 
-
     try {
       let importedCount = 0;
       let updatedCount = 0;
 
-
       for (const [platformId, accounts] of Object.entries(decodedData.database)) {
-        const platformName = toTitleCase(platformId.replace(/_/g, ' '));
-
+        const platformName = toTitleCase(platformId.replace(/_/g, " "));
 
         if (!database[platformId]) {
           addPlatform(platformId, platformName);
         }
 
-
         const existingSchema = schemas[platformId] || [];
         const newSchema = decodedData.schemas[platformId] || [];
         const mergedSchema = Array.from(new Set([...existingSchema, ...newSchema]));
-
 
         if (mergedSchema.length > existingSchema.length) {
           updatePlatformSchema(platformId, mergedSchema);
         }
 
-
         for (const account of accounts) {
           const existingAccounts = database[platformId] || [];
-          const identifierField = account.email ? 'email' : account.username ? 'username' : null;
+          const identifierField = account.email ? "email" : account.username ? "username" : null;
           const duplicate = identifierField
             ? existingAccounts.find((a: any) => a[identifierField] === account[identifierField])
             : null;
-
 
           if (duplicate) {
             updateAccount(platformId, duplicate.id, account);
@@ -498,20 +438,13 @@ export default function DecoderScreen() {
         }
       }
 
-
-      showToastMessage(
-        `Import complete! ${importedCount} new, ${updatedCount} updated`,
-        "success"
-      );
-
+      showToastMessage(`Import complete! ${importedCount} new, ${updatedCount} updated`, "success");
 
       setTimeout(() => {
         if (isMountedRef.current) {
-          router.push('/(tabs)');
+          router.push("/(tabs)");
         }
       }, 1000);
-
-
     } catch (error: any) {
       console.error("Import error:", error);
       showToastMessage(`Import failed: ${error.message}`, "error");
@@ -520,47 +453,36 @@ export default function DecoderScreen() {
         setLoading(false);
       }
 
-
       if (isAuthEnabled) {
         updateActivity();
       }
     }
   };
 
-
   const handleGetFormattedText = () => {
     if (!decodedData) return;
 
-
-    const formattedText = generateExportText(
-      decodedData.database,
-      decodedData.schemas
-    );
-
+    const formattedText = generateExportText(decodedData.database, decodedData.schemas);
 
     setExportText(formattedText);
     setViewMode("text");
     showToastMessage("Switched to text export view", "info");
-
 
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-
   const handleCopyText = async () => {
     if (exportText) {
       await Clipboard.setStringAsync(exportText);
       showToastMessage("Copied to clipboard", "success");
-
 
       if (isAuthEnabled) {
         updateActivity();
       }
     }
   };
-
 
   const handleShowFormatted = () => {
     setViewMode("formatted");
@@ -568,7 +490,6 @@ export default function DecoderScreen() {
       updateActivity();
     }
   };
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
@@ -583,7 +504,10 @@ export default function DecoderScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -597,11 +521,11 @@ export default function DecoderScreen() {
             Decode from Image
           </Text>
 
-
-          <Text style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+          <Text
+            style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}
+          >
             Recover your account data from a colored encrypted image.
           </Text>
-
 
           <Pressable
             onPress={handlePickImage}
@@ -614,19 +538,27 @@ export default function DecoderScreen() {
             </Text>
           </Pressable>
 
-
           {imageUri && (
-            <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-              📄 {imageUri.split('/').pop()}
+            <Text
+              style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}
+            >
+              📄 {imageUri.split("/").pop()}
             </Text>
           )}
-
 
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
               Password
             </Text>
-            <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View
+              style={[
+                styles.inputContainer,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.cardBorder,
+                },
+              ]}
+            >
               <TextInput
                 style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
                 value={password}
@@ -655,7 +587,6 @@ export default function DecoderScreen() {
             </View>
           </View>
 
-
           {showProgress && (
             <ProgressBar
               percent={progressUpdate.percent}
@@ -666,11 +597,16 @@ export default function DecoderScreen() {
             />
           )}
 
-
           <Pressable
             onPress={handleDecode}
             disabled={loading || !imageUri}
-            style={[styles.button, { backgroundColor: colors.accent, opacity: (!imageUri || loading) ? 0.5 : 1 }]}
+            style={[
+              styles.button,
+              {
+                backgroundColor: colors.accent,
+                opacity: !imageUri || loading ? 0.5 : 1,
+              },
+            ]}
           >
             {loading && !decodedData ? (
               <ActivityIndicator color="#fff" />
@@ -684,20 +620,30 @@ export default function DecoderScreen() {
             )}
           </Pressable>
 
-
           {decodedData && !loading && (
             <View style={styles.section}>
-              <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.accent }]}>
+              <View
+                style={[
+                  styles.successCard,
+                  { backgroundColor: colors.card, borderColor: colors.accent },
+                ]}
+              >
                 <Ionicons name="checkmark-circle" size={48} color={colors.accent} />
-                <Text style={[styles.successText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                <Text
+                  style={[styles.successText, { color: colors.text, fontFamily: fontConfig.bold }]}
+                >
                   Decoding Successful!
                 </Text>
-                <Text style={[styles.successSubtext, { color: colors.muted, fontFamily: fontConfig.regular }]}>
-                  {Object.keys(decodedData.database).length} platforms • {' '}
+                <Text
+                  style={[
+                    styles.successSubtext,
+                    { color: colors.muted, fontFamily: fontConfig.regular },
+                  ]}
+                >
+                  {Object.keys(decodedData.database).length} platforms •{" "}
                   {Object.values(decodedData.database).flat().length} accounts
                 </Text>
               </View>
-
 
               <View style={styles.actionButtons}>
                 <Pressable
@@ -717,64 +663,100 @@ export default function DecoderScreen() {
                   )}
                 </Pressable>
 
-
                 {viewMode === "formatted" ? (
                   <Pressable
                     onPress={handleGetFormattedText}
-                    style={[styles.button, styles.secondaryAction, {
-                      backgroundColor: colors.card,
-                      borderColor: colors.cardBorder,
-                      borderWidth: 1,
-                    }]}
+                    style={[
+                      styles.button,
+                      styles.secondaryAction,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.cardBorder,
+                        borderWidth: 1,
+                      },
+                    ]}
                   >
                     <Ionicons name="document-text" size={20} color={colors.text} />
-                    <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        { color: colors.text, fontFamily: fontConfig.bold },
+                      ]}
+                    >
                       Get Text Export
                     </Text>
                   </Pressable>
                 ) : (
                   <Pressable
                     onPress={handleShowFormatted}
-                    style={[styles.button, styles.secondaryAction, {
-                      backgroundColor: colors.card,
-                      borderColor: colors.cardBorder,
-                      borderWidth: 1,
-                    }]}
+                    style={[
+                      styles.button,
+                      styles.secondaryAction,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.cardBorder,
+                        borderWidth: 1,
+                      },
+                    ]}
                   >
                     <Ionicons name="list" size={20} color={colors.text} />
-                    <Text style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        { color: colors.text, fontFamily: fontConfig.bold },
+                      ]}
+                    >
                       Show Formatted View
                     </Text>
                   </Pressable>
                 )}
               </View>
 
-
               {viewMode === "formatted" ? (
-                <DecodedDataDisplay 
+                <DecodedDataDisplay
                   decodedData={decodedData}
                   onCopyField={(value) => showToastMessage("Copied to clipboard", "info")}
                 />
               ) : (
                 <View style={styles.section}>
                   <View style={styles.labelRow}>
-                    <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                    <Text
+                      style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}
+                    >
                       Text Export
                     </Text>
                     <Pressable onPress={handleCopyText} style={styles.copyButton}>
                       <Ionicons name="copy-outline" size={18} color={colors.accent} />
-                      <Text style={[styles.copyText, { color: colors.accent, fontFamily: fontConfig.regular }]}>
+                      <Text
+                        style={[
+                          styles.copyText,
+                          {
+                            color: colors.accent,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
                         Copy All
                       </Text>
                     </Pressable>
                   </View>
 
-
                   <ScrollView
-                    style={[styles.outputBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+                    style={[
+                      styles.outputBox,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.cardBorder,
+                      },
+                    ]}
                     nestedScrollEnabled
                   >
-                    <Text style={[styles.outputText, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                    <Text
+                      style={[
+                        styles.outputText,
+                        { color: colors.text, fontFamily: fontConfig.regular },
+                      ]}
+                    >
                       {exportText}
                     </Text>
                   </ScrollView>
@@ -785,12 +767,10 @@ export default function DecoderScreen() {
         </ScrollView>
       </MotiView>
 
-
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -856,16 +836,16 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 16,
     borderWidth: 2,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 8,
   },
   successText: {
     fontSize: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   successSubtext: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   actionButtons: {
     gap: 12,

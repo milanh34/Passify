@@ -6,33 +6,19 @@ import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
-
 export default function Slide3SecurityTools() {
   const { colors, fontConfig } = useTheme();
-
 
   return (
     <OnboardingSlide slideIndex={2}>
       <View style={styles.container}>
-        <Text
-          style={[
-            styles.title,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
           Security & Encoding Tools
         </Text>
 
-
-        <Text
-          style={[
-            styles.subtitle,
-            { color: colors.subtext, fontFamily: fontConfig.regular },
-          ]}
-        >
+        <Text style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}>
           Advanced features for data security:
         </Text>
-
 
         <TabCard
           icon="lock-closed"
@@ -42,7 +28,6 @@ export default function Slide3SecurityTools() {
           colors={colors}
           fontConfig={fontConfig}
         />
-
 
         <TabCard
           icon="key"
@@ -56,7 +41,6 @@ export default function Slide3SecurityTools() {
     </OnboardingSlide>
   );
 }
-
 
 function TabCard({
   icon,
@@ -74,36 +58,23 @@ function TabCard({
   fontConfig: any;
 }) {
   return (
-    <View
-      style={[styles.card, { backgroundColor: `${color}10`, borderColor: color }]}
-    >
+    <View style={[styles.card, { backgroundColor: `${color}10`, borderColor: color }]}>
       <View style={styles.cardHeader}>
-        <View
-          style={[styles.iconBox, { backgroundColor: `${color}20` }]}
-        >
+        <View style={[styles.iconBox, { backgroundColor: `${color}20` }]}>
           <Ionicons name={icon as any} size={28} color={color} />
         </View>
-        <Text
-          style={[
-            styles.cardTitle,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
           {title}
         </Text>
       </View>
       <Text
-        style={[
-          styles.cardDescription,
-          { color: colors.subtext, fontFamily: fontConfig.regular },
-        ]}
+        style={[styles.cardDescription, { color: colors.subtext, fontFamily: fontConfig.regular }]}
       >
         {description}
       </Text>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

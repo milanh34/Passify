@@ -22,8 +22,8 @@ export default function TabsLayout() {
           height: 75,
           paddingBottom: 10,
         },
-        tabBarLabelStyle: { 
-          fontFamily: fontConfig.bold, 
+        tabBarLabelStyle: {
+          fontFamily: fontConfig.bold,
           fontSize: 11,
         },
         tabBarItemStyle: {
@@ -41,10 +41,10 @@ export default function TabsLayout() {
         options={{
           title: "Manage",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={(focused || isOnAccounts) ? "grid" : "grid-outline"} 
-              size={22} 
-              color={(focused || isOnAccounts) ? colors.accent : color} 
+            <Ionicons
+              name={focused || isOnAccounts ? "grid" : "grid-outline"}
+              size={22}
+              color={focused || isOnAccounts ? colors.accent : color}
             />
           ),
           tabBarLabel: ({ focused }) => (
@@ -52,7 +52,7 @@ export default function TabsLayout() {
               style={{
                 fontFamily: fontConfig.bold,
                 fontSize: 11,
-                color: (focused || isOnAccounts) ? colors.accent : colors.subtext,
+                color: focused || isOnAccounts ? colors.accent : colors.subtext,
               }}
             >
               Manage
@@ -91,11 +91,7 @@ export default function TabsLayout() {
         options={{
           title: "Decoder",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "key" : "key-outline"}
-              size={22}
-              color={color}
-            />
+            <Ionicons name={focused ? "key" : "key-outline"} size={22} color={color} />
           ),
         }}
       />

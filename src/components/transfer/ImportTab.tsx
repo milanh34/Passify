@@ -1,14 +1,7 @@
 // src/components/transfer/ImportTab.tsx
 
 import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  Pressable,
-} from "react-native";
+import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../context/ThemeContext";
 import { useDb } from "../../context/DbContext";
@@ -18,9 +11,7 @@ import { parseTransferText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 import ConflictModal from "./ConflictModal";
 
-
 type ConflictResolution = "update" | "skip";
-
 
 interface ConflictDecision {
   platformId: string;
@@ -29,20 +20,18 @@ interface ConflictDecision {
   newData: any;
 }
 
-
 export default function ImportTab() {
   const { colors, fontConfig } = useTheme();
-  const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } = useDb();
+  const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } =
+    useDb();
   const router = useRouter();
-
 
   const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isGuideExpanded, setIsGuideExpanded] = useState(false);
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
-
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
 
   const [conflictModalVisible, setConflictModalVisible] = useState(false);
   const [currentConflict, setCurrentConflict] = useState<{
@@ -51,18 +40,19 @@ export default function ImportTab() {
     newAccount: any;
     identifierField: string;
   } | null>(null);
-  
+
   const globalResolutionRef = useRef<ConflictResolution | null>(null);
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
 
-
-  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" | "info" | "warning" = "success"
+  ) => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
-
 
   const getIdentifierField = (account: any): { field: string; value: string } | null => {
     if (account.email) return { field: "email", value: account.email };
@@ -71,11 +61,9 @@ export default function ImportTab() {
     return null;
   };
 
-
   const getNameFromEmail = (account: any): string => {
     const identifier = getIdentifierField(account);
     if (!identifier) return "";
-
 
     const email = identifier.value;
     const atIndex = email.indexOf("@");
@@ -85,7 +73,6 @@ export default function ImportTab() {
     return email;
   };
 
-
   const findExistingAccount = (
     platformId: string,
     newAccount: any
@@ -93,9 +80,7 @@ export default function ImportTab() {
     const accounts = database[platformId] || [];
     const identifier = getIdentifierField(newAccount);
 
-
     if (!identifier) return null;
-
 
     const existing = accounts.find((acc: any) => {
       const existingIdentifier = getIdentifierField(acc);
@@ -106,10 +91,8 @@ export default function ImportTab() {
       );
     });
 
-
     return existing ? { account: existing, field: identifier.field } : null;
   };
-
 
   const askUserForResolution = (
     platformName: string,
@@ -125,7 +108,7 @@ export default function ImportTab() {
         identifierField,
       });
       setConflictModalVisible(true);
-      
+
       resolutionCallbackRef.current = (action: ConflictResolution) => {
         resolve(action);
         resolutionCallbackRef.current = null;
@@ -133,19 +116,17 @@ export default function ImportTab() {
     });
   };
 
-
   const handleDecision = (action: ConflictResolution, applyToAll: boolean) => {
     if (applyToAll) {
       globalResolutionRef.current = action;
     }
-    
+
     setConflictModalVisible(false);
-    
+
     if (resolutionCallbackRef.current) {
       resolutionCallbackRef.current(action);
     }
   };
-
 
   const handleImport = async () => {
     if (!inputText.trim()) {
@@ -153,15 +134,12 @@ export default function ImportTab() {
       return;
     }
 
-
     setIsProcessing(true);
     globalResolutionRef.current = null;
-
 
     try {
       const parsedData = parseTransferText(inputText);
       const platformNames = Object.keys(parsedData);
-
 
       if (platformNames.length === 0) {
         showToastMessage("Could not parse the text. Please check the format", "error");
@@ -169,64 +147,46 @@ export default function ImportTab() {
         return;
       }
 
-
       const newAccountsToAdd: Array<{ platformId: string; data: any }> = [];
       const decisionsToApply: ConflictDecision[] = [];
-
 
       for (const platformName of platformNames) {
         const accounts = parsedData[platformName];
         const titleCaseName = toTitleCase(platformName);
         const platformId = platformName.toLowerCase().replace(/\s+/g, "_");
 
-
         const platformExists = !!database[platformId];
-
 
         if (!platformExists) {
           await addPlatform(platformId);
         }
-
 
         const newFields = new Set<string>();
         accounts.forEach((acc) => {
           Object.keys(acc).forEach((field) => newFields.add(field));
         });
 
-
         const existingSchema = schemas[platformId] || [];
-        const mergedFields = new Set([
-          ...existingSchema,
-          ...Array.from(newFields),
-        ]);
-
+        const mergedFields = new Set([...existingSchema, ...Array.from(newFields)]);
 
         const finalSchema: string[] = [];
-
 
         if (mergedFields.has("name")) {
           finalSchema.push("name");
           mergedFields.delete("name");
         }
 
-
         if (mergedFields.has("password")) {
           finalSchema.push("password");
           mergedFields.delete("password");
         }
 
-
         existingSchema.forEach((field) => {
-          if (
-            field !== "name" &&
-            field !== "password" &&
-            mergedFields.has(field)
-          ) {
+          if (field !== "name" && field !== "password" && mergedFields.has(field)) {
             finalSchema.push(field);
             mergedFields.delete(field);
           }
         });
-
 
         mergedFields.forEach((field) => {
           if (field !== "id") {
@@ -234,36 +194,28 @@ export default function ImportTab() {
           }
         });
 
-
         if (!platformExists || finalSchema.length !== existingSchema.length) {
           await updatePlatformSchema(platformId, finalSchema);
         }
 
-
         for (let i = 0; i < accounts.length; i++) {
           const accountData = { ...accounts[i] };
-
 
           if (!accountData.name) {
             const emailName = getNameFromEmail(accountData);
             accountData.name = emailName || `Account ${i + 1}`;
           }
 
-
           if (!accountData.password) {
             accountData.password = "";
           }
 
-
           accountData.platform = titleCaseName;
-
 
           const existingData = findExistingAccount(platformId, accountData);
 
-
           if (existingData) {
             let action: ConflictResolution;
-
 
             if (globalResolutionRef.current) {
               action = globalResolutionRef.current;
@@ -275,7 +227,6 @@ export default function ImportTab() {
                 existingData.field
               );
             }
-
 
             decisionsToApply.push({
               platformId,
@@ -289,17 +240,14 @@ export default function ImportTab() {
         }
       }
 
-
       let totalAccounts = 0;
       let updatedAccounts = 0;
       let skippedAccounts = 0;
-
 
       for (const item of newAccountsToAdd) {
         await addAccount(item.platformId, item.data);
         totalAccounts++;
       }
-
 
       for (const decision of decisionsToApply) {
         if (decision.action === "update") {
@@ -310,18 +258,15 @@ export default function ImportTab() {
         }
       }
 
-
       const messages = [];
       if (totalAccounts > 0) messages.push(`${totalAccounts} new`);
       if (updatedAccounts > 0) messages.push(`${updatedAccounts} updated`);
       if (skippedAccounts > 0) messages.push(`${skippedAccounts} skipped`);
 
-
       showToastMessage(
         `Import complete: ${messages.join(", ")} account(s) from ${platformNames.length} platform(s)`,
         "success"
       );
-
 
       setInputText("");
     } catch (error) {
@@ -333,38 +278,24 @@ export default function ImportTab() {
     }
   };
 
-
   const handleClear = () => {
     setInputText("");
   };
 
-
   return (
     <>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Ionicons name="cloud-upload" size={36} color={colors.accent} />
-          <Text
-            style={[
-              styles.title,
-              { color: colors.text, fontFamily: fontConfig.bold },
-            ]}
-          >
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
             Import Data
           </Text>
           <Text
-            style={[
-              styles.subtitle,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
-            ]}
+            style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}
           >
             Paste your formatted text below
           </Text>
         </View>
-
 
         <Pressable
           onPress={() => setIsGuideExpanded(!isGuideExpanded)}
@@ -372,18 +303,13 @@ export default function ImportTab() {
             styles.guideCard,
             {
               backgroundColor: colors.card,
-              borderColor: isGuideExpanded
-                ? colors.accent
-                : colors.accent + "30",
+              borderColor: isGuideExpanded ? colors.accent : colors.accent + "30",
             },
           ]}
         >
           <View style={styles.guideHeader}>
             <Text
-              style={[
-                styles.guideTitle,
-                { color: colors.accent2, fontFamily: fontConfig.bold },
-              ]}
+              style={[styles.guideTitle, { color: colors.accent2, fontFamily: fontConfig.bold }]}
             >
               Format Guide
             </Text>
@@ -393,7 +319,6 @@ export default function ImportTab() {
               color={colors.accent}
             />
           </View>
-
 
           <AnimatePresence>
             {isGuideExpanded && (
@@ -410,13 +335,10 @@ export default function ImportTab() {
                       { color: colors.subtext, fontFamily: fontConfig.regular },
                     ]}
                   >
-                    • Platform name on first line{"\n"}
-                    • Two blank lines after platform name{"\n"}
-                    • Field lines: "Key - Value"{"\n"}
-                    • Two blank lines between accounts{"\n"}
-                    • Three blank lines between platforms
+                    • Platform name on first line{"\n"}• Two blank lines after platform name{"\n"}•
+                    Field lines: "Key - Value"{"\n"}• Two blank lines between accounts{"\n"}• Three
+                    blank lines between platforms
                   </Text>
-
 
                   <View
                     style={[
@@ -441,9 +363,10 @@ export default function ImportTab() {
                         { color: colors.text, fontFamily: fontConfig.regular },
                       ]}
                     >
-                      Google{"\n\n"}Email - user@gmail.com{"\n"}Password -
-                      pass123{"\n"}DOB - 01/01/2000{"\n\n"}Email - user2@gmail.com{"\n"}Password -
-                      pass456{"\n\n\n"}Instagram{"\n\n"}Username - myhandle
+                      Google{"\n\n"}Email - user@gmail.com{"\n"}Password - pass123{"\n"}DOB -
+                      01/01/2000{"\n\n"}Email - user2@gmail.com{"\n"}Password - pass456{"\n\n\n"}
+                      Instagram
+                      {"\n\n"}Username - myhandle
                       {"\n"}Password - instapass
                     </Text>
                   </View>
@@ -452,7 +375,6 @@ export default function ImportTab() {
             )}
           </AnimatePresence>
         </Pressable>
-
 
         <View
           style={[
@@ -481,7 +403,6 @@ export default function ImportTab() {
           />
         </View>
 
-
         <View style={styles.buttonRow}>
           <Pressable
             onPress={handleClear}
@@ -493,15 +414,11 @@ export default function ImportTab() {
           >
             <Ionicons name="trash-outline" size={18} color={colors.accent} />
             <Text
-              style={[
-                styles.buttonText,
-                { color: colors.accent, fontFamily: fontConfig.bold },
-              ]}
+              style={[styles.buttonText, { color: colors.accent, fontFamily: fontConfig.bold }]}
             >
               Clear
             </Text>
           </Pressable>
-
 
           <Pressable
             onPress={handleImport}
@@ -518,18 +435,12 @@ export default function ImportTab() {
               size={18}
               color="#fff"
             />
-            <Text
-              style={[
-                styles.buttonText,
-                { color: "#fff", fontFamily: fontConfig.bold },
-              ]}
-            >
+            <Text style={[styles.buttonText, { color: "#fff", fontFamily: fontConfig.bold }]}>
               {isProcessing ? "Importing..." : "Import"}
             </Text>
           </Pressable>
         </View>
       </ScrollView>
-
 
       <ConflictModal
         visible={conflictModalVisible}
@@ -537,12 +448,10 @@ export default function ImportTab() {
         onDecision={handleDecision}
       />
 
-
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </>
   );
 }
-
 
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 30 },
@@ -576,8 +485,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
   },
-  textInput: { 
-    fontSize: 13, 
+  textInput: {
+    fontSize: 13,
     lineHeight: 19,
     height: 300,
     textAlignVertical: "top",

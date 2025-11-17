@@ -1,6 +1,6 @@
 // app/(tabs)/encoder.tsx
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,71 +12,63 @@ import {
   Image,
   RefreshControl,
   Modal,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
-import { useTheme } from '../../src/context/ThemeContext';
-import { useDb } from '../../src/context/DbContext';
-import { useAuth } from '../../src/context/AuthContext';
-import { useInactivityTracker } from '../../src/utils/inactivityTracker';
-import ProgressBar from '../../src/components/ProgressBar';
-import Toast from '../../src/components/Toast';
-import { Ionicons } from '@expo/vector-icons';
-import { encryptData } from '../../src/utils/crypto';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
+import { useTheme } from "../../src/context/ThemeContext";
+import { useDb } from "../../src/context/DbContext";
+import { useAuth } from "../../src/context/AuthContext";
+import { useInactivityTracker } from "../../src/utils/inactivityTracker";
+import ProgressBar from "../../src/components/ProgressBar";
+import Toast from "../../src/components/Toast";
+import { Ionicons } from "@expo/vector-icons";
+import { encryptData } from "../../src/utils/crypto";
 import {
   calculateDimensions,
   packHeader,
   calculateChecksum,
   encodeToPixels,
   BLOCK_CONSTANTS,
-} from '../../src/utils/blocks';
-import { savePixelsAsPNG } from '../../src/utils/image';
-import { downloadImage, shareFile, isExpoGo } from '../../src/utils/fileSharing';
-import { ThrottledProgress, ProgressUpdate } from '../../src/types/progress';
-import { useAnimation } from '../../src/context/AnimationContext';
-import { MotiView } from 'moti';
-
+} from "../../src/utils/blocks";
+import { savePixelsAsPNG } from "../../src/utils/image";
+import { downloadImage, shareFile, isExpoGo } from "../../src/utils/fileSharing";
+import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
+import { useAnimation } from "../../src/context/AnimationContext";
+import { MotiView } from "moti";
 
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
 
-
   const { TAB_ANIMATION } = useAnimation();
 
-
   const [animationKey, setAnimationKey] = useState(0);
-
 
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
-
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [imageUri, setImageUri] = useState('');
-  const [filename, setFilename] = useState('');
+  const [imageUri, setImageUri] = useState("");
+  const [filename, setFilename] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
   const [downloadModalVisible, setDownloadModalVisible] = useState(false);
 
-
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
-    phase: 'stringify',
+    phase: "stringify",
     processedBytes: 0,
     totalBytes: 0,
     percent: 0,
   });
   const [showProgress, setShowProgress] = useState(false);
 
-
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
-
 
   useEffect(() => {
     return () => {
@@ -85,11 +77,9 @@ export default function EncoderScreen() {
     };
   }, []);
 
-
   useFocusEffect(
     React.useCallback(() => {
       setAnimationKey((prev) => prev + 1);
-
 
       if (isAuthEnabled && !isProcessingRef.current) {
         updateActivity();
@@ -97,8 +87,10 @@ export default function EncoderScreen() {
     }, [isAuthEnabled, updateActivity])
   );
 
-
-  const showToastMessage = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+  const showToastMessage = (
+    msg: string,
+    type: "success" | "error" | "info" | "warning" = "success"
+  ) => {
     if (!isMountedRef.current) return;
     setToastMessage(msg);
     setToastType(type);
@@ -108,14 +100,13 @@ export default function EncoderScreen() {
     }, 3000);
   };
 
-
   const cleanup = () => {
     isProcessingRef.current = false;
     if (isMountedRef.current) {
       setLoading(false);
       setShowProgress(false);
       setProgressUpdate({
-        phase: 'stringify',
+        phase: "stringify",
         processedBytes: 0,
         totalBytes: 0,
         percent: 0,
@@ -123,37 +114,32 @@ export default function EncoderScreen() {
     }
   };
 
-
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
-      console.log('🛑 Cancelling ongoing encode...');
+      console.log("🛑 Cancelling ongoing encode...");
       cleanup();
     }
 
-
     setRefreshing(true);
-    setPassword('');
-    setImageUri('');
-    setFilename('');
+    setPassword("");
+    setImageUri("");
+    setFilename("");
     setLoading(false);
     setShowProgress(false);
     setProgressUpdate({
-      phase: 'stringify',
+      phase: "stringify",
       processedBytes: 0,
       totalBytes: 0,
       percent: 0,
     });
 
-
     await new Promise((r) => setTimeout(r, 300));
     if (isMountedRef.current) setRefreshing(false);
-
 
     if (isAuthEnabled) {
       updateActivity();
     }
   };
-
 
   const onProgress = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
@@ -162,40 +148,33 @@ export default function EncoderScreen() {
     }
   };
 
-
   const handleEncode = async () => {
     if (!password.trim()) {
       showToastMessage("Please enter a password", "error");
       return;
     }
 
-
     if (isProcessingRef.current) {
       showToastMessage("Encoding already in progress", "error");
       return;
     }
 
-
     if (isAuthEnabled) {
       updateActivity();
     }
-
 
     isProcessingRef.current = true;
     setLoading(true);
     setShowProgress(true);
 
-
     try {
       let dataToEncrypt: string;
       let dataBytes: Uint8Array;
-
 
       try {
         dataToEncrypt = JSON.stringify({ database, schemas });
         const encoder = new TextEncoder();
         dataBytes = encoder.encode(dataToEncrypt);
-
 
         onProgress({
           phase: "stringify",
@@ -207,10 +186,8 @@ export default function EncoderScreen() {
         throw new Error(`Failed to serialize data: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
-
 
       let encryptedBytes: Uint8Array;
       try {
@@ -219,13 +196,10 @@ export default function EncoderScreen() {
         throw new Error(`Encryption failed: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
 
-
       const { width, height } = calculateDimensions(encryptedBytes.length);
-
 
       let fullData: Uint8Array;
       try {
@@ -240,7 +214,6 @@ export default function EncoderScreen() {
           reserved: 0,
         };
 
-
         const headerBytes = packHeader(header);
         fullData = new Uint8Array(headerBytes.length + encryptedBytes.length);
         fullData.set(headerBytes);
@@ -249,9 +222,7 @@ export default function EncoderScreen() {
         throw new Error(`Failed to create image header: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
-
 
       let pixels: Uint8Array;
       try {
@@ -262,14 +233,11 @@ export default function EncoderScreen() {
         throw new Error(`Failed to encode pixels: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
 
-
       let pngUri: string;
       const generatedFilename = `passify_backup_${Date.now()}.png`;
-
 
       try {
         pngUri = await savePixelsAsPNG(
@@ -290,9 +258,7 @@ export default function EncoderScreen() {
         throw new Error(`Failed to save image: ${error.message}`);
       }
 
-
       if (!isProcessingRef.current) return;
-
 
       if (isMountedRef.current) {
         setImageUri(pngUri);
@@ -308,10 +274,8 @@ export default function EncoderScreen() {
     } catch (error: any) {
       console.error("🔴 Encoding error:", error);
 
-
       if (isMountedRef.current && isProcessingRef.current) {
-        const errorMessage =
-          error.message || "An unexpected error occurred during encoding";
+        const errorMessage = error.message || "An unexpected error occurred during encoding";
         showToastMessage(errorMessage, "error");
       }
     } finally {
@@ -320,24 +284,21 @@ export default function EncoderScreen() {
         if (isMountedRef.current) setShowProgress(false);
       }, 1000);
 
-
       if (isAuthEnabled) {
         updateActivity();
       }
     }
   };
 
-
   const handleSharePress = async () => {
     if (!imageUri) return;
     setLoading(true);
-    await shareFile(imageUri, 'image/png');
+    await shareFile(imageUri, "image/png");
     setLoading(false);
     if (isAuthEnabled) {
       updateActivity();
     }
   };
-
 
   const handleDownloadPress = () => {
     if (!imageUri) return;
@@ -351,7 +312,6 @@ export default function EncoderScreen() {
     }
   };
 
-
   const handleDownloadConfirm = async () => {
     setDownloadModalVisible(false);
     if (!imageUri || !filename) return;
@@ -359,13 +319,12 @@ export default function EncoderScreen() {
     const success = await downloadImage(imageUri, filename);
     setLoading(false);
     if (success) {
-      showToastMessage('Download successful!', "info");
+      showToastMessage("Download successful!", "info");
     }
     if (isAuthEnabled) {
       updateActivity();
     }
   };
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
@@ -397,7 +356,6 @@ export default function EncoderScreen() {
             Create an encrypted backup image from your account data
           </Text>
 
-
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
               Encryption Password
@@ -405,7 +363,10 @@ export default function EncoderScreen() {
             <View
               style={[
                 styles.inputContainer,
-                { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.cardBorder,
+                },
               ]}
             >
               <TextInput
@@ -431,15 +392,10 @@ export default function EncoderScreen() {
                 }}
                 style={styles.eyeIcon}
               >
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color={colors.muted}
-                />
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
               </Pressable>
             </View>
           </View>
-
 
           {showProgress && (
             <ProgressBar
@@ -451,13 +407,15 @@ export default function EncoderScreen() {
             />
           )}
 
-
           <Pressable
             onPress={handleEncode}
             disabled={loading || !password.trim()}
             style={[
               styles.button,
-              { backgroundColor: colors.accent, opacity: loading || !password.trim() ? 0.5 : 1 },
+              {
+                backgroundColor: colors.accent,
+                opacity: loading || !password.trim() ? 0.5 : 1,
+              },
             ]}
           >
             {loading && !imageUri ? (
@@ -470,19 +428,25 @@ export default function EncoderScreen() {
             </Text>
           </Pressable>
 
-
           {imageUri && !loading && (
             <>
               <View style={styles.section}>
-                <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                <Text
+                  style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}
+                >
                   Generated Backup Image
                 </Text>
-                <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
-                <Text style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.imagePreview}
+                  resizeMode="contain"
+                />
+                <Text
+                  style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}
+                >
                   {filename}
                 </Text>
               </View>
-
 
               <View style={styles.buttonRow}>
                 <Pressable
@@ -495,7 +459,6 @@ export default function EncoderScreen() {
                   </Text>
                 </Pressable>
 
-
                 <Pressable
                   onPress={handleDownloadPress}
                   style={[styles.buttonHalf, { backgroundColor: colors.accent }]}
@@ -507,9 +470,13 @@ export default function EncoderScreen() {
                 </Pressable>
               </View>
 
-
               {isExpoGo() && (
-                <Text style={[styles.infoText, { color: colors.danger, fontFamily: fontConfig.regular }]}>
+                <Text
+                  style={[
+                    styles.infoText,
+                    { color: colors.danger, fontFamily: fontConfig.regular },
+                  ]}
+                >
                   ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
                 </Text>
               )}
@@ -518,30 +485,20 @@ export default function EncoderScreen() {
         </ScrollView>
       </MotiView>
 
-
       <Modal visible={downloadModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <Ionicons name="information-circle" size={48} color={colors.accent} />
-            <Text
-              style={[
-                styles.modalTitle,
-                { color: colors.text, fontFamily: fontConfig.bold },
-              ]}
-            >
+            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
               Development Mode
             </Text>
             <Text
-              style={[
-                styles.modalMessage,
-                { color: colors.text, fontFamily: fontConfig.regular },
-              ]}
+              style={[styles.modalMessage, { color: colors.text, fontFamily: fontConfig.regular }]}
             >
               Download to device storage is only available in production builds.
-              {'\n\n'}
+              {"\n\n"}
               File saved to app directory. Use the Share button to export this file.
             </Text>
-
 
             <View style={styles.modalButtons}>
               <Pressable
@@ -563,7 +520,6 @@ export default function EncoderScreen() {
                 </Text>
               </Pressable>
 
-
               <Pressable
                 onPress={() => {
                   setDownloadModalVisible(false);
@@ -574,7 +530,7 @@ export default function EncoderScreen() {
                 <Text
                   style={[
                     styles.modalButtonText,
-                    { color: '#fff', fontFamily: fontConfig.regular },
+                    { color: "#fff", fontFamily: fontConfig.regular },
                   ]}
                 >
                   Share Now
@@ -585,14 +541,10 @@ export default function EncoderScreen() {
         </View>
       </Modal>
 
-
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
-
-
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -602,8 +554,8 @@ const styles = StyleSheet.create({
   section: { marginVertical: 12 },
   label: { fontSize: 16, marginBottom: 8 },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
@@ -613,15 +565,15 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 8,
   },
-  buttonText: { color: '#fff', fontSize: 16 },
+  buttonText: { color: "#fff", fontSize: 16 },
   buttonRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginVertical: 12,
   },
@@ -629,65 +581,65 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
   },
   imagePreview: {
-    width: '100%',
+    width: "100%",
     height: 300,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     marginTop: 8,
   },
   fileInfo: {
     fontSize: 12,
     marginTop: 8,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   infoText: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 12,
     paddingHorizontal: 16,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
     borderRadius: 16,
     padding: 24,
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 20,
     marginTop: 16,
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalMessage: {
     fontSize: 15,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
     marginBottom: 24,
   },
   modalButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    width: '100%',
+    width: "100%",
   },
   modalButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalButtonText: {
     fontSize: 16,

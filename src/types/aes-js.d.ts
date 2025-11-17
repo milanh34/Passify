@@ -1,6 +1,6 @@
 // src/types/aes-js.d.ts
 
-declare module 'aes-js' {
+declare module "aes-js" {
   export namespace utils {
     namespace utf8 {
       function toBytes(text: string): number[];
@@ -12,11 +12,9 @@ declare module 'aes-js' {
     }
   }
 
-
   export class Counter {
     constructor(initialValue: number[] | Uint8Array);
   }
-
 
   export namespace ModeOfOperation {
     class ctr {
@@ -45,7 +43,6 @@ declare module 'aes-js' {
       decrypt(ciphertext: number[] | Uint8Array): Uint8Array;
     }
   }
-
 
   export function padding_pkcs7_pad(data: number[] | Uint8Array): Uint8Array;
   export function padding_pkcs7_strip(data: number[] | Uint8Array): Uint8Array;

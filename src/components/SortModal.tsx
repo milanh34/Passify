@@ -1,18 +1,10 @@
 // src/components/SortModal.tsx
 
-import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../context/ThemeContext';
-import { SORT_OPTIONS, SortOption } from '../utils/sortPlatforms';
-
+import React from "react";
+import { Modal, View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
+import { SORT_OPTIONS, SortOption } from "../utils/sortPlatforms";
 
 interface SortModalProps {
   visible: boolean;
@@ -21,29 +13,16 @@ interface SortModalProps {
   onClose: () => void;
 }
 
-
-export default function SortModal({
-  visible,
-  currentSort,
-  onSelect,
-  onClose,
-}: SortModalProps) {
+export default function SortModal({ visible, currentSort, onSelect, onClose }: SortModalProps) {
   const { colors, fontConfig } = useTheme();
-
 
   const handleSelect = (option: SortOption) => {
     onSelect(option);
     onClose();
   };
 
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <View
           style={[styles.modalContent, { backgroundColor: colors.card }]}
@@ -51,19 +30,13 @@ export default function SortModal({
         >
           <View style={styles.header}>
             <Ionicons name="funnel-outline" size={24} color={colors.accent} />
-            <Text
-              style={[
-                styles.title,
-                { color: colors.text, fontFamily: fontConfig.bold },
-              ]}
-            >
+            <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
               Sort Platforms
             </Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={colors.muted} />
             </Pressable>
           </View>
-
 
           <ScrollView style={styles.optionsList}>
             {SORT_OPTIONS.map((option) => {
@@ -75,15 +48,11 @@ export default function SortModal({
                   style={[
                     styles.optionItem,
                     {
-                      backgroundColor: isSelected
-                        ? colors.accent + '15'
-                        : 'transparent',
-                      borderColor: isSelected
-                        ? colors.accent
-                        : colors.cardBorder,
+                      backgroundColor: isSelected ? colors.accent + "15" : "transparent",
+                      borderColor: isSelected ? colors.accent : colors.cardBorder,
                     },
                   ]}
-                  android_ripple={{ color: colors.accent + '22' }}
+                  android_ripple={{ color: colors.accent + "22" }}
                 >
                   <Ionicons
                     name={option.icon as any}
@@ -95,20 +64,14 @@ export default function SortModal({
                       styles.optionText,
                       {
                         color: isSelected ? colors.accent : colors.text,
-                        fontFamily: isSelected
-                          ? fontConfig.bold
-                          : fontConfig.regular,
+                        fontFamily: isSelected ? fontConfig.bold : fontConfig.regular,
                       },
                     ]}
                   >
                     {option.label}
                   </Text>
                   {isSelected && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={20}
-                      color={colors.accent}
-                    />
+                    <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
                   )}
                 </Pressable>
               );
@@ -120,26 +83,25 @@ export default function SortModal({
   );
 }
 
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     borderRadius: 16,
-    maxHeight: '80%',
-    overflow: 'hidden',
+    maxHeight: "80%",
+    overflow: "hidden",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 20,
     paddingBottom: 16,
     gap: 12,
@@ -156,8 +118,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     padding: 16,
     borderRadius: 12,

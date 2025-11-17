@@ -14,11 +14,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSegments, useRootNavigationState } from "expo-router";
 import { isOnboardingComplete } from "../src/utils/onboardingState";
 
-
-LogBox.ignoreLogs([
-  "Non-serializable values were found in the navigation state",
-]);
-
+LogBox.ignoreLogs(["Non-serializable values were found in the navigation state"]);
 
 function OnboardingGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,19 +22,16 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
   const navigationState = useRootNavigationState();
   const [isChecking, setIsChecking] = useState(true);
 
-
   useEffect(() => {
     if (!navigationState?.key) return;
-    
+
     checkOnboarding();
   }, [navigationState?.key]);
-
 
   const checkOnboarding = async () => {
     try {
       const completed = await isOnboardingComplete();
       setIsChecking(false);
-
 
       if (!completed && segments[0] !== "onboarding") {
         setTimeout(() => {
@@ -51,20 +44,16 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
     }
   };
 
-
   if (isChecking || !navigationState?.key) {
     return null;
   }
 
-
   return <>{children}</>;
 }
-
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLocked, isInitialized } = useAuth();
   const { colors } = useTheme();
-
 
   if (!isInitialized) {
     return (
@@ -81,19 +70,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-
   if (isLocked) {
     return <BiometricUnlockScreen />;
   }
 
-
   return <>{children}</>;
 }
 
-
 function RootStack() {
   const { colors } = useTheme();
-
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
@@ -133,7 +118,6 @@ function RootStack() {
     </View>
   );
 }
-
 
 export default function RootLayout() {
   return (

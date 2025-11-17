@@ -1,11 +1,9 @@
 // src/components/ProgressBar.tsx
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import { ProgressPhase } from '../types/progress';
-
-
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Animated } from "react-native";
+import { useTheme } from "../context/ThemeContext";
+import { ProgressPhase } from "../types/progress";
 
 interface ProgressBarProps {
   percent: number;
@@ -15,31 +13,25 @@ interface ProgressBarProps {
   visible: boolean;
 }
 
-
-
 const PHASE_LABELS: Record<ProgressPhase, string> = {
-  stringify: 'Serializing data',
-  encrypt: 'Encrypting',
-  pack: 'Packing into pixels',
-  encodePNG: 'Encoding PNG image',
-  writeFile: 'Writing file',
-  readFile: 'Reading file',
-  decodePNG: 'Decoding PNG image',
-  unpack: 'Extracting pixel data',
-  decrypt: 'Decrypting',
-  parseJSON: 'Parsing data',
-  done: 'Complete ✓',
+  stringify: "Serializing data",
+  encrypt: "Encrypting",
+  pack: "Packing into pixels",
+  encodePNG: "Encoding PNG image",
+  writeFile: "Writing file",
+  readFile: "Reading file",
+  decodePNG: "Decoding PNG image",
+  unpack: "Extracting pixel data",
+  decrypt: "Decrypting",
+  parseJSON: "Parsing data",
+  done: "Complete ✓",
 };
-
-
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
-
-
 
 export default function ProgressBar({
   percent,
@@ -50,7 +42,7 @@ export default function ProgressBar({
 }: ProgressBarProps) {
   const { colors, fontConfig } = useTheme();
   const progressAnim = useRef(new Animated.Value(0)).current;
-  
+
   useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: percent,
@@ -58,17 +50,17 @@ export default function ProgressBar({
       useNativeDriver: false,
     }).start();
   }, [percent]);
-  
+
   if (!visible) return null;
-  
+
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 100],
-    outputRange: ['0%', '100%'],
+    outputRange: ["0%", "100%"],
   });
-  
-  const phaseLabel = PHASE_LABELS[phase] || 'Processing';
+
+  const phaseLabel = PHASE_LABELS[phase] || "Processing";
   const showBytes = processedBytes !== undefined && totalBytes !== undefined && totalBytes > 0;
-  
+
   return (
     <View
       style={[styles.container, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
@@ -85,16 +77,13 @@ export default function ProgressBar({
           {Math.round(percent)}%
         </Text>
       </View>
-      
+
       <View style={[styles.progressTrack, { backgroundColor: colors.bg[0] }]}>
         <Animated.View
-          style={[
-            styles.progressFill,
-            { backgroundColor: colors.accent, width: progressWidth },
-          ]}
+          style={[styles.progressFill, { backgroundColor: colors.accent, width: progressWidth }]}
         />
       </View>
-      
+
       {showBytes && (
         <Text style={[styles.bytes, { color: colors.muted, fontFamily: fontConfig.regular }]}>
           {formatBytes(processedBytes!)} / {formatBytes(totalBytes!)}
@@ -104,8 +93,6 @@ export default function ProgressBar({
   );
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
     padding: 16,
@@ -114,9 +101,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   phase: {
     fontSize: 14,
@@ -129,14 +116,14 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 8,
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 4,
   },
   bytes: {
     fontSize: 12,
-    textAlign: 'right',
+    textAlign: "right",
   },
 });

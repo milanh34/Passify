@@ -1,13 +1,7 @@
 // src/components/transfer/ExportTab.tsx
 
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useDb } from "../../context/DbContext";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +10,6 @@ import { generateExportText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 import * as Clipboard from "expo-clipboard";
 
-
 type Selection = {
   [platformId: string]: {
     selected: boolean;
@@ -24,83 +17,67 @@ type Selection = {
   };
 };
 
-
 export default function ExportTab() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
 
-
   const [selection, setSelection] = useState<Selection>({});
-  const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'warning'>('success');
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
   const [exportedText, setExportedText] = useState("");
-
 
   const platformIds = Object.keys(database);
 
-
-  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" | "info" | "warning" = "success"
+  ) => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
-
   const togglePlatform = (platformId: string) => {
     setSelection((prev) => {
       const newSelection = { ...prev };
       const isSelected = prev[platformId]?.selected || false;
 
-
       if (!newSelection[platformId]) {
         newSelection[platformId] = { selected: false, accounts: {} };
       }
 
-
       newSelection[platformId].selected = !isSelected;
-
 
       const accounts = database[platformId] || [];
       accounts.forEach((acc: any) => {
         newSelection[platformId].accounts[acc.id] = !isSelected;
       });
 
-
       return newSelection;
     });
   };
-
 
   const toggleAccount = (platformId: string, accountId: string) => {
     setSelection((prev) => {
       const newSelection = { ...prev };
 
-
       if (!newSelection[platformId]) {
         newSelection[platformId] = { selected: false, accounts: {} };
       }
 
-
       const isSelected = prev[platformId]?.accounts[accountId] || false;
       newSelection[platformId].accounts[accountId] = !isSelected;
 
-
       const accounts = database[platformId] || [];
-      const allSelected = accounts.every(
-        (acc: any) => newSelection[platformId].accounts[acc.id]
-      );
+      const allSelected = accounts.every((acc: any) => newSelection[platformId].accounts[acc.id]);
       newSelection[platformId].selected = allSelected;
-
 
       return newSelection;
     });
   };
-
 
   const toggleExpanded = (platformId: string) => {
     setExpandedPlatforms((prev) => {
@@ -113,7 +90,6 @@ export default function ExportTab() {
       return newSet;
     });
   };
-
 
   const selectAll = () => {
     const newSelection: Selection = {};
@@ -131,26 +107,21 @@ export default function ExportTab() {
     setSelection(newSelection);
   };
 
-
   const deselectAll = () => {
     setSelection({});
     setExportedText("");
   };
 
-
   const handleExport = async () => {
     const selectedData: any = {};
-
 
     for (const platformId of platformIds) {
       const platformSelection = selection[platformId];
       if (!platformSelection) continue;
 
-
       const selectedAccounts = (database[platformId] || []).filter(
         (acc: any) => platformSelection.accounts[acc.id]
       );
-
 
       if (selectedAccounts.length > 0) {
         const platformName =
@@ -159,31 +130,24 @@ export default function ExportTab() {
       }
     }
 
-
     if (Object.keys(selectedData).length === 0) {
       showToastMessage("Please select at least one account to export", "warning");
       return;
     }
 
-
     try {
       const exportText = generateExportText(selectedData, schemas);
-      
-      setExportedText(exportText);
 
+      setExportedText(exportText);
 
       showToastMessage("Data exported successfully!", "success");
 
-
       setSelection({});
-
-
     } catch (error) {
       console.error("Export error:", error);
       showToastMessage("Export failed. Please try again", "error");
     }
   };
-
 
   const handleCopyExport = async () => {
     if (exportedText) {
@@ -191,7 +155,6 @@ export default function ExportTab() {
       showToastMessage("Copied to clipboard!", "info");
     }
   };
-
 
   const countSelected = () => {
     let count = 0;
@@ -201,36 +164,22 @@ export default function ExportTab() {
     return count;
   };
 
-
   const selectedCount = countSelected();
-
 
   return (
     <>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Ionicons name="cloud-upload" size={36} color={colors.accent} />
-          <Text
-            style={[
-              styles.title,
-              { color: colors.text, fontFamily: fontConfig.bold },
-            ]}
-          >
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
             Export Data
           </Text>
           <Text
-            style={[
-              styles.subtitle,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
-            ]}
+            style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}
           >
             Select platforms and accounts to export
           </Text>
         </View>
-
 
         <View style={styles.buttonRow}>
           <Pressable
@@ -251,7 +200,6 @@ export default function ExportTab() {
             </Text>
           </Pressable>
 
-
           <Pressable
             onPress={deselectAll}
             style={[
@@ -271,15 +219,11 @@ export default function ExportTab() {
           </Pressable>
         </View>
 
-
         {platformIds.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="folder-open-outline" size={64} color={colors.muted} />
             <Text
-              style={[
-                styles.emptyText,
-                { color: colors.subtext, fontFamily: fontConfig.regular },
-              ]}
+              style={[styles.emptyText, { color: colors.subtext, fontFamily: fontConfig.regular }]}
             >
               No platforms found. Add some accounts first!
             </Text>
@@ -287,10 +231,10 @@ export default function ExportTab() {
         ) : (
           platformIds.map((platformId) => {
             const accounts = database[platformId] || [];
-            const platformName = accounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
+            const platformName =
+              accounts[0]?.platform || toTitleCase(platformId.replace(/_/g, " "));
             const isExpanded = expandedPlatforms.has(platformId);
             const isPlatformSelected = selection[platformId]?.selected || false;
-
 
             return (
               <MotiView
@@ -302,16 +246,11 @@ export default function ExportTab() {
                   styles.platformCard,
                   {
                     backgroundColor: colors.card,
-                    borderColor: isPlatformSelected
-                      ? colors.accent
-                      : colors.accent + "30",
+                    borderColor: isPlatformSelected ? colors.accent : colors.accent + "30",
                   },
                 ]}
               >
-                <Pressable
-                  onPress={() => toggleExpanded(platformId)}
-                  style={styles.platformHeader}
-                >
+                <Pressable onPress={() => toggleExpanded(platformId)} style={styles.platformHeader}>
                   <View style={styles.platformLeft}>
                     <Pressable
                       onPress={() => togglePlatform(platformId)}
@@ -319,17 +258,12 @@ export default function ExportTab() {
                         styles.checkbox,
                         {
                           borderColor: colors.accent,
-                          backgroundColor: isPlatformSelected
-                            ? colors.accent
-                            : "transparent",
+                          backgroundColor: isPlatformSelected ? colors.accent : "transparent",
                         },
                       ]}
                     >
-                      {isPlatformSelected && (
-                        <Ionicons name="checkmark" size={16} color="#fff" />
-                      )}
+                      {isPlatformSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
                     </Pressable>
-
 
                     <View>
                       <Text
@@ -343,14 +277,17 @@ export default function ExportTab() {
                       <Text
                         style={[
                           styles.platformCount,
-                          { color: colors.subtext, fontFamily: fontConfig.regular },
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
                         ]}
                       >
-                        {accounts.length} account{accounts.length !== 1 ? "s" : ""}
+                        {accounts.length} account
+                        {accounts.length !== 1 ? "s" : ""}
                       </Text>
                     </View>
                   </View>
-
 
                   <Ionicons
                     name={isExpanded ? "chevron-up" : "chevron-down"}
@@ -358,7 +295,6 @@ export default function ExportTab() {
                     color={colors.accent}
                   />
                 </Pressable>
-
 
                 <AnimatePresence>
                   {isExpanded && (
@@ -370,9 +306,7 @@ export default function ExportTab() {
                     >
                       <View style={styles.accountsList}>
                         {accounts.map((account: any, index: number) => {
-                          const isSelected =
-                            selection[platformId]?.accounts[account.id] || false;
-
+                          const isSelected = selection[platformId]?.accounts[account.id] || false;
 
                           return (
                             <MotiView
@@ -386,35 +320,24 @@ export default function ExportTab() {
                               }}
                             >
                               <Pressable
-                                onPress={() =>
-                                  toggleAccount(platformId, account.id)
-                                }
+                                onPress={() => toggleAccount(platformId, account.id)}
                                 style={styles.accountItem}
                               >
                                 <Pressable
-                                  onPress={() =>
-                                    toggleAccount(platformId, account.id)
-                                  }
+                                  onPress={() => toggleAccount(platformId, account.id)}
                                   style={[
                                     styles.checkbox,
                                     styles.accountCheckbox,
                                     {
                                       borderColor: colors.accent,
-                                      backgroundColor: isSelected
-                                        ? colors.accent
-                                        : "transparent",
+                                      backgroundColor: isSelected ? colors.accent : "transparent",
                                     },
                                   ]}
                                 >
                                   {isSelected && (
-                                    <Ionicons
-                                      name="checkmark"
-                                      size={14}
-                                      color="#fff"
-                                    />
+                                    <Ionicons name="checkmark" size={14} color="#fff" />
                                   )}
                                 </Pressable>
-
 
                                 <Text
                                   style={[
@@ -440,7 +363,6 @@ export default function ExportTab() {
           })
         )}
 
-
         {exportedText && (
           <MotiView
             from={{ opacity: 0, scale: 0.95 }}
@@ -456,40 +378,25 @@ export default function ExportTab() {
           >
             <View style={styles.previewHeader}>
               <Text
-                style={[
-                  styles.previewTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.previewTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
               >
                 Exported Data
               </Text>
               <Pressable
                 onPress={handleCopyExport}
-                style={[
-                  styles.copyButton,
-                  { backgroundColor: colors.accent },
-                ]}
+                style={[styles.copyButton, { backgroundColor: colors.accent }]}
               >
                 <Ionicons name="copy-outline" size={16} color="#fff" />
                 <Text
-                  style={[
-                    styles.copyButtonText,
-                    { color: "#fff", fontFamily: fontConfig.bold },
-                  ]}
+                  style={[styles.copyButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
                 >
                   Copy
                 </Text>
               </Pressable>
             </View>
-            <ScrollView 
-              style={styles.previewScroll}
-              nestedScrollEnabled
-            >
+            <ScrollView style={styles.previewScroll} nestedScrollEnabled>
               <Text
-                style={[
-                  styles.previewText,
-                  { color: colors.text, fontFamily: fontConfig.regular },
-                ]}
+                style={[styles.previewText, { color: colors.text, fontFamily: fontConfig.regular }]}
               >
                 {exportedText}
               </Text>
@@ -497,7 +404,6 @@ export default function ExportTab() {
           </MotiView>
         )}
       </ScrollView>
-
 
       {selectedCount > 0 && (
         <MotiView
@@ -508,30 +414,20 @@ export default function ExportTab() {
         >
           <Pressable
             onPress={handleExport}
-            style={[
-              styles.exportButton,
-              { backgroundColor: colors.accent },
-            ]}
+            style={[styles.exportButton, { backgroundColor: colors.accent }]}
           >
             <Ionicons name="share-outline" size={20} color="#fff" />
-            <Text
-              style={[
-                styles.exportButtonText,
-                { color: "#fff", fontFamily: fontConfig.bold },
-              ]}
-            >
+            <Text style={[styles.exportButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}>
               Export {selectedCount} Account{selectedCount !== 1 ? "s" : ""}
             </Text>
           </Pressable>
         </MotiView>
       )}
 
-
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </>
   );
 }
-
 
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 30 },
@@ -563,7 +459,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  platformLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  platformLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
   checkbox: {
     width: 24,
     height: 24,

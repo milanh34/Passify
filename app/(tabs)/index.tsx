@@ -31,9 +31,7 @@ import { searchPlatforms, debounce } from "../../src/utils/searchFilter";
 import { sortPlatforms, SortOption } from "../../src/utils/sortPlatforms";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 const SORT_PREFERENCE_KEY = "@PM:sort_preference";
-
 
 export default function ManageScreen() {
   const { colors, fontConfig, fontsLoaded } = useTheme();
@@ -48,16 +46,12 @@ export default function ManageScreen() {
   } = useDb();
   const insets = useSafeAreaInsets();
 
-
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
-
   const { TAB_ANIMATION } = useAnimation();
 
-
   const [animationKey, setAnimationKey] = useState(0);
-
 
   const [platformModal, setPlatformModal] = useState<{
     visible: boolean;
@@ -68,35 +62,24 @@ export default function ManageScreen() {
     item?: any;
   }>({ visible: false });
 
-
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(
-    new Set()
-  );
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
-
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-
   const [sortOption, setSortOption] = useState<SortOption>("recent");
   const [sortModalVisible, setSortModalVisible] = useState(false);
 
-
   const [refreshing, setRefreshing] = useState(false);
-
 
   useFocusEffect(
     useCallback(() => {
       setAnimationKey((prev) => prev + 1);
-
 
       const loadSortPreference = async () => {
         try {
@@ -110,17 +93,14 @@ export default function ManageScreen() {
       };
       loadSortPreference();
 
-
       setIsSelectionMode(false);
       setSelectedPlatforms(new Set());
-
 
       if (isAuthEnabled) {
         updateActivity();
       }
     }, [isAuthEnabled, updateActivity])
   );
-
 
   const debouncedSetQuery = useMemo(
     () =>
@@ -130,7 +110,6 @@ export default function ManageScreen() {
     []
   );
 
-
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     debouncedSetQuery(text);
@@ -139,7 +118,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const handleClearSearch = () => {
     setSearchQuery("");
     setDebouncedQuery("");
@@ -147,7 +125,6 @@ export default function ManageScreen() {
       updateActivity();
     }
   };
-
 
   const handleSortSelect = async (option: SortOption) => {
     setSortOption(option);
@@ -161,7 +138,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const handleRefresh = async () => {
     setRefreshing(true);
     handleClearSearch();
@@ -174,7 +150,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const showToastMessage = (
     message: string,
     type: "success" | "error" | "info" | "warning" = "success"
@@ -184,7 +159,6 @@ export default function ManageScreen() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
-
 
   const platforms = useMemo(() => {
     return Object.keys(database).map((key) => {
@@ -204,23 +178,17 @@ export default function ManageScreen() {
     });
   }, [database, platformsMetadata]);
 
-
   const searchResults = useMemo(() => {
     return searchPlatforms(platforms, database, debouncedQuery);
   }, [platforms, database, debouncedQuery]);
-
 
   const sortedPlatforms = useMemo(() => {
     const platformsToSort = searchResults.map((result) => result.platform);
     return sortPlatforms(platformsToSort, sortOption, platformsMetadata);
   }, [searchResults, sortOption, platformsMetadata]);
 
-
   const searchMatchMap = useMemo(() => {
-    const map = new Map<
-      string,
-      { matchType: "platform" | "account"; matchedAccounts?: any[] }
-    >();
+    const map = new Map<string, { matchType: "platform" | "account"; matchedAccounts?: any[] }>();
     searchResults.forEach((result) => {
       map.set(result.platform.key, {
         matchType: result.matchType,
@@ -230,11 +198,9 @@ export default function ManageScreen() {
     return map;
   }, [searchResults]);
 
-
   const savePlatform = (data: Record<string, any>) => {
     const name = data.name?.trim();
     if (!name) return;
-
 
     if (platformModal.editing) {
       updatePlatformName(platformModal.editing.key, name);
@@ -249,7 +215,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const handleLongPress = (platformKey: string) => {
     setIsSelectionMode(true);
     setSelectedPlatforms(new Set([platformKey]));
@@ -258,12 +223,10 @@ export default function ManageScreen() {
     }
   };
 
-
   const handlePlatformPress = (platformKey: string, platformName: string) => {
     if (isAuthEnabled) {
       updateActivity();
     }
-
 
     if (!isSelectionMode) {
       const matchInfo = searchMatchMap.get(platformKey);
@@ -272,7 +235,6 @@ export default function ManageScreen() {
         matchInfo?.matchType === "account" &&
         matchInfo.matchedAccounts &&
         matchInfo.matchedAccounts.length > 0;
-
 
       if (hasMatchedAccounts) {
         const matchedIds = matchInfo.matchedAccounts!.map((acc) => acc.id);
@@ -307,7 +269,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const selectAllPlatforms = () => {
     const allKeys = sortedPlatforms.map((p) => p.key);
     setSelectedPlatforms(new Set(allKeys));
@@ -316,7 +277,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const deselectAllPlatforms = () => {
     setSelectedPlatforms(new Set());
     setIsSelectionMode(false);
@@ -324,7 +284,6 @@ export default function ManageScreen() {
       updateActivity();
     }
   };
-
 
   const handleDeleteSelected = () => {
     setDeleteModal({
@@ -340,7 +299,6 @@ export default function ManageScreen() {
     }
   };
 
-
   const exitSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedPlatforms(new Set());
@@ -348,7 +306,6 @@ export default function ManageScreen() {
       updateActivity();
     }
   };
-
 
   const executeDelete = () => {
     if (deleteModal.item?.type === "multiple") {
@@ -368,7 +325,6 @@ export default function ManageScreen() {
     }
   };
 
-
   if (isDbLoading || !fontsLoaded) {
     return (
       <View
@@ -384,7 +340,6 @@ export default function ManageScreen() {
       </View>
     );
   }
-
 
   return (
     <View
@@ -427,11 +382,7 @@ export default function ManageScreen() {
                 ]}
                 android_ripple={{ color: colors.accent + "33" }}
               >
-                <Ionicons
-                  name="close-circle-outline"
-                  size={18}
-                  color={colors.accent}
-                />
+                <Ionicons name="close-circle-outline" size={18} color={colors.accent} />
                 <Text
                   style={{
                     ...styles.selectAllText,
@@ -454,11 +405,7 @@ export default function ManageScreen() {
                 ]}
                 android_ripple={{ color: colors.accent + "33" }}
               >
-                <Ionicons
-                  name="checkmark-done-outline"
-                  size={18}
-                  color={colors.accent}
-                />
+                <Ionicons name="checkmark-done-outline" size={18} color={colors.accent} />
                 <Text
                   style={{
                     ...styles.selectAllText,
@@ -482,11 +429,7 @@ export default function ManageScreen() {
               ]}
               android_ripple={{ color: colors.accent + "33" }}
             >
-              <Ionicons
-                name="color-palette-outline"
-                size={18}
-                color={colors.accent}
-              />
+              <Ionicons name="color-palette-outline" size={18} color={colors.accent} />
               <Text
                 style={{
                   ...styles.settingsBtnText,
@@ -499,7 +442,6 @@ export default function ManageScreen() {
             </Pressable>
           )}
         </View>
-
 
         {!isSelectionMode && (
           <View style={styles.searchSortRow}>
@@ -527,7 +469,6 @@ export default function ManageScreen() {
           </View>
         )}
 
-
         {!isSelectionMode && debouncedQuery.trim() && (
           <Text
             style={{
@@ -539,7 +480,6 @@ export default function ManageScreen() {
             Showing {sortedPlatforms.length} of {platforms.length} platforms
           </Text>
         )}
-
 
         <FlatList
           data={sortedPlatforms}
@@ -562,7 +502,6 @@ export default function ManageScreen() {
               matchInfo.matchedAccounts &&
               matchInfo.matchedAccounts.length > 0;
 
-
             return (
               <Pressable
                 onPress={() => handlePlatformPress(item.key, item.name)}
@@ -584,20 +523,13 @@ export default function ManageScreen() {
                   <View style={styles.selectionIndicator}>
                     <Ionicons
                       name={
-                        selectedPlatforms.has(item.key)
-                          ? "checkmark-circle"
-                          : "ellipse-outline"
+                        selectedPlatforms.has(item.key) ? "checkmark-circle" : "ellipse-outline"
                       }
                       size={24}
-                      color={
-                        selectedPlatforms.has(item.key)
-                          ? colors.accent
-                          : colors.muted
-                      }
+                      color={selectedPlatforms.has(item.key) ? colors.accent : colors.muted}
                     />
                   </View>
                 )}
-
 
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
@@ -635,18 +567,13 @@ export default function ManageScreen() {
                             fontFamily: fontConfig.regular,
                           }}
                         >
-                          <Ionicons
-                            name="search"
-                            size={12}
-                            color={colors.accent}
-                          />{" "}
+                          <Ionicons name="search" size={12} color={colors.accent} />{" "}
                           {matchInfo.matchedAccounts!.length} matching account
                           {matchInfo.matchedAccounts!.length !== 1 ? "s" : ""}
                         </Text>
                       )}
                     </View>
                   </View>
-
 
                   {!isSelectionMode && (
                     <View style={styles.actions}>
@@ -664,11 +591,7 @@ export default function ManageScreen() {
                         style={styles.iconBtn}
                         android_ripple={{ color: colors.accent + "33" }}
                       >
-                        <Ionicons
-                          name="create-outline"
-                          size={20}
-                          color={colors.text}
-                        />
+                        <Ionicons name="create-outline" size={20} color={colors.text} />
                       </Pressable>
                       <Pressable
                         onPress={(e) => {
@@ -684,11 +607,7 @@ export default function ManageScreen() {
                         style={styles.iconBtn}
                         android_ripple={{ color: colors.danger + "33" }}
                       >
-                        <Ionicons
-                          name="trash-outline"
-                          size={20}
-                          color={colors.danger}
-                        />
+                        <Ionicons name="trash-outline" size={20} color={colors.danger} />
                       </Pressable>
                     </View>
                   )}
@@ -699,11 +618,7 @@ export default function ManageScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons
-                name={
-                  debouncedQuery.trim()
-                    ? "search-outline"
-                    : "folder-open-outline"
-                }
+                name={debouncedQuery.trim() ? "search-outline" : "folder-open-outline"}
                 size={64}
                 color={colors.muted}
               />
@@ -723,22 +638,13 @@ export default function ManageScreen() {
         />
       </MotiView>
 
-
       {isSelectionMode && selectedPlatforms.size > 0 ? (
         <>
           <View style={{ ...styles.fabContainer, bottom: insets.bottom + 90 }}>
-            <FAB
-              onPress={handleDeleteSelected}
-              icon="trash"
-              color={colors.danger}
-            />
+            <FAB onPress={handleDeleteSelected} icon="trash" color={colors.danger} />
           </View>
           <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
-            <FAB
-              onPress={exitSelectionMode}
-              icon="close"
-              color={colors.cardBorder}
-            />
+            <FAB onPress={exitSelectionMode} icon="close" color={colors.cardBorder} />
           </View>
         </>
       ) : (
@@ -756,26 +662,19 @@ export default function ManageScreen() {
         </View>
       )}
 
-
       <FormModal
         visible={platformModal.visible}
         onClose={() => setPlatformModal({ visible: false })}
         onSubmit={savePlatform}
         title={platformModal.editing ? "Edit Platform" : "Add Platform"}
         fields={[{ name: "name", label: "Platform Name" }]}
-        initialData={
-          platformModal.editing ? { name: platformModal.editing.name } : {}
-        }
+        initialData={platformModal.editing ? { name: platformModal.editing.name } : {}}
       />
       <DeleteModal
         visible={deleteModal.visible}
         onClose={() => setDeleteModal({ visible: false })}
         onConfirm={executeDelete}
-        title={
-          deleteModal.item?.type === "multiple"
-            ? "Delete Platforms?"
-            : "Delete Platform?"
-        }
+        title={deleteModal.item?.type === "multiple" ? "Delete Platforms?" : "Delete Platform?"}
         description={
           deleteModal.item?.type === "multiple"
             ? `Are you sure you want to delete ${deleteModal.item.count} platform(s)? This will remove all associated accounts.`
@@ -792,7 +691,6 @@ export default function ManageScreen() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 18 },

@@ -5,12 +5,7 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  interpolate,
-} from "react-native-reanimated";
-
+import Animated, { useAnimatedStyle, useSharedValue, interpolate } from "react-native-reanimated";
 
 export default function Slide4ManageAccounts() {
   const { colors, fontConfig } = useTheme();
@@ -18,57 +13,58 @@ export default function Slide4ManageAccounts() {
   const [visibleScrollBarHeight, setVisibleScrollBarHeight] = useState(0);
   const scrollIndicator = useSharedValue(0);
 
-
   const features = [
     {
       icon: "add-circle",
       title: "Add Accounts",
-      description: "Use the + button to add individual accounts, or use the Transfer tab to import accounts in bulk from external sources.",
+      description:
+        "Use the + button to add individual accounts, or use the Transfer tab to import accounts in bulk from external sources.",
     },
     {
       icon: "create",
       title: "Edit Accounts",
-      description: "Tap any account card to expand it, then tap the edit icon to modify usernames, passwords, or platform details.",
+      description:
+        "Tap any account card to expand it, then tap the edit icon to modify usernames, passwords, or platform details.",
     },
     {
       icon: "trash",
       title: "Delete Accounts",
-      description: "Remove accounts you no longer need. Expand a card and tap the delete icon to remove it permanently.",
+      description:
+        "Remove accounts you no longer need. Expand a card and tap the delete icon to remove it permanently.",
     },
     {
       icon: "search",
       title: "Search Accounts",
-      description: "Quickly find any account using the search bar. Search by platform name, username, or any keyword.",
+      description:
+        "Quickly find any account using the search bar. Search by platform name, username, or any keyword.",
     },
     {
       icon: "funnel",
       title: "Sort & Filter",
-      description: "Organize your accounts by date added, platform name, alphabetically, or custom sorting preferences.",
+      description:
+        "Organize your accounts by date added, platform name, alphabetically, or custom sorting preferences.",
     },
     {
       icon: "shield-checkmark",
       title: "Encrypt Data",
-      description: "Encrypt your entire credential database into a secure image format using your master password.",
+      description:
+        "Encrypt your entire credential database into a secure image format using your master password.",
     },
     {
       icon: "key",
       title: "Decrypt Data",
-      description: "Decrypt your encrypted image back to access all your credentials using your master password.",
+      description:
+        "Decrypt your encrypted image back to access all your credentials using your master password.",
     },
   ];
-
 
   const scrollIndicatorSize =
     completeScrollBarHeight > visibleScrollBarHeight
       ? (visibleScrollBarHeight * visibleScrollBarHeight) / completeScrollBarHeight
       : visibleScrollBarHeight;
 
-
   const difference =
-    visibleScrollBarHeight > scrollIndicatorSize
-      ? visibleScrollBarHeight - scrollIndicatorSize
-      : 1;
-
+    visibleScrollBarHeight > scrollIndicatorSize ? visibleScrollBarHeight - scrollIndicatorSize : 1;
 
   const scrollIndicatorPosition = useAnimatedStyle(() => {
     const position = interpolate(
@@ -77,40 +73,25 @@ export default function Slide4ManageAccounts() {
       [0, difference]
     );
 
-
     return {
       transform: [{ translateY: position }],
     };
   });
 
-
   const handleScroll = (event: any) => {
     scrollIndicator.value = event.nativeEvent.contentOffset.y;
   };
 
-
   return (
     <OnboardingSlide slideIndex={3}>
       <View style={styles.container}>
-        <Text
-          style={[
-            styles.title,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
           Managing Your Accounts
         </Text>
 
-
-        <Text
-          style={[
-            styles.subtitle,
-            { color: colors.subtext, fontFamily: fontConfig.regular },
-          ]}
-        >
+        <Text style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}>
           Complete control over your credentials:
         </Text>
-
 
         <View style={styles.scrollContainer}>
           <ScrollView
@@ -143,14 +124,8 @@ export default function Slide4ManageAccounts() {
             ))}
           </ScrollView>
 
-
           <View style={styles.scrollBarContainer}>
-            <View
-              style={[
-                styles.scrollBarTrack,
-                { backgroundColor: `${colors.accent}20` },
-              ]}
-            >
+            <View style={[styles.scrollBarTrack, { backgroundColor: `${colors.accent}20` }]}>
               <Animated.View
                 style={[
                   styles.scrollBarThumb,
@@ -168,7 +143,6 @@ export default function Slide4ManageAccounts() {
     </OnboardingSlide>
   );
 }
-
 
 function FeatureItem({
   icon,
@@ -191,12 +165,7 @@ function FeatureItem({
         <Ionicons name={icon as any} size={24} color={color} />
       </View>
       <View style={styles.featureContent}>
-        <Text
-          style={[
-            styles.featureTitle,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.featureTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
           {title}
         </Text>
         <Text
@@ -211,7 +180,6 @@ function FeatureItem({
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

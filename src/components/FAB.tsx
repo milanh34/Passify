@@ -4,7 +4,6 @@ import React from "react";
 import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-
 export default function FAB({
   onPress,
   icon = "add",
@@ -26,7 +25,6 @@ export default function FAB({
     </TouchableOpacity>
   );
 }
-
 
 const styles = StyleSheet.create({
   fab: {

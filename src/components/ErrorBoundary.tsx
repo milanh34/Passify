@@ -1,21 +1,18 @@
 // src/components/ErrorBoundary.tsx
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
-
 interface State {
   hasError: boolean;
   error: Error | null;
 }
-
 
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -26,7 +23,6 @@ export default class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-
   static getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
@@ -34,12 +30,10 @@ export default class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('🔴 Error caught by boundary:', error);
-    console.error('🔴 Error info:', errorInfo);
+    console.error("🔴 Error caught by boundary:", error);
+    console.error("🔴 Error info:", errorInfo);
   }
-
 
   handleReset = () => {
     this.setState({
@@ -48,20 +42,18 @@ export default class ErrorBoundary extends Component<Props, State> {
     });
   };
 
-
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-
       return (
         <View style={styles.container}>
           <Ionicons name="alert-circle" size={64} color="#ff6b6b" />
           <Text style={styles.title}>Oops! Something went wrong</Text>
           <Text style={styles.message}>
-            {this.state.error?.message || 'An unexpected error occurred'}
+            {this.state.error?.message || "An unexpected error occurred"}
           </Text>
           <Pressable onPress={this.handleReset} style={styles.button}>
             <Ionicons name="refresh" size={20} color="#fff" />
@@ -71,46 +63,44 @@ export default class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-
     return this.props.children;
   }
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 16,
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   message: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 24,
     paddingHorizontal: 20,
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

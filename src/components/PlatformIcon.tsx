@@ -1,11 +1,19 @@
 // src/components/PlatformIcon.tsx
 
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons, FontAwesome, FontAwesome5, Ionicons, AntDesign, Entypo, Feather } from '@expo/vector-icons';
-import { getPlatformIcon, getPlatformInitials, getContrastColor } from '../utils/iconLibrary';
-import { useTheme } from '../context/ThemeContext';
-
+import React from "react";
+import { View, Text, StyleSheet, ViewStyle } from "react-native";
+import {
+  MaterialIcons,
+  MaterialCommunityIcons,
+  FontAwesome,
+  FontAwesome5,
+  Ionicons,
+  AntDesign,
+  Entypo,
+  Feather,
+} from "@expo/vector-icons";
+import { getPlatformIcon, getPlatformInitials, getContrastColor } from "../utils/iconLibrary";
+import { useTheme } from "../context/ThemeContext";
 
 interface PlatformIconProps {
   platformName: string;
@@ -15,7 +23,6 @@ interface PlatformIconProps {
   showFallback?: boolean;
   style?: ViewStyle;
 }
-
 
 export default function PlatformIcon({
   platformName,
@@ -27,17 +34,14 @@ export default function PlatformIcon({
 }: PlatformIconProps) {
   const { colors, fontConfig } = useTheme();
 
-
   const iconMapping = iconKey ? getPlatformIcon(iconKey) : null;
-  
-  const displayColor = iconColor || iconMapping?.defaultColor || colors.accent;
-  
-  const iconSize = Math.floor(size * 0.6);
 
+  const displayColor = iconColor || iconMapping?.defaultColor || colors.accent;
+
+  const iconSize = Math.floor(size * 0.6);
 
   const renderLibraryIcon = () => {
     if (!iconMapping) return null;
-
 
     const iconProps = {
       name: iconMapping.iconName as any,
@@ -45,38 +49,34 @@ export default function PlatformIcon({
       color: displayColor,
     };
 
-
     switch (iconMapping.library) {
-      case 'MaterialIcons':
+      case "MaterialIcons":
         return <MaterialIcons {...iconProps} />;
-      case 'MaterialCommunityIcons':
+      case "MaterialCommunityIcons":
         return <MaterialCommunityIcons {...iconProps} />;
-      case 'FontAwesome':
+      case "FontAwesome":
         return <FontAwesome {...iconProps} />;
-      case 'FontAwesome5':
+      case "FontAwesome5":
         return <FontAwesome5 {...iconProps} />;
-      case 'Ionicons':
+      case "Ionicons":
         return <Ionicons {...iconProps} />;
-      case 'AntDesign':
+      case "AntDesign":
         return <AntDesign {...iconProps} />;
-      case 'Entypo':
+      case "Entypo":
         return <Entypo {...iconProps} />;
-      case 'Feather':
+      case "Feather":
         return <Feather {...iconProps} />;
       default:
         return null;
     }
   };
 
-
   const renderFallback = () => {
     if (!showFallback) return null;
-
 
     const initials = getPlatformInitials(platformName);
     const textColor = getContrastColor(displayColor);
     const fontSize = Math.floor(size * 0.35);
-
 
     return (
       <View
@@ -106,9 +106,7 @@ export default function PlatformIcon({
     );
   };
 
-
   const icon = renderLibraryIcon();
-
 
   return (
     <View style={[styles.container, { width: size, height: size }, style]}>
@@ -120,7 +118,7 @@ export default function PlatformIcon({
               width: size,
               height: size,
               borderRadius: size / 2,
-              backgroundColor: displayColor + '20',
+              backgroundColor: displayColor + "20",
             },
           ]}
         >
@@ -133,21 +131,20 @@ export default function PlatformIcon({
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   fallbackContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   fallbackText: {
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

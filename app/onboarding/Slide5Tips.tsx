@@ -6,16 +6,15 @@ import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
-
 export default function Slide5Tips() {
   const { colors, fontConfig } = useTheme();
-
 
   const customizations = [
     {
       icon: "color-palette",
       title: "Themes",
-      description: "Choose from various color themes including light, dark, and custom schemes to match your style",
+      description:
+        "Choose from various color themes including light, dark, and custom schemes to match your style",
     },
     {
       icon: "text",
@@ -25,15 +24,16 @@ export default function Slide5Tips() {
     {
       icon: "swap-horizontal",
       title: "Screen Transitions",
-      description: "Customize transition effects between screens for a personalized navigation experience",
+      description:
+        "Customize transition effects between screens for a personalized navigation experience",
     },
     {
       icon: "finger-print",
       title: "Biometric & PIN",
-      description: "Enable biometric authentication or PIN lock for additional security and quick access",
+      description:
+        "Enable biometric authentication or PIN lock for additional security and quick access",
     },
   ];
-
 
   return (
     <OnboardingSlide slideIndex={4}>
@@ -43,25 +43,15 @@ export default function Slide5Tips() {
         bounces={false}
       >
         <View style={styles.container}>
-          <Text
-            style={[
-              styles.title,
-              { color: colors.text, fontFamily: fontConfig.bold },
-            ]}
-          >
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
             Personalize Your Experience
           </Text>
 
-
           <Text
-            style={[
-              styles.subtitle,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
-            ]}
+            style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}
           >
             Customize the app to suit your style and preferences:
           </Text>
-
 
           <View style={styles.customizationsContainer}>
             {customizations.map((item, index) => (
@@ -76,13 +66,7 @@ export default function Slide5Tips() {
             ))}
           </View>
 
-
-          <Text
-            style={[
-              styles.note,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
-            ]}
-          >
+          <Text style={[styles.note, { color: colors.subtext, fontFamily: fontConfig.regular }]}>
             Access all customization options from the Customize tab anytime.
           </Text>
         </View>
@@ -90,7 +74,6 @@ export default function Slide5Tips() {
     </OnboardingSlide>
   );
 }
-
 
 function CustomizationCard({
   icon,
@@ -107,21 +90,11 @@ function CustomizationCard({
 }) {
   return (
     <View style={styles.customCard}>
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: `${colors.accent}15` },
-        ]}
-      >
+      <View style={[styles.iconContainer, { backgroundColor: `${colors.accent}15` }]}>
         <Ionicons name={icon as any} size={20} color={colors.accent} />
       </View>
       <View style={styles.customContent}>
-        <Text
-          style={[
-            styles.customTitle,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.customTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
           {title}
         </Text>
         <Text
@@ -136,7 +109,6 @@ function CustomizationCard({
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   scrollContent: {

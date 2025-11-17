@@ -1,13 +1,6 @@
 // app/customize.tsx
 
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Switch,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from "react-native";
 import { useTheme } from "../src/context/ThemeContext";
 import { useAnimation } from "../src/context/AnimationContext";
 import { useAuth } from "../src/context/AuthContext";
@@ -20,37 +13,15 @@ import { MotiView } from "moti";
 import Toast from "../src/components/Toast";
 import ConfirmModal from "../src/components/ConfirmModal";
 import PINInputModal from "../src/components/PINInputModal";
-import {
-  storePIN,
-  changePIN,
-  isPINSet,
-  removePIN,
-} from "../src/utils/pinCode";
-import {
-  authenticateWithBiometric,
-  getBiometricTypeName,
-} from "../src/utils/biometricAuth";
-import {
-  InactivityTimeout,
-  getTimeoutLabel,
-} from "../src/utils/inactivityTracker";
+import { storePIN, changePIN, isPINSet, removePIN } from "../src/utils/pinCode";
+import { authenticateWithBiometric, getBiometricTypeName } from "../src/utils/biometricAuth";
+import { InactivityTimeout, getTimeoutLabel } from "../src/utils/inactivityTracker";
 import { resetOnboarding } from "../src/utils/onboardingState";
 
-
 export default function Customize() {
-  const {
-    mode,
-    font,
-    changeTheme,
-    changeFont,
-    colors,
-    THEMES,
-    FONTS,
-    fontConfig,
-    fontsLoaded,
-  } = useTheme();
-  const { currentAnimation, changeAnimation, ANIMATION_PRESETS } =
-    useAnimation();
+  const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } =
+    useTheme();
+  const { currentAnimation, changeAnimation, ANIMATION_PRESETS } = useAnimation();
   const {
     preferences,
     biometricCapability,
@@ -61,47 +32,35 @@ export default function Customize() {
     checkPINStatus,
   } = useAuth();
 
-
   const insets = useSafeAreaInsets();
   const router = useRouter();
-
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [renderKey, setRenderKey] = useState(0);
 
-
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<
-    "success" | "error" | "info" | "warning"
-  >("success");
+  const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
   const [pinModalVisible, setPinModalVisible] = useState(false);
-  const [pinModalMode, setPinModalMode] = useState<"setup" | "change">(
-    "setup"
-  );
+  const [pinModalMode, setPinModalMode] = useState<"setup" | "change">("setup");
   const [oldPIN, setOldPIN] = useState("");
   const [showOldPINModal, setShowOldPINModal] = useState(false);
-
 
   const [showReplayTutorialModal, setShowReplayTutorialModal] = useState(false);
   const [showRemovePINModal, setShowRemovePINModal] = useState(false);
 
-
   useEffect(() => {
     setRenderKey((prev) => prev + 1);
   }, [colors, fontConfig]);
-
 
   useEffect(() => {
     refreshBiometricCapability();
     checkPINStatus();
   }, []);
 
-
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
-
 
   const showToastMessage = (
     message: string,
@@ -115,55 +74,39 @@ export default function Customize() {
     }, 3000);
   };
 
-
   const handleBiometricToggle = async (value: boolean) => {
     if (value && !biometricCapability?.isAvailable) {
-      showToastMessage(
-        "Biometric authentication is not available on this device",
-        "error"
-      );
+      showToastMessage("Biometric authentication is not available on this device", "error");
       return;
     }
-
 
     if (value && !isPINConfigured) {
-      showToastMessage(
-        "Please set up a PIN first as a fallback",
-        "warning"
-      );
+      showToastMessage("Please set up a PIN first as a fallback", "warning");
       return;
     }
-
 
     await setBiometricEnabled(value);
     showToastMessage(
-      value
-        ? "Biometric authentication enabled"
-        : "Biometric authentication disabled",
+      value ? "Biometric authentication enabled" : "Biometric authentication disabled",
       "success"
     );
   };
-
 
   const handleSetupPIN = () => {
     setPinModalMode("setup");
     setPinModalVisible(true);
   };
 
-
   const handleChangePIN = () => {
     setShowOldPINModal(true);
   };
-
 
   const handleOldPINSubmit = async (pin: string): Promise<boolean> => {
     const isValid = await isPINSet();
     if (!isValid) return false;
 
-
     const { verifyPIN } = await import("../src/utils/pinCode");
     const verified = await verifyPIN(pin);
-
 
     if (verified) {
       setOldPIN(pin);
@@ -173,10 +116,8 @@ export default function Customize() {
       return true;
     }
 
-
     return false;
   };
-
 
   const handlePINSubmit = async (pin: string): Promise<boolean> => {
     try {
@@ -199,10 +140,7 @@ export default function Customize() {
           showToastMessage("PIN changed successfully", "success");
           return true;
         } else {
-          showToastMessage(
-            result.error || "Failed to change PIN",
-            "error"
-          );
+          showToastMessage(result.error || "Failed to change PIN", "error");
           return false;
         }
       }
@@ -212,11 +150,9 @@ export default function Customize() {
     }
   };
 
-
   const handleRemovePIN = () => {
     setShowRemovePINModal(true);
   };
-
 
   const confirmRemovePIN = async () => {
     const success = await removePIN();
@@ -230,25 +166,16 @@ export default function Customize() {
     setShowRemovePINModal(false);
   };
 
-
   const handleTimeoutChange = async (minutes: InactivityTimeout) => {
     await setInactivityTimeout(minutes);
-    showToastMessage(
-      `Auto-lock timeout set to ${getTimeoutLabel(minutes)}`,
-      "success"
-    );
+    showToastMessage(`Auto-lock timeout set to ${getTimeoutLabel(minutes)}`, "success");
   };
-
 
   const handleTestBiometric = async () => {
     if (!biometricCapability?.isAvailable) {
-      showToastMessage(
-        "Biometric authentication is not available",
-        "error"
-      );
+      showToastMessage("Biometric authentication is not available", "error");
       return;
     }
-
 
     const result = await authenticateWithBiometric();
     if (result.success) {
@@ -258,11 +185,9 @@ export default function Customize() {
     }
   };
 
-
   const handleReplayTutorial = () => {
     setShowReplayTutorialModal(true);
   };
-
 
   const confirmReplayTutorial = async () => {
     setShowReplayTutorialModal(false);
@@ -270,21 +195,13 @@ export default function Customize() {
     router.replace("/onboarding");
   };
 
-
   if (!fontsLoaded) {
-    return (
-      <LinearGradient
-        colors={colors.bg}
-        style={[styles.root, { paddingTop: insets.top }]}
-      />
-    );
+    return <LinearGradient colors={colors.bg} style={[styles.root, { paddingTop: insets.top }]} />;
   }
-
 
   return (
     <LinearGradient colors={colors.bg} style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
-
 
       <View
         key={`header-${renderKey}`}
@@ -303,17 +220,11 @@ export default function Customize() {
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
-        <Text
-          style={[
-            styles.headerTitle,
-            { color: colors.text, fontFamily: fontConfig.bold },
-          ]}
-        >
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
           Customize
         </Text>
         <View style={{ width: 40 }} />
       </View>
-
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -339,10 +250,7 @@ export default function Customize() {
                 style={{ marginRight: 12 }}
               />
               <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
               >
                 Color Theme
               </Text>
@@ -353,7 +261,6 @@ export default function Customize() {
               color={colors.accent}
             />
           </Pressable>
-
 
           {expandedSection === "theme" && (
             <MotiView
@@ -386,7 +293,6 @@ export default function Customize() {
           )}
         </View>
 
-
         <View style={[styles.section, { marginTop: 20 }]} key={`font-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("font")}
@@ -400,17 +306,9 @@ export default function Customize() {
             android_ripple={{ color: colors.accent + "22" }}
           >
             <View style={styles.headerLeft}>
-              <Ionicons
-                name="text"
-                size={22}
-                color={colors.accent}
-                style={{ marginRight: 12 }}
-              />
+              <Ionicons name="text" size={22} color={colors.accent} style={{ marginRight: 12 }} />
               <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
               >
                 Font Family
               </Text>
@@ -421,7 +319,6 @@ export default function Customize() {
               color={colors.accent}
             />
           </Pressable>
-
 
           {expandedSection === "font" && (
             <MotiView
@@ -447,7 +344,6 @@ export default function Customize() {
           )}
         </View>
 
-
         <View style={[styles.section, { marginTop: 20 }]} key={`animation-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("animation")}
@@ -461,30 +357,19 @@ export default function Customize() {
             android_ripple={{ color: colors.accent + "22" }}
           >
             <View style={styles.headerLeft}>
-              <Ionicons
-                name="flash"
-                size={22}
-                color={colors.accent}
-                style={{ marginRight: 12 }}
-              />
+              <Ionicons name="flash" size={22} color={colors.accent} style={{ marginRight: 12 }} />
               <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
               >
                 Animation Style
               </Text>
             </View>
             <Ionicons
-              name={
-                expandedSection === "animation" ? "chevron-up" : "chevron-down"
-              }
+              name={expandedSection === "animation" ? "chevron-up" : "chevron-down"}
               size={24}
               color={colors.accent}
             />
           </Pressable>
-
 
           {expandedSection === "animation" && (
             <MotiView
@@ -510,7 +395,6 @@ export default function Customize() {
           )}
         </View>
 
-
         <View style={[styles.section, { marginTop: 20 }]} key={`security-section-${renderKey}`}>
           <Pressable
             onPress={() => toggleSection("security")}
@@ -531,23 +415,17 @@ export default function Customize() {
                 style={{ marginRight: 12 }}
               />
               <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
               >
                 Security & Privacy
               </Text>
             </View>
             <Ionicons
-              name={
-                expandedSection === "security" ? "chevron-up" : "chevron-down"
-              }
+              name={expandedSection === "security" ? "chevron-up" : "chevron-down"}
               size={24}
               color={colors.accent}
             />
           </Pressable>
-
 
           {expandedSection === "security" && (
             <MotiView
@@ -557,18 +435,9 @@ export default function Customize() {
               transition={{ type: "timing", duration: 300 }}
               style={styles.securityContent}
             >
-              <View
-                style={[
-                  styles.securityRow,
-                  { borderBottomColor: colors.cardBorder },
-                ]}
-              >
+              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
                 <View style={styles.securityLeft}>
-                  <Ionicons
-                    name="finger-print"
-                    size={24}
-                    color={colors.accent}
-                  />
+                  <Ionicons name="finger-print" size={24} color={colors.accent} />
                   <View style={styles.securityTextContainer}>
                     <Text
                       style={[
@@ -581,13 +450,14 @@ export default function Customize() {
                     <Text
                       style={[
                         styles.securitySubtitle,
-                        { color: colors.subtext, fontFamily: fontConfig.regular },
+                        {
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        },
                       ]}
                     >
                       {biometricCapability?.isAvailable
-                        ? `Use ${getBiometricTypeName(
-                            biometricCapability.biometricType
-                          )}`
+                        ? `Use ${getBiometricTypeName(biometricCapability.biometricType)}`
                         : "Not available on this device"}
                     </Text>
                   </View>
@@ -595,19 +465,14 @@ export default function Customize() {
                 <Switch
                   value={preferences.biometricEnabled}
                   onValueChange={handleBiometricToggle}
-                  disabled={
-                    !biometricCapability?.isAvailable || !isPINConfigured
-                  }
+                  disabled={!biometricCapability?.isAvailable || !isPINConfigured}
                   trackColor={{
                     false: colors.cardBorder,
                     true: colors.accent + "60",
                   }}
-                  thumbColor={
-                    preferences.biometricEnabled ? colors.accent : colors.card
-                  }
+                  thumbColor={preferences.biometricEnabled ? colors.accent : colors.card}
                 />
               </View>
-
 
               {biometricCapability?.isAvailable && (
                 <Pressable
@@ -621,11 +486,7 @@ export default function Customize() {
                   ]}
                   android_ripple={{ color: colors.accent + "22" }}
                 >
-                  <Ionicons
-                    name="scan-outline"
-                    size={20}
-                    color={colors.accent}
-                  />
+                  <Ionicons name="scan-outline" size={20} color={colors.accent} />
                   <Text
                     style={[
                       styles.securityButtonText,
@@ -637,13 +498,7 @@ export default function Customize() {
                 </Pressable>
               )}
 
-
-              <View
-                style={[
-                  styles.securityRow,
-                  { borderBottomColor: colors.cardBorder },
-                ]}
-              >
+              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
                 <View style={styles.securityLeft}>
                   <Ionicons name="keypad" size={24} color={colors.accent} />
                   <View style={styles.securityTextContainer}>
@@ -658,7 +513,10 @@ export default function Customize() {
                     <Text
                       style={[
                         styles.securitySubtitle,
-                        { color: colors.subtext, fontFamily: fontConfig.regular },
+                        {
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        },
                       ]}
                     >
                       {isPINConfigured ? "PIN is configured" : "No PIN set"}
@@ -667,22 +525,14 @@ export default function Customize() {
                 </View>
               </View>
 
-
               <View style={styles.securityButtonGroup}>
                 {!isPINConfigured ? (
                   <Pressable
                     onPress={handleSetupPIN}
-                    style={[
-                      styles.securityButton,
-                      { backgroundColor: colors.accent, flex: 1 },
-                    ]}
+                    style={[styles.securityButton, { backgroundColor: colors.accent, flex: 1 }]}
                     android_ripple={{ color: colors.bg[0] }}
                   >
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={20}
-                      color="#fff"
-                    />
+                    <Ionicons name="add-circle-outline" size={20} color="#fff" />
                     <Text
                       style={[
                         styles.securityButtonText,
@@ -706,15 +556,14 @@ export default function Customize() {
                       ]}
                       android_ripple={{ color: colors.accent + "22" }}
                     >
-                      <Ionicons
-                        name="create-outline"
-                        size={20}
-                        color={colors.accent}
-                      />
+                      <Ionicons name="create-outline" size={20} color={colors.accent} />
                       <Text
                         style={[
                           styles.securityButtonText,
-                          { color: colors.text, fontFamily: fontConfig.regular },
+                          {
+                            color: colors.text,
+                            fontFamily: fontConfig.regular,
+                          },
                         ]}
                       >
                         Change PIN
@@ -732,15 +581,14 @@ export default function Customize() {
                       ]}
                       android_ripple={{ color: colors.danger + "22" }}
                     >
-                      <Ionicons
-                        name="trash-outline"
-                        size={20}
-                        color={colors.danger}
-                      />
+                      <Ionicons name="trash-outline" size={20} color={colors.danger} />
                       <Text
                         style={[
                           styles.securityButtonText,
-                          { color: colors.danger, fontFamily: fontConfig.regular },
+                          {
+                            color: colors.danger,
+                            fontFamily: fontConfig.regular,
+                          },
                         ]}
                       >
                         Remove PIN
@@ -750,19 +598,9 @@ export default function Customize() {
                 )}
               </View>
 
-
-              <View
-                style={[
-                  styles.securityRow,
-                  { borderBottomColor: colors.cardBorder },
-                ]}
-              >
+              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
                 <View style={styles.securityLeft}>
-                  <Ionicons
-                    name="timer-outline"
-                    size={24}
-                    color={colors.accent}
-                  />
+                  <Ionicons name="timer-outline" size={24} color={colors.accent} />
                   <View style={styles.securityTextContainer}>
                     <Text
                       style={[
@@ -775,7 +613,10 @@ export default function Customize() {
                     <Text
                       style={[
                         styles.securitySubtitle,
-                        { color: colors.subtext, fontFamily: fontConfig.regular },
+                        {
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        },
                       ]}
                     >
                       {getTimeoutLabel(preferences.inactivityTimeout)}
@@ -784,14 +625,11 @@ export default function Customize() {
                 </View>
               </View>
 
-
               <View style={styles.timeoutGrid}>
                 {([1, 5, 10, 30, 0] as const).map((minutes) => (
                   <Pressable
                     key={minutes}
-                    onPress={() =>
-                      handleTimeoutChange(minutes as InactivityTimeout)
-                    }
+                    onPress={() => handleTimeoutChange(minutes as InactivityTimeout)}
                     style={[
                       styles.timeoutButton,
                       {
@@ -799,8 +637,7 @@ export default function Customize() {
                           preferences.inactivityTimeout === minutes
                             ? colors.accent + "15"
                             : colors.card,
-                        borderWidth:
-                          preferences.inactivityTimeout === minutes ? 2 : 1,
+                        borderWidth: preferences.inactivityTimeout === minutes ? 2 : 1,
                         borderColor:
                           preferences.inactivityTimeout === minutes
                             ? colors.accent
@@ -814,9 +651,7 @@ export default function Customize() {
                         styles.timeoutButtonText,
                         {
                           color:
-                            preferences.inactivityTimeout === minutes
-                              ? colors.accent
-                              : colors.text,
+                            preferences.inactivityTimeout === minutes ? colors.accent : colors.text,
                           fontFamily: fontConfig.bold,
                         },
                       ]}
@@ -826,7 +661,6 @@ export default function Customize() {
                   </Pressable>
                 ))}
               </View>
-
 
               {preferences.lastUnlockTime > 0 && (
                 <View
@@ -838,31 +672,29 @@ export default function Customize() {
                     },
                   ]}
                 >
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={20}
-                    color={colors.subtext}
-                  />
+                  <Ionicons name="information-circle-outline" size={20} color={colors.subtext} />
                   <View style={{ flex: 1 }}>
                     <Text
                       style={[
                         styles.infoText,
-                        { color: colors.subtext, fontFamily: fontConfig.regular },
+                        {
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        },
                       ]}
                     >
-                      Last unlocked:{" "}
-                      {new Date(preferences.lastUnlockTime).toLocaleString()}
+                      Last unlocked: {new Date(preferences.lastUnlockTime).toLocaleString()}
                     </Text>
                     <Text
                       style={[
                         styles.infoText,
-                        { color: colors.subtext, fontFamily: fontConfig.regular },
+                        {
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        },
                       ]}
                     >
-                      Method:{" "}
-                      {preferences.lastUnlockMethod === "biometric"
-                        ? "Biometric"
-                        : "PIN"}
+                      Method: {preferences.lastUnlockMethod === "biometric" ? "Biometric" : "PIN"}
                     </Text>
                   </View>
                 </View>
@@ -870,7 +702,6 @@ export default function Customize() {
             </MotiView>
           )}
         </View>
-
 
         <View style={[styles.section, { marginTop: 20 }]} key={`tutorial-section-${renderKey}`}>
           <Pressable
@@ -885,30 +716,19 @@ export default function Customize() {
             android_ripple={{ color: colors.accent + "22" }}
           >
             <View style={styles.headerLeft}>
-              <Ionicons
-                name="school"
-                size={22}
-                color={colors.accent}
-                style={{ marginRight: 12 }}
-              />
+              <Ionicons name="school" size={22} color={colors.accent} style={{ marginRight: 12 }} />
               <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
               >
                 Tutorial & Help
               </Text>
             </View>
             <Ionicons
-              name={
-                expandedSection === "tutorial" ? "chevron-up" : "chevron-down"
-              }
+              name={expandedSection === "tutorial" ? "chevron-up" : "chevron-down"}
               size={24}
               color={colors.accent}
             />
           </Pressable>
-
 
           {expandedSection === "tutorial" && (
             <MotiView
@@ -918,18 +738,9 @@ export default function Customize() {
               transition={{ type: "timing", duration: 300 }}
               style={styles.securityContent}
             >
-              <View
-                style={[
-                  styles.securityRow,
-                  { borderBottomColor: colors.cardBorder },
-                ]}
-              >
+              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
                 <View style={styles.securityLeft}>
-                  <Ionicons
-                    name="play-circle"
-                    size={24}
-                    color={colors.accent}
-                  />
+                  <Ionicons name="play-circle" size={24} color={colors.accent} />
                   <View style={styles.securityTextContainer}>
                     <Text
                       style={[
@@ -942,7 +753,10 @@ export default function Customize() {
                     <Text
                       style={[
                         styles.securitySubtitle,
-                        { color: colors.subtext, fontFamily: fontConfig.regular },
+                        {
+                          color: colors.subtext,
+                          fontFamily: fontConfig.regular,
+                        },
                       ]}
                     >
                       Go through the onboarding slides again
@@ -950,7 +764,6 @@ export default function Customize() {
                   </View>
                 </View>
               </View>
-
 
               <Pressable
                 onPress={handleReplayTutorial}
@@ -977,7 +790,6 @@ export default function Customize() {
         </View>
       </ScrollView>
 
-
       <PINInputModal
         visible={showOldPINModal}
         onSubmit={handleOldPINSubmit}
@@ -987,7 +799,6 @@ export default function Customize() {
         mode="unlock"
       />
 
-
       <PINInputModal
         visible={pinModalVisible}
         onSubmit={handlePINSubmit}
@@ -996,14 +807,9 @@ export default function Customize() {
           setOldPIN("");
         }}
         title={pinModalMode === "setup" ? "Set Up PIN" : "Enter New PIN"}
-        subtitle={
-          pinModalMode === "setup"
-            ? "Create a 4-6 digit PIN"
-            : "Enter your new PIN"
-        }
+        subtitle={pinModalMode === "setup" ? "Create a 4-6 digit PIN" : "Enter your new PIN"}
         mode={pinModalMode}
       />
-
 
       <ConfirmModal
         visible={showReplayTutorialModal}
@@ -1016,7 +822,6 @@ export default function Customize() {
         onCancel={() => setShowReplayTutorialModal(false)}
       />
 
-
       <ConfirmModal
         visible={showRemovePINModal}
         title="Remove PIN?"
@@ -1028,12 +833,10 @@ export default function Customize() {
         onCancel={() => setShowRemovePINModal(false)}
       />
 
-
       <Toast visible={showToast} message={toastMessage} type={toastType} />
     </LinearGradient>
   );
 }
-
 
 function getAnimationIcon(id: string): string {
   const iconMap: Record<string, string> = {
@@ -1051,7 +854,6 @@ function getAnimationIcon(id: string): string {
   };
   return iconMap[id] || "flash-outline";
 }
-
 
 function ThemeOption({
   label,
@@ -1111,15 +913,7 @@ function ThemeOption({
   );
 }
 
-
-function FontOption({
-  label,
-  active,
-  onPress,
-  colors,
-  sampleFamily,
-  fontConfig,
-}: any) {
+function FontOption({ label, active, onPress, colors, sampleFamily, fontConfig }: any) {
   return (
     <Pressable
       onPress={onPress}
@@ -1158,15 +952,7 @@ function FontOption({
   );
 }
 
-
-function AnimationOption({
-  label,
-  icon,
-  active,
-  onPress,
-  colors,
-  fontConfig,
-}: any) {
+function AnimationOption({ label, icon, active, onPress, colors, fontConfig }: any) {
   return (
     <Pressable
       onPress={onPress}
@@ -1200,7 +986,6 @@ function AnimationOption({
     </Pressable>
   );
 }
-
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
@@ -1243,7 +1028,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     minHeight: 90,
   },
-  securityContent: { paddingTop: 12, paddingHorizontal: 4, paddingBottom: 8, gap: 12 },
+  securityContent: {
+    paddingTop: 12,
+    paddingHorizontal: 4,
+    paddingBottom: 8,
+    gap: 12,
+  },
   securityRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1252,7 +1042,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderBottomWidth: 1,
   },
-  securityLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  securityLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
   securityTextContainer: { flex: 1 },
   securityTitle: { fontSize: 16, marginBottom: 2 },
   securitySubtitle: { fontSize: 13 },

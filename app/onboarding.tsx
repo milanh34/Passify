@@ -1,13 +1,7 @@
 // app/onboarding.tsx
 
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,7 +17,6 @@ import { useTheme } from "../src/context/ThemeContext";
 import { saveOnboardingState } from "../src/utils/onboardingState";
 import ConfirmModal from "../src/components/ConfirmModal";
 
-
 import Slide1Welcome from "./onboarding/Slide1Welcome";
 import Slide2Tabs from "./onboarding/Slide2Tabs";
 import Slide3SecurityTools from "./onboarding/Slide3SecurityTools";
@@ -31,9 +24,7 @@ import Slide4ManageAccounts from "./onboarding/Slide4ManageAccounts";
 import Slide5Tips from "./onboarding/Slide5Tips";
 import Slide6GetStarted from "./onboarding/Slide6GetStarted";
 
-
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 
 const SLIDES = [
   Slide1Welcome,
@@ -44,7 +35,6 @@ const SLIDES = [
   Slide6GetStarted,
 ];
 
-
 export default function OnboardingScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showSkipModal, setShowSkipModal] = useState(false);
@@ -52,14 +42,11 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { colors, fontConfig } = useTheme();
 
-
   const translateX = useSharedValue(0);
   const isTransitioning = useSharedValue(false);
 
-
   const isFirstSlide = currentSlide === 0;
   const isLastSlide = currentSlide === SLIDES.length - 1;
-
 
   const handleNext = () => {
     if (isLastSlide) {
@@ -69,40 +56,32 @@ export default function OnboardingScreen() {
     }
   };
 
-
   const handlePrevious = () => {
     if (!isFirstSlide) {
       animateToSlide(currentSlide - 1, "prev");
     }
   };
 
-
   const animateToSlide = (newIndex: number, direction: "next" | "prev") => {
     if (isTransitioning.value) return;
-    
+
     isTransitioning.value = true;
     const targetX = direction === "next" ? -SCREEN_WIDTH : SCREEN_WIDTH;
-    
-    translateX.value = withTiming(
-      targetX,
-      { duration: 300 },
-      (finished) => {
-        if (finished) {
-          runOnJS(setCurrentSlide)(newIndex);
-          translateX.value = direction === "next" ? SCREEN_WIDTH : -SCREEN_WIDTH;
-          translateX.value = withTiming(0, { duration: 300 }, () => {
-            isTransitioning.value = false;
-          });
-        }
-      }
-    );
-  };
 
+    translateX.value = withTiming(targetX, { duration: 300 }, (finished) => {
+      if (finished) {
+        runOnJS(setCurrentSlide)(newIndex);
+        translateX.value = direction === "next" ? SCREEN_WIDTH : -SCREEN_WIDTH;
+        translateX.value = withTiming(0, { duration: 300 }, () => {
+          isTransitioning.value = false;
+        });
+      }
+    });
+  };
 
   const handleSkipAll = () => {
     setShowSkipModal(true);
   };
-
 
   const handleComplete = async () => {
     try {
@@ -118,7 +97,6 @@ export default function OnboardingScreen() {
     }
   };
 
-
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-10, 10])
@@ -130,28 +108,17 @@ export default function OnboardingScreen() {
     .onEnd((event) => {
       if (isTransitioning.value) return;
 
-
       const SWIPE_THRESHOLD = 50;
       const velocity = event.velocityX;
 
-
-      if (
-        (event.translationX < -SWIPE_THRESHOLD || velocity < -500) &&
-        !isLastSlide
-      ) {
+      if ((event.translationX < -SWIPE_THRESHOLD || velocity < -500) && !isLastSlide) {
         runOnJS(handleNext)();
-      }
-      else if (
-        (event.translationX > SWIPE_THRESHOLD || velocity > 500) &&
-        !isFirstSlide
-      ) {
+      } else if ((event.translationX > SWIPE_THRESHOLD || velocity > 500) && !isFirstSlide) {
         runOnJS(handlePrevious)();
-      }
-      else {
+      } else {
         translateX.value = withTiming(0, { duration: 200 });
       }
     });
-
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -159,9 +126,7 @@ export default function OnboardingScreen() {
     };
   });
 
-
   const CurrentSlideComponent = SLIDES[currentSlide];
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
@@ -176,14 +141,10 @@ export default function OnboardingScreen() {
         ]}
       >
         <Text
-          style={[
-            styles.slideCounter,
-            { color: colors.subtext, fontFamily: fontConfig.regular },
-          ]}
+          style={[styles.slideCounter, { color: colors.subtext, fontFamily: fontConfig.regular }]}
         >
           {currentSlide + 1} / {SLIDES.length}
         </Text>
-
 
         {!isLastSlide && (
           <Pressable
@@ -191,17 +152,12 @@ export default function OnboardingScreen() {
             style={({ pressed }) => [
               styles.skipButton,
               {
-                backgroundColor: pressed
-                  ? `${colors.accent}20`
-                  : `${colors.accent}10`,
+                backgroundColor: pressed ? `${colors.accent}20` : `${colors.accent}10`,
               },
             ]}
           >
             <Text
-              style={[
-                styles.skipButtonText,
-                { color: colors.accent, fontFamily: fontConfig.bold },
-              ]}
+              style={[styles.skipButtonText, { color: colors.accent, fontFamily: fontConfig.bold }]}
             >
               Skip
             </Text>
@@ -209,13 +165,11 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.slideContainer, animatedStyle]}>
           <CurrentSlideComponent key={`slide-${currentSlide}`} />
         </Animated.View>
       </GestureDetector>
-
 
       <View style={[styles.dotContainer, { backgroundColor: colors.bg[0] }]}>
         {SLIDES.map((_, index) => (
@@ -223,10 +177,7 @@ export default function OnboardingScreen() {
             key={index}
             animate={{
               width: index === currentSlide ? 24 : 8,
-              backgroundColor:
-                index === currentSlide
-                  ? colors.accent
-                  : `${colors.accent}30`,
+              backgroundColor: index === currentSlide ? colors.accent : `${colors.accent}30`,
             }}
             transition={{
               type: "timing",
@@ -236,7 +187,6 @@ export default function OnboardingScreen() {
           />
         ))}
       </View>
-
 
       <View
         style={[
@@ -254,18 +204,14 @@ export default function OnboardingScreen() {
               backgroundColor: isFirstSlide
                 ? colors.card
                 : pressed
-                ? `${colors.accent}20`
-                : colors.card,
+                  ? `${colors.accent}20`
+                  : colors.card,
               borderColor: colors.cardBorder,
               opacity: isFirstSlide ? 0.5 : 1,
             },
           ]}
         >
-          <Ionicons
-            name="arrow-back"
-            size={20}
-            color={isFirstSlide ? colors.muted : colors.text}
-          />
+          <Ionicons name="arrow-back" size={20} color={isFirstSlide ? colors.muted : colors.text} />
           <Text
             style={[
               styles.navButtonText,
@@ -280,36 +226,25 @@ export default function OnboardingScreen() {
           </Text>
         </Pressable>
 
-
         <Pressable
           onPress={handleNext}
           style={({ pressed }) => [
             styles.navButton,
             styles.nextButton,
             {
-              backgroundColor: pressed
-                ? `${colors.accent}CC`
-                : colors.accent,
+              backgroundColor: pressed ? `${colors.accent}CC` : colors.accent,
             },
           ]}
         >
           <Text
-            style={[
-              styles.navButtonText,
-              { color: "#FFFFFF", fontFamily: fontConfig.bold },
-            ]}
+            style={[styles.navButtonText, { color: "#FFFFFF", fontFamily: fontConfig.bold }]}
             numberOfLines={1}
           >
             {isLastSlide ? "Let's Go!" : "Next"}
           </Text>
-          <Ionicons
-            name={isLastSlide ? "rocket" : "arrow-forward"}
-            size={20}
-            color="#FFFFFF"
-          />
+          <Ionicons name={isLastSlide ? "rocket" : "arrow-forward"} size={20} color="#FFFFFF" />
         </Pressable>
       </View>
-
 
       <ConfirmModal
         visible={showSkipModal}
@@ -327,7 +262,6 @@ export default function OnboardingScreen() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

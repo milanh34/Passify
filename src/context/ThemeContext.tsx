@@ -4,19 +4,53 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme } from "react-native";
 
-
 import { useFonts as useInter, Inter_400Regular, Inter_700Bold } from "@expo-google-fonts/inter";
-import { useFonts as useLexend, Lexend_400Regular, Lexend_700Bold } from "@expo-google-fonts/lexend";
-import { useFonts as useOpenSans, OpenSans_400Regular, OpenSans_700Bold } from "@expo-google-fonts/open-sans";
-import { useFonts as useRobotoMono, RobotoMono_400Regular, RobotoMono_700Bold } from "@expo-google-fonts/roboto-mono";
-import { useFonts as usePlayfair, PlayfairDisplay_400Regular, PlayfairDisplay_700Bold } from "@expo-google-fonts/playfair-display";
-import { useFonts as usePoppins, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import {
+  useFonts as useLexend,
+  Lexend_400Regular,
+  Lexend_700Bold,
+} from "@expo-google-fonts/lexend";
+import {
+  useFonts as useOpenSans,
+  OpenSans_400Regular,
+  OpenSans_700Bold,
+} from "@expo-google-fonts/open-sans";
+import {
+  useFonts as useRobotoMono,
+  RobotoMono_400Regular,
+  RobotoMono_700Bold,
+} from "@expo-google-fonts/roboto-mono";
+import {
+  useFonts as usePlayfair,
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_700Bold,
+} from "@expo-google-fonts/playfair-display";
+import {
+  useFonts as usePoppins,
+  Poppins_400Regular,
+  Poppins_700Bold,
+} from "@expo-google-fonts/poppins";
 import { useFonts as useLato, Lato_400Regular, Lato_700Bold } from "@expo-google-fonts/lato";
-import { useFonts as useSourceSerif, SourceSerif4_400Regular, SourceSerif4_700Bold } from "@expo-google-fonts/source-serif-4";
-import { useFonts as useIbmPlex, IBMPlexSans_400Regular, IBMPlexSans_700Bold } from "@expo-google-fonts/ibm-plex-sans";
-import { useFonts as useJetBrains, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from "@expo-google-fonts/jetbrains-mono";
-import { useFonts as useSpaceGrotesk, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
-
+import {
+  useFonts as useSourceSerif,
+  SourceSerif4_400Regular,
+  SourceSerif4_700Bold,
+} from "@expo-google-fonts/source-serif-4";
+import {
+  useFonts as useIbmPlex,
+  IBMPlexSans_400Regular,
+  IBMPlexSans_700Bold,
+} from "@expo-google-fonts/ibm-plex-sans";
+import {
+  useFonts as useJetBrains,
+  JetBrainsMono_400Regular,
+  JetBrainsMono_700Bold,
+} from "@expo-google-fonts/jetbrains-mono";
+import {
+  useFonts as useSpaceGrotesk,
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_700Bold,
+} from "@expo-google-fonts/space-grotesk";
 
 type ThemeColors = {
   name: string;
@@ -37,7 +71,6 @@ type ThemeColors = {
   modalBorder: string;
   isDark: boolean;
 };
-
 
 const THEMES: Record<string, ThemeColors> = {
   light: {
@@ -248,7 +281,8 @@ const THEMES: Record<string, ThemeColors> = {
     modalBackdrop: "rgba(0,0,0,0.78)",
     modalBorder: "#0b3943",
     isDark: true,
-  }, pastel: {
+  },
+  pastel: {
     name: "Pastel",
     bg: ["#fef3f8", "#fce8f3"],
     card: "#ffffff",
@@ -345,30 +379,62 @@ const THEMES: Record<string, ThemeColors> = {
   },
 };
 
-
 const FONTS = {
   Inter: { label: "Inter", regular: "Inter_400Regular", bold: "Inter_700Bold" },
-  Lexend: { label: "Lexend", regular: "Lexend_400Regular", bold: "Lexend_700Bold" },
-  OpenSans: { label: "Open Sans", regular: "OpenSans_400Regular", bold: "OpenSans_700Bold" },
-  RobotoMono: { label: "Roboto Mono", regular: "RobotoMono_400Regular", bold: "RobotoMono_700Bold" },
-  Playfair: { label: "Playfair Display", regular: "PlayfairDisplay_400Regular", bold: "PlayfairDisplay_700Bold" },
-  Poppins: { label: "Poppins", regular: "Poppins_400Regular", bold: "Poppins_700Bold" },
+  Lexend: {
+    label: "Lexend",
+    regular: "Lexend_400Regular",
+    bold: "Lexend_700Bold",
+  },
+  OpenSans: {
+    label: "Open Sans",
+    regular: "OpenSans_400Regular",
+    bold: "OpenSans_700Bold",
+  },
+  RobotoMono: {
+    label: "Roboto Mono",
+    regular: "RobotoMono_400Regular",
+    bold: "RobotoMono_700Bold",
+  },
+  Playfair: {
+    label: "Playfair Display",
+    regular: "PlayfairDisplay_400Regular",
+    bold: "PlayfairDisplay_700Bold",
+  },
+  Poppins: {
+    label: "Poppins",
+    regular: "Poppins_400Regular",
+    bold: "Poppins_700Bold",
+  },
   Lato: { label: "Lato", regular: "Lato_400Regular", bold: "Lato_700Bold" },
-  SourceSerif4: { label: "Source Serif 4", regular: "SourceSerif4_400Regular", bold: "SourceSerif4_700Bold" },
-  IBMPlexSans: { label: "IBM Plex Sans", regular: "IBMPlexSans_400Regular", bold: "IBMPlexSans_700Bold" },
-  JetBrainsMono: { label: "JetBrains Mono", regular: "JetBrainsMono_400Regular", bold: "JetBrainsMono_700Bold" },
-  SpaceGrotesk: { label: "Space Grotesk", regular: "SpaceGrotesk_400Regular", bold: "SpaceGrotesk_700Bold" },
+  SourceSerif4: {
+    label: "Source Serif 4",
+    regular: "SourceSerif4_400Regular",
+    bold: "SourceSerif4_700Bold",
+  },
+  IBMPlexSans: {
+    label: "IBM Plex Sans",
+    regular: "IBMPlexSans_400Regular",
+    bold: "IBMPlexSans_700Bold",
+  },
+  JetBrainsMono: {
+    label: "JetBrains Mono",
+    regular: "JetBrainsMono_400Regular",
+    bold: "JetBrainsMono_700Bold",
+  },
+  SpaceGrotesk: {
+    label: "Space Grotesk",
+    regular: "SpaceGrotesk_400Regular",
+    bold: "SpaceGrotesk_700Bold",
+  },
 };
-
 
 type ThemeName = keyof typeof THEMES;
 type FontName = keyof typeof FONTS;
 type ThemeMode = ThemeName | "system";
 
-
 const THEME_KEY = "@PM:themeV3";
 const FONT_KEY = "@PM:fontV3";
-
 
 type ThemeContextValue = {
   mode: ThemeMode;
@@ -382,28 +448,42 @@ type ThemeContextValue = {
   fontsLoaded: boolean;
 };
 
-
 const ThemeCtx = createContext<ThemeContextValue | null>(null);
-
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const system = useColorScheme();
   const [mode, setMode] = useState<ThemeMode>("system");
   const [font, setFont] = useState<FontName>("Inter");
 
-
   const [interLoaded] = useInter({ Inter_400Regular, Inter_700Bold });
   const [lexendLoaded] = useLexend({ Lexend_400Regular, Lexend_700Bold });
   const [openLoaded] = useOpenSans({ OpenSans_400Regular, OpenSans_700Bold });
-  const [monoLoaded] = useRobotoMono({ RobotoMono_400Regular, RobotoMono_700Bold });
-  const [playfairLoaded] = usePlayfair({ PlayfairDisplay_400Regular, PlayfairDisplay_700Bold });
+  const [monoLoaded] = useRobotoMono({
+    RobotoMono_400Regular,
+    RobotoMono_700Bold,
+  });
+  const [playfairLoaded] = usePlayfair({
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_700Bold,
+  });
   const [poppinsLoaded] = usePoppins({ Poppins_400Regular, Poppins_700Bold });
   const [latoLoaded] = useLato({ Lato_400Regular, Lato_700Bold });
-  const [serifLoaded] = useSourceSerif({ SourceSerif4_400Regular, SourceSerif4_700Bold });
-  const [plexLoaded] = useIbmPlex({ IBMPlexSans_400Regular, IBMPlexSans_700Bold });
-  const [jetLoaded] = useJetBrains({ JetBrainsMono_400Regular, JetBrainsMono_700Bold });
-  const [spaceLoaded] = useSpaceGrotesk({ SpaceGrotesk_400Regular, SpaceGrotesk_700Bold });
-
+  const [serifLoaded] = useSourceSerif({
+    SourceSerif4_400Regular,
+    SourceSerif4_700Bold,
+  });
+  const [plexLoaded] = useIbmPlex({
+    IBMPlexSans_400Regular,
+    IBMPlexSans_700Bold,
+  });
+  const [jetLoaded] = useJetBrains({
+    JetBrainsMono_400Regular,
+    JetBrainsMono_700Bold,
+  });
+  const [spaceLoaded] = useSpaceGrotesk({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_700Bold,
+  });
 
   const fontsLoaded =
     interLoaded &&
@@ -418,7 +498,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     jetLoaded &&
     spaceLoaded;
 
-
   useEffect(() => {
     Promise.all([AsyncStorage.getItem(THEME_KEY), AsyncStorage.getItem(FONT_KEY)]).then(
       ([t, f]) => {
@@ -428,24 +507,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
-
   const changeTheme = (newMode: ThemeMode) => {
     setMode(newMode);
     AsyncStorage.setItem(THEME_KEY, newMode);
   };
-
 
   const changeFont = (newFont: FontName) => {
     setFont(newFont);
     AsyncStorage.setItem(FONT_KEY, newFont);
   };
 
-
   const currentThemeName: ThemeName =
     mode === "system" ? ((system || "light") as ThemeName) : (mode as ThemeName);
   const colors = THEMES[currentThemeName];
   const fontConfig = FONTS[font];
-
 
   const value = useMemo(
     () => ({
@@ -462,10 +537,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [mode, font, colors, fontConfig, fontsLoaded]
   );
 
-
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
-
 
 export function useTheme() {
   const ctx = useContext(ThemeCtx);

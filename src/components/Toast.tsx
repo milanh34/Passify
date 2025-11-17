@@ -6,7 +6,6 @@ import { MotiView, AnimatePresence } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 
-
 interface ToastProps {
   message: string;
   visible: boolean;
@@ -14,15 +13,8 @@ interface ToastProps {
   duration?: number;
 }
 
-
-export default function Toast({
-  message,
-  visible,
-  type = "success",
-  duration = 3000,
-}: ToastProps) {
+export default function Toast({ message, visible, type = "success", duration = 3000 }: ToastProps) {
   const { colors, fontConfig } = useTheme();
-
 
   const getToastStyle = () => {
     switch (type) {
@@ -54,9 +46,7 @@ export default function Toast({
     }
   };
 
-
   const { bgColor, borderColor, icon } = getToastStyle();
-
 
   return (
     <AnimatePresence>
@@ -91,10 +81,7 @@ export default function Toast({
           ]}
         >
           <Ionicons name={icon} size={24} color="#fff" style={styles.icon} />
-          <Text
-            style={[styles.toastText, { fontFamily: fontConfig.regular }]}
-            numberOfLines={3}
-          >
+          <Text style={[styles.toastText, { fontFamily: fontConfig.regular }]} numberOfLines={3}>
             {message}
           </Text>
         </MotiView>
@@ -102,7 +89,6 @@ export default function Toast({
     </AnimatePresence>
   );
 }
-
 
 const styles = StyleSheet.create({
   toast: {

@@ -1,6 +1,6 @@
 # 🔐 Passify
 
-> **Version 1.0** - ***Your secure password manager***
+> **Version 1.0** - **_Your secure password manager_**
 
 #### A feature-rich password and account manager built with React Native and Expo. More updates coming soon! 🚀
 
@@ -86,12 +86,14 @@ npx expo run:ios
 ## 🎨 Key Features Explained
 
 ### Animation System
+
 - 11 preset animations (Slide, Fade, Scale, Bounce, etc.)
 - Centralized animation management
 - Persistent preferences
 - Smooth transitions across all screens
 
 ### Account Cards
+
 - Multiple cards can be expanded simultaneously
 - Smooth animations with border highlights
 - Password masking with toggle
@@ -99,6 +101,7 @@ npx expo run:ios
 - Custom fields per platform
 
 ### Customization
+
 - System-aware theme switching
 - Multiple color schemes
 - Font family selection
@@ -117,6 +120,7 @@ npx expo run:ios
 ## 🔒 Security Note
 
 This is a local-only password manager. All data is stored on-device using AsyncStorage. For production use, consider implementing:
+
 - Secure storage (Expo SecureStore)
 
 ## 🗺️ Roadmap

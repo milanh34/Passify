@@ -8,7 +8,6 @@ import { useTheme } from "../context/ThemeContext";
 import { toTitleCase } from "../utils/transferParser";
 import * as Clipboard from "expo-clipboard";
 
-
 interface DecodedDataDisplayProps {
   decodedData: {
     database: Record<string, any[]>;
@@ -17,14 +16,12 @@ interface DecodedDataDisplayProps {
   onCopyField?: (value: string) => void;
 }
 
-
 export default function DecodedDataDisplay({ decodedData, onCopyField }: DecodedDataDisplayProps) {
   const { colors, fontConfig } = useTheme();
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
-
 
   const togglePlatform = (platformId: string) => {
     setExpandedPlatforms((prev) => {
@@ -38,7 +35,6 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     });
   };
 
-
   const toggleAccount = (accountId: string) => {
     setExpandedAccounts((prev) => {
       const newSet = new Set(prev);
@@ -51,14 +47,12 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     });
   };
 
-
   const copyToClipboard = async (text: string, key: string) => {
     await Clipboard.setStringAsync(text || "");
     setCopiedField(key);
     setTimeout(() => setCopiedField((k) => (k === key ? null : k)), 1000);
     if (onCopyField) onCopyField(text);
   };
-
 
   const togglePasswordVisibility = (fieldKey: string) => {
     setVisiblePasswords((prev) => ({
@@ -67,32 +61,23 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     }));
   };
 
-
   const sortedPlatforms = Object.keys(decodedData.database).sort((a, b) => {
     const nameA = toTitleCase(a.replace(/_/g, " "));
     const nameB = toTitleCase(b.replace(/_/g, " "));
     return nameA.localeCompare(nameB);
   });
 
-
   return (
     <View style={styles.container}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          { color: colors.text, fontFamily: fontConfig.bold },
-        ]}
-      >
+      <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
         Decoded Accounts
       </Text>
-
 
       {sortedPlatforms.map((platformId, platformIndex) => {
         const accounts = decodedData.database[platformId];
         const platformName = toTitleCase(platformId.replace(/_/g, " "));
         const isPlatformExpanded = expandedPlatforms.has(platformId);
         const schema = decodedData.schemas[platformId] || ["name", "password"];
-
 
         return (
           <MotiView
@@ -118,11 +103,7 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
             >
               <View style={styles.platformHeader}>
                 <View style={styles.platformLeft}>
-                  <Ionicons
-                    name="folder"
-                    size={24}
-                    color={colors.accent}
-                  />
+                  <Ionicons name="folder" size={24} color={colors.accent} />
                   <View style={styles.platformInfo}>
                     <Text
                       style={[
@@ -138,7 +119,8 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                         { color: colors.muted, fontFamily: fontConfig.regular },
                       ]}
                     >
-                      {accounts.length} account{accounts.length !== 1 ? "s" : ""}
+                      {accounts.length} account
+                      {accounts.length !== 1 ? "s" : ""}
                     </Text>
                   </View>
                 </View>
@@ -149,13 +131,11 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                 />
               </View>
 
-
               {isPlatformExpanded && (
                 <View style={styles.accountsList}>
                   {accounts.map((account: any, accountIndex: number) => {
                     const accountKey = `${platformId}-${account.id || accountIndex}`;
                     const isAccountExpanded = expandedAccounts.has(accountKey);
-
 
                     return (
                       <View
@@ -176,7 +156,10 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                           <Text
                             style={[
                               styles.accountName,
-                              { color: colors.text, fontFamily: fontConfig.bold },
+                              {
+                                color: colors.text,
+                                fontFamily: fontConfig.bold,
+                              },
                             ]}
                           >
                             {account.name || `Account ${accountIndex + 1}`}
@@ -188,7 +171,6 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                           />
                         </Pressable>
 
-
                         {isAccountExpanded && (
                           <View style={styles.accountDetails}>
                             {schema
@@ -197,11 +179,9 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                 const value = account[fieldName];
                                 if (!value) return null;
 
-
                                 const fieldKey = `${accountKey}-${fieldName}`;
                                 const isPassword = fieldName.toLowerCase().includes("password");
                                 const isVisible = visiblePasswords[fieldKey];
-
 
                                 return (
                                   <View key={fieldName} style={styles.fieldRow}>
@@ -209,7 +189,10 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                       <Text
                                         style={[
                                           styles.fieldLabel,
-                                          { color: colors.muted, fontFamily: fontConfig.regular },
+                                          {
+                                            color: colors.muted,
+                                            fontFamily: fontConfig.regular,
+                                          },
                                         ]}
                                       >
                                         {fieldName.charAt(0).toUpperCase() +
@@ -218,7 +201,10 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                       <Text
                                         style={[
                                           styles.fieldValue,
-                                          { color: colors.text, fontFamily: fontConfig.regular },
+                                          {
+                                            color: colors.text,
+                                            fontFamily: fontConfig.regular,
+                                          },
                                         ]}
                                         selectable
                                       >
@@ -230,7 +216,9 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                         <Pressable
                                           onPress={() => togglePasswordVisibility(fieldKey)}
                                           style={styles.iconButton}
-                                          android_ripple={{ color: colors.accent + "33" }}
+                                          android_ripple={{
+                                            color: colors.accent + "33",
+                                          }}
                                         >
                                           <Ionicons
                                             name={isVisible ? "eye-off" : "eye"}
@@ -242,10 +230,14 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                       <Pressable
                                         onPress={() => copyToClipboard(value, fieldKey)}
                                         style={styles.iconButton}
-                                        android_ripple={{ color: colors.accent + "33" }}
+                                        android_ripple={{
+                                          color: colors.accent + "33",
+                                        }}
                                       >
                                         <Ionicons
-                                          name={copiedField === fieldKey ? "checkmark" : "copy-outline"}
+                                          name={
+                                            copiedField === fieldKey ? "checkmark" : "copy-outline"
+                                          }
                                           size={18}
                                           color={
                                             copiedField === fieldKey ? colors.accent : colors.muted
@@ -270,7 +262,6 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

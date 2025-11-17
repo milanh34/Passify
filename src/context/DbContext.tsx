@@ -1,27 +1,23 @@
 // src/context/DbContext.tsx
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 const initialData = require("../../assets/database.json");
-
 
 const DB_KEY = "@PM:database";
 const SCHEMA_KEY = "@PM:schemas";
 const METADATA_KEY = "@PM:platform_metadata";
 
-
-type Account = { id: string; name: string; createdAt?: number; updatedAt?: number; [k: string]: any };
+type Account = {
+  id: string;
+  name: string;
+  createdAt?: number;
+  updatedAt?: number;
+  [k: string]: any;
+};
 type Database = Record<string, Account[]>;
 type Schemas = Record<string, string[]>;
-
 
 type PlatformMetadata = {
   createdAt: number;
@@ -31,16 +27,13 @@ type PlatformMetadata = {
 };
 type PlatformsMetadata = Record<string, PlatformMetadata>;
 
-
 const defaultSchemas: Schemas = {
   google: ["name", "email", "password"],
   instagram: ["name", "username", "password"],
   github: ["name", "username", "email", "password"],
 };
 
-
 const Ctx = createContext<any>(null);
-
 
 export function DbProvider({ children }: { children: React.ReactNode }) {
   const [database, setDatabase] = useState<Database>({});
@@ -48,29 +41,20 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
   const [platformsMetadata, setPlatformsMetadata] = useState<PlatformsMetadata>({});
   const [isDbLoading, setIsDbLoading] = useState(true);
 
-
   useEffect(() => {
     const load = async () => {
       try {
-        const [db, sc, meta] = await AsyncStorage.multiGet([
-          DB_KEY,
-          SCHEMA_KEY,
-          METADATA_KEY,
-        ]);
+        const [db, sc, meta] = await AsyncStorage.multiGet([DB_KEY, SCHEMA_KEY, METADATA_KEY]);
         const dbVal = db[1] ? JSON.parse(db[1]) : initialData;
         const scVal = sc[1] ? JSON.parse(sc[1]) : defaultSchemas;
         const metaVal = meta[1] ? JSON.parse(meta[1]) : {};
 
-
         const now = Date.now();
-
 
         const { findBestMatchingIcon } = require("../utils/iconLibrary");
 
-
         const updatedMeta = { ...metaVal };
         let needsMetaUpdate = false;
-
 
         Object.keys(dbVal).forEach((key) => {
           if (!updatedMeta[key]) {
@@ -80,9 +64,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
                 ? accounts[0].platform
                 : key.replace(/_/g, " ");
 
-
             const iconMatch = findBestMatchingIcon(platformName);
-
 
             updatedMeta[key] = {
               createdAt: now - Math.floor(Math.random() * 86400000 * 30),
@@ -98,9 +80,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
                 ? accounts[0].platform
                 : key.replace(/_/g, " ");
 
-
             const iconMatch = findBestMatchingIcon(platformName);
-
 
             updatedMeta[key] = {
               ...updatedMeta[key],
@@ -111,7 +91,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
           }
         });
 
-
         let needsDbUpdate = false;
         Object.keys(dbVal).forEach((platformKey) => {
           const accounts = dbVal[platformKey] || [];
@@ -120,22 +99,16 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
               needsDbUpdate = true;
               return {
                 ...acc,
-                createdAt:
-                  acc.createdAt ||
-                  now - Math.floor(Math.random() * 86400000 * 60),
-                updatedAt:
-                  acc.updatedAt ||
-                  now - Math.floor(Math.random() * 86400000 * 30),
+                createdAt: acc.createdAt || now - Math.floor(Math.random() * 86400000 * 60),
+                updatedAt: acc.updatedAt || now - Math.floor(Math.random() * 86400000 * 30),
               };
             }
             return acc;
           });
         });
 
-
         setDatabase(dbVal);
         setSchemas(scVal);
-
 
         if (needsMetaUpdate) {
           setPlatformsMetadata(updatedMeta);
@@ -144,19 +117,14 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
           setPlatformsMetadata(metaVal);
         }
 
-
-        if (!db[1] || needsDbUpdate)
-          await AsyncStorage.setItem(DB_KEY, JSON.stringify(dbVal));
-        if (!sc[1])
-          await AsyncStorage.setItem(SCHEMA_KEY, JSON.stringify(scVal));
+        if (!db[1] || needsDbUpdate) await AsyncStorage.setItem(DB_KEY, JSON.stringify(dbVal));
+        if (!sc[1]) await AsyncStorage.setItem(SCHEMA_KEY, JSON.stringify(scVal));
       } finally {
         setIsDbLoading(false);
       }
     };
     load();
   }, []);
-
-
 
   useEffect(() => {
     if (!isDbLoading) {
@@ -168,18 +136,14 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }
   }, [database, schemas, platformsMetadata, isDbLoading]);
 
-
   const addPlatform = (key: string, displayName?: string) => {
     const platformKey = key.toLowerCase().replace(/\s+/g, "_");
     if (database[platformKey]) return;
 
-
     const now = Date.now();
-
 
     const { findBestMatchingIcon } = require("../utils/iconLibrary");
     const iconMatch = findBestMatchingIcon(displayName || key);
-
 
     setDatabase((db) => ({ ...db, [platformKey]: [] }));
     setSchemas((s) => ({ ...s, [platformKey]: ["name", "password"] }));
@@ -194,18 +158,14 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
-
   const updatePlatformName = (oldKey: string, newName: string) => {
     const newKey = newName.toLowerCase().replace(/\s+/g, "_");
     if (database[newKey] || oldKey === newKey) return;
 
-
     const now = Date.now();
-
 
     const { findBestMatchingIcon } = require("../utils/iconLibrary");
     const iconMatch = findBestMatchingIcon(newName);
-
 
     setDatabase((db) => {
       const { [oldKey]: accounts, ...rest } = db;
@@ -216,12 +176,10 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       return { ...rest, [newKey]: updatedAccounts };
     });
 
-
     setSchemas((s) => {
       const { [oldKey]: sch, ...rest } = s;
       return { ...rest, [newKey]: sch || ["name", "password"] };
     });
-
 
     setPlatformsMetadata((m) => {
       const { [oldKey]: oldMeta, ...rest } = m;
@@ -237,9 +195,11 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-
-
-  const updatePlatformIcon = (platformKey: string, icon: string | null, iconColor?: string | null) => {
+  const updatePlatformIcon = (
+    platformKey: string,
+    icon: string | null,
+    iconColor?: string | null
+  ) => {
     const now = Date.now();
     setPlatformsMetadata((m) => ({
       ...m,
@@ -251,7 +211,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       },
     }));
   };
-
 
   const deletePlatform = (key: string) => {
     setDatabase((db) => {
@@ -268,20 +227,20 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-
-  const addAccount = (platformKey: string, payload: Omit<Account, "id" | "createdAt" | "updatedAt">) => {
+  const addAccount = (
+    platformKey: string,
+    payload: Omit<Account, "id" | "createdAt" | "updatedAt">
+  ) => {
     const now = Date.now();
     const id = `acc_${now}_${Math.floor(Math.random() * 9999)}`;
-
 
     setDatabase((db) => ({
       ...db,
       [platformKey]: [
-        ...(db[platformKey] || []), 
-        { id, ...payload, createdAt: now, updatedAt: now }
+        ...(db[platformKey] || []),
+        { id, ...payload, createdAt: now, updatedAt: now },
       ],
     }));
-
 
     setPlatformsMetadata((m) => ({
       ...m,
@@ -291,7 +250,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       },
     }));
   };
-
 
   const updateAccount = (platformKey: string, id: string, updated: Account) => {
     const now = Date.now();
@@ -302,7 +260,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       ),
     }));
 
-
     setPlatformsMetadata((m) => ({
       ...m,
       [platformKey]: {
@@ -311,7 +268,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       },
     }));
   };
-
 
   const deleteAccount = (platformKey: string, id: string) => {
     const now = Date.now();
@@ -320,7 +276,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       [platformKey]: (db[platformKey] || []).filter((a) => a.id !== id),
     }));
 
-
     setPlatformsMetadata((m) => ({
       ...m,
       [platformKey]: {
@@ -330,18 +285,13 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
-
   const updatePlatformSchema = (platformKey: string, newSchema: string[]) => {
-    const filtered = Array.from(
-      new Set(newSchema.map((s) => s.trim()).filter(Boolean))
-    );
-
+    const filtered = Array.from(new Set(newSchema.map((s) => s.trim()).filter(Boolean)));
 
     setSchemas((s) => ({
       ...s,
       [platformKey]: filtered.length ? filtered : ["name", "password"],
     }));
-
 
     setDatabase((db) => {
       const updated = (db[platformKey] || []).map((acc) => {
@@ -359,7 +309,6 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       return { ...db, [platformKey]: updated };
     });
   };
-
 
   const value = useMemo(
     () => ({
@@ -379,10 +328,8 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     [database, schemas, platformsMetadata, isDbLoading]
   );
 
-
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
-
 
 export function useDb() {
   const ctx = useContext(Ctx);

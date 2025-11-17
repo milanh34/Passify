@@ -1,19 +1,11 @@
 // src/components/PINInputModal.tsx
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-  Vibration,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { MotiView, AnimatePresence } from 'moti';
-import { useTheme } from '../context/ThemeContext';
-import { validatePINFormat } from '../utils/pinCode';
-
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Pressable, Modal, Vibration } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { MotiView, AnimatePresence } from "moti";
+import { useTheme } from "../context/ThemeContext";
+import { validatePINFormat } from "../utils/pinCode";
 
 interface PINInputModalProps {
   visible: boolean;
@@ -21,67 +13,59 @@ interface PINInputModalProps {
   onCancel?: () => void;
   title?: string;
   subtitle?: string;
-  mode?: 'unlock' | 'setup' | 'change';
+  mode?: "unlock" | "setup" | "change";
   minLength?: number;
   maxLength?: number;
 }
-
 
 export default function PINInputModal({
   visible,
   onSubmit,
   onCancel,
-  title = 'Enter PIN',
-  subtitle = 'Enter your PIN code',
-  mode = 'unlock',
+  title = "Enter PIN",
+  subtitle = "Enter your PIN code",
+  mode = "unlock",
   minLength = 4,
   maxLength = 6,
 }: PINInputModalProps) {
   const { colors, fontConfig } = useTheme();
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
 
   useEffect(() => {
     if (visible) {
-      setPin('');
-      setError('');
+      setPin("");
+      setError("");
       setIsLoading(false);
     }
   }, [visible]);
-
 
   const handleNumberPress = (num: number) => {
     if (pin.length < maxLength) {
       const newPin = pin + num.toString();
       setPin(newPin);
-      setError('');
+      setError("");
 
-
-      if (mode === 'unlock' && newPin.length === maxLength) {
+      if (mode === "unlock" && newPin.length === maxLength) {
         handleSubmit(newPin);
       }
     }
   };
 
-
   const handleBackspace = () => {
     setPin(pin.slice(0, -1));
-    setError('');
+    setError("");
   };
-
 
   const handleSubmit = async (pinToSubmit?: string) => {
     const currentPin = pinToSubmit || pin;
-
 
     if (currentPin.length < minLength) {
       setError(`PIN must be at least ${minLength} digits`);
       Vibration.vibrate(100);
       return;
     }
-
 
     const validation = validatePINFormat(currentPin);
     if (!validation.isValid) {
@@ -90,40 +74,35 @@ export default function PINInputModal({
       return;
     }
 
-
     setIsLoading(true);
     const success = await onSubmit(currentPin);
     setIsLoading(false);
 
-
     if (!success) {
-      setError('Incorrect PIN. Try again.');
-      setPin('');
+      setError("Incorrect PIN. Try again.");
+      setPin("");
       Vibration.vibrate([100, 50, 100]);
     }
   };
-
 
   const renderKeypad = () => {
     const keys = [
       [1, 2, 3],
       [4, 5, 6],
       [7, 8, 9],
-      ['', 0, 'backspace'],
+      ["", 0, "backspace"],
     ];
-
 
     return (
       <View style={styles.keypad}>
         {keys.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.keypadRow}>
             {row.map((key, keyIndex) => {
-              if (key === '') {
+              if (key === "") {
                 return <View key={keyIndex} style={styles.keyButton} />;
               }
 
-
-              if (key === 'backspace') {
+              if (key === "backspace") {
                 return (
                   <Pressable
                     key={keyIndex}
@@ -136,7 +115,7 @@ export default function PINInputModal({
                         borderColor: colors.cardBorder,
                       },
                     ]}
-                    android_ripple={{ color: colors.accent + '22' }}
+                    android_ripple={{ color: colors.accent + "22" }}
                   >
                     <Ionicons
                       name="backspace-outline"
@@ -146,7 +125,6 @@ export default function PINInputModal({
                   </Pressable>
                 );
               }
-
 
               return (
                 <Pressable
@@ -160,7 +138,7 @@ export default function PINInputModal({
                       borderColor: colors.cardBorder,
                     },
                   ]}
-                  android_ripple={{ color: colors.accent + '22' }}
+                  android_ripple={{ color: colors.accent + "22" }}
                 >
                   <Text
                     style={[
@@ -182,7 +160,6 @@ export default function PINInputModal({
     );
   };
 
-
   const renderPINDots = () => {
     return (
       <View style={styles.pinDotsContainer}>
@@ -194,12 +171,11 @@ export default function PINInputModal({
               scale: index < pin.length ? 1 : 0.8,
               opacity: index < pin.length ? 1 : 0.3,
             }}
-            transition={{ type: 'timing', duration: 150 }}
+            transition={{ type: "timing", duration: 150 }}
             style={[
               styles.pinDot,
               {
-                backgroundColor:
-                  index < pin.length ? colors.accent : colors.cardBorder,
+                backgroundColor: index < pin.length ? colors.accent : colors.cardBorder,
               },
             ]}
           />
@@ -208,24 +184,13 @@ export default function PINInputModal({
     );
   };
 
-
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onCancel}
-    >
-      <View
-        style={[
-          styles.modalOverlay,
-          { backgroundColor: colors.bg[0] + 'CC' },
-        ]}
-      >
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onCancel}>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.bg[0] + "CC" }]}>
         <MotiView
           from={{ opacity: 0, translateY: 50 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 300 }}
+          transition={{ type: "timing", duration: 300 }}
           style={[
             styles.modalContent,
             {
@@ -235,11 +200,7 @@ export default function PINInputModal({
           ]}
         >
           <View style={styles.header}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={48}
-              color={colors.accent}
-            />
+            <Ionicons name="lock-closed-outline" size={48} color={colors.accent} />
             <Text
               style={[
                 styles.title,
@@ -264,9 +225,7 @@ export default function PINInputModal({
             </Text>
           </View>
 
-
           {renderPINDots()}
-
 
           <AnimatePresence>
             {error && (
@@ -274,7 +233,7 @@ export default function PINInputModal({
                 from={{ opacity: 0, translateY: -10 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 exit={{ opacity: 0, translateY: -10 }}
-                transition={{ type: 'timing', duration: 200 }}
+                transition={{ type: "timing", duration: 200 }}
                 style={styles.errorContainer}
               >
                 <Ionicons name="alert-circle" size={16} color={colors.danger} />
@@ -293,20 +252,17 @@ export default function PINInputModal({
             )}
           </AnimatePresence>
 
-
           {renderKeypad()}
 
-
           <View style={styles.actions}>
-            {mode !== 'unlock' && (
+            {mode !== "unlock" && (
               <Pressable
                 onPress={() => handleSubmit()}
                 disabled={pin.length < minLength || isLoading}
                 style={[
                   styles.submitButton,
                   {
-                    backgroundColor:
-                      pin.length >= minLength ? colors.accent : colors.cardBorder,
+                    backgroundColor: pin.length >= minLength ? colors.accent : colors.cardBorder,
                   },
                 ]}
                 android_ripple={{ color: colors.bg[0] }}
@@ -315,23 +271,18 @@ export default function PINInputModal({
                   style={[
                     styles.submitButtonText,
                     {
-                      color: pin.length >= minLength ? '#fff' : colors.subtext,
+                      color: pin.length >= minLength ? "#fff" : colors.subtext,
                       fontFamily: fontConfig.bold,
                     },
                   ]}
                 >
-                  {isLoading ? 'Verifying...' : 'Submit'}
+                  {isLoading ? "Verifying..." : "Submit"}
                 </Text>
               </Pressable>
             )}
 
-
             {onCancel && (
-              <Pressable
-                onPress={onCancel}
-                disabled={isLoading}
-                style={styles.cancelButton}
-              >
+              <Pressable onPress={onCancel} disabled={isLoading} style={styles.cancelButton}>
                 <Text
                   style={[
                     styles.cancelButtonText,
@@ -352,16 +303,15 @@ export default function PINInputModal({
   );
 }
 
-
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     borderRadius: 24,
     borderWidth: 1,
@@ -369,20 +319,20 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 8,
   },
   title: {
     fontSize: 24,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   pinDotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 16,
     paddingVertical: 16,
   },
@@ -392,9 +342,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingVertical: 8,
   },
@@ -405,17 +355,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   keypadRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   keyButton: {
     width: 72,
     height: 72,
     borderRadius: 36,
     borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   keyText: {
     fontSize: 28,
@@ -426,14 +376,14 @@ const styles = StyleSheet.create({
   submitButton: {
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   submitButtonText: {
     fontSize: 16,
   },
   cancelButton: {
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
     fontSize: 14,

@@ -1,17 +1,10 @@
 // src/components/SearchSuggestionsDropdown.tsx
 
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
-import { useTheme } from '../context/ThemeContext';
-
+import React from "react";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti";
+import { useTheme } from "../context/ThemeContext";
 
 interface SearchSuggestionsDropdownProps {
   visible: boolean;
@@ -19,7 +12,6 @@ interface SearchSuggestionsDropdownProps {
   onSelectSuggestion: (query: string) => void;
   maxHeight?: number;
 }
-
 
 export default function SearchSuggestionsDropdown({
   visible,
@@ -29,16 +21,14 @@ export default function SearchSuggestionsDropdown({
 }: SearchSuggestionsDropdownProps) {
   const { colors, fontConfig } = useTheme();
 
-
   if (!visible) return null;
-
 
   return (
     <MotiView
       from={{ opacity: 0, translateY: -10 }}
       animate={{ opacity: 1, translateY: 0 }}
       exit={{ opacity: 0, translateY: -10 }}
-      transition={{ type: 'timing', duration: 200 }}
+      transition={{ type: "timing", duration: 200 }}
       style={[
         styles.container,
         {
@@ -64,13 +54,9 @@ export default function SearchSuggestionsDropdown({
                 borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
               },
             ]}
-            android_ripple={{ color: colors.accent + '22' }}
+            android_ripple={{ color: colors.accent + "22" }}
           >
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color={colors.muted}
-            />
+            <Ionicons name="search-outline" size={18} color={colors.muted} />
             <Text
               style={[
                 styles.suggestionText,
@@ -87,19 +73,18 @@ export default function SearchSuggestionsDropdown({
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     top: 52,
     left: 0,
     right: 0,
     borderRadius: 12,
     borderWidth: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
     zIndex: 1000,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -108,8 +93,8 @@ const styles = StyleSheet.create({
     maxHeight: 250,
   },
   suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,

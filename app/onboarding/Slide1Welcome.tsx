@@ -6,10 +6,8 @@ import { useTheme } from "../../src/context/ThemeContext";
 import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
 
-
 export default function Slide1Welcome() {
   const { colors, fontConfig } = useTheme();
-
 
   return (
     <OnboardingSlide slideIndex={0}>
@@ -27,57 +25,26 @@ export default function Slide1Welcome() {
             />
           </View>
 
-
-          <Text
-            style={[
-              styles.title,
-              { color: colors.text, fontFamily: fontConfig.bold },
-            ]}
-          >
+          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
             Welcome to Passify
           </Text>
 
-
           <Text
-            style={[
-              styles.description,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
-            ]}
+            style={[styles.description, { color: colors.subtext, fontFamily: fontConfig.regular }]}
           >
-            Your secure and organized password manager. Store encrypted credentials
-            across multiple platforms with powerful search and sorting capabilities.
+            Your secure and organized password manager. Store encrypted credentials across multiple
+            platforms with powerful search and sorting capabilities.
           </Text>
 
-
           <View style={styles.featuresGrid}>
-            <FeatureItem
-              icon="lock-closed"
-              label="Encrypted"
-              color={colors.accent}
-            />
-            <FeatureItem
-              icon="search"
-              label="Searchable"
-              color={colors.accent}
-            />
-            <FeatureItem
-              icon="funnel"
-              label="Sortable"
-              color={colors.accent}
-            />
-            <FeatureItem
-              icon="layers"
-              label="Multi-Platform"
-              color={colors.accent}
-            />
+            <FeatureItem icon="lock-closed" label="Encrypted" color={colors.accent} />
+            <FeatureItem icon="search" label="Searchable" color={colors.accent} />
+            <FeatureItem icon="funnel" label="Sortable" color={colors.accent} />
+            <FeatureItem icon="layers" label="Multi-Platform" color={colors.accent} />
           </View>
 
-
           <Text
-            style={[
-              styles.securityNote,
-              { color: colors.accent, fontFamily: fontConfig.regular },
-            ]}
+            style={[styles.securityNote, { color: colors.accent, fontFamily: fontConfig.regular }]}
           >
             All your data is encrypted and stored securely on your device
           </Text>
@@ -87,32 +54,17 @@ export default function Slide1Welcome() {
   );
 }
 
-
-function FeatureItem({
-  icon,
-  label,
-  color,
-}: {
-  icon: string;
-  label: string;
-  color: string;
-}) {
+function FeatureItem({ icon, label, color }: { icon: string; label: string; color: string }) {
   const { colors, fontConfig } = useTheme();
   return (
     <View style={styles.featureItem}>
       <Ionicons name={icon as any} size={22} color={color} />
-      <Text
-        style={[
-          styles.featureLabel,
-          { color: colors.text, fontFamily: fontConfig.regular },
-        ]}
-      >
+      <Text style={[styles.featureLabel, { color: colors.text, fontFamily: fontConfig.regular }]}>
         {label}
       </Text>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   scrollContent: {
