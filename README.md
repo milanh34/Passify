@@ -2,10 +2,16 @@
 
 <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/icon.png" alt="Passify Logo" width="256" />
 
-# Passify
+<h1> Passify </h1>
 
-**Your Secure, Encrypted Password Manager**
+<h4> A Privacy-First, Offline Password Manager </h4>
 
+<p align="center">
+  <img src="https://komarev.com/ghpvc/?username=milanh34&repo=Passify" />
+  <img src="https://img.shields.io/github/stars/milanh34/Passify?style=flat&color=22c55e" />
+  <img src="https://img.shields.io/github/forks/milanh34/Passify?style=flat&color=f97316" />
+  <img src="https://img.shields.io/github/last-commit/milanh34/Passify?style=flat&color=ef4444" />
+</p>
 </div>
 
 ***
@@ -14,7 +20,7 @@
 
 **The Problem:** Managing passwords across multiple platforms is challenging. Traditional password managers require cloud sync, raising privacy concerns. Users need a secure, offline-first solution that puts them in complete control.
 
-**The Solution:** Passify is a modern, cross-platform password manager that encrypts all your credentials locally using military-grade encryption. Your data never leaves your device, and you can export everything as a visually encoded image backup.
+**The Solution:** Passify is a modern, cross-platform password manager that stores and protects your credentials locally using strong cryptographic primitives. Your data never leaves your device, and you can export everything as a visually encoded image backup.
 
 ### ✨ Key Highlights
 
@@ -51,7 +57,7 @@
 
 ***
 
-## 🚀 Features
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="30" /> Features
 
 ### 🗂️ Password Management
 - Organize by platform (Gmail, GitHub, Instagram, etc.)
@@ -65,10 +71,10 @@
 - Smart filtering & highlighted matches
 
 ### 🔐 Encryption & Security
-- **AES-256-CTR** encryption
-- **PBKDF2** key derivation (100k iterations)
-- **HMAC-SHA256** authentication
-- Checksum validation & tamper detection
+- AES-based symmetric encryption
+- Password-derived keys using PBKDF2
+- HMAC-based integrity verification
+- Checksum validation for corruption detection
 
 ### 📸 Encoder & 🔓 Decoder
 - Convert database to encrypted PNG
@@ -98,6 +104,54 @@
 - Smooth Moti & Reanimated animations
 - Pull-to-refresh everywhere
 - Toast notifications
+
+***
+
+## 📱 App Screenshots
+
+<details>
+<summary><b>🗂️ Platform & Account Management</b></summary>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/platforms.png" width="30%" />
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/accounts.png" width="30%" />
+</p>
+
+<p align="center">
+  <i>Platform overview and individual account management screens</i>
+</p>
+
+</details>
+
+<details>
+<summary><b>🔐 Encoder & Decoder</b></summary>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/encoder.png" width="30%" />
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/decoder.png" width="30%" />
+</p>
+
+<p align="center">
+  <i>Encrypted image backup creation and restoration flow</i>
+</p>
+
+</details>
+
+<details>
+<summary><b>🎨 Customization</b></summary>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-theme.png" width="22%" />
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-font.png" width="22%" />
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-animation.png" width="22%" />
+  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-security.png" width="22%" />
+</p>
+
+<p align="center">
+  <i>Theme, font, animation style, and security customization screens</i>
+</p>
+
+</details>
 
 ***
 
@@ -136,6 +190,26 @@ Expo -  Moti -  Reanimated -  AES-JS -  AsyncStorage -  Ionicons
 - Expo Document Picker, File System, Sharing, Clipboard
 
 </details>
+
+***
+
+## 🧠 High-Level Architecture
+
+```mermaid
+graph TB
+  UI[📱 Expo Router UI]
+  CTX[🧩 Context Providers]
+  SEC[🔐 Auth & Security Layer]
+  STORE[💾 Local Storage]
+
+  UI --> CTX
+  CTX --> SEC
+  SEC --> STORE
+
+  STORE -->|No network| STORE
+```
+
+> Passify operates entirely offline. All data flows remain within the device.
 
 ***
 
@@ -498,6 +572,15 @@ Navigate to **Customize** tab:
 
 ***
 
+## 🧭 Design Philosophy
+
+- Offline-first by design
+- User owns their data entirely
+- No cloud, no servers, no tracking
+- Security boundaries aligned with personal devices
+- Explicit user responsibility over forced restrictions
+***
+
 ## 🔒 Security & Encryption
 
 <div align="center">
@@ -628,7 +711,7 @@ Unfortunately, no recovery is possible. Write it down and store securely!
 <details>
 <summary><b>How secure is the encryption?</b></summary>
 <br>
-Military-grade AES-256 with 100k PBKDF2 iterations - same as banks and government agencies.
+Military-grade AES-256 with 100k PBKDF2 iterations - industry-standard cryptographic algorithms used for local data protection.
 </details>
 
 <details>
@@ -654,7 +737,7 @@ Yes! 100% offline, no internet connection required.
 
 **Made with ❤️ and 🔐 by [Milan Haria](https://github.com/milanh34)**
 
-*Your passwords deserve better security. Use Passify.*
+*Your data. Your device. Your control.*
 
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Star.png" width="25" />
 
