@@ -236,7 +236,7 @@ graph TB
     B1 --> B1C[transfer.tsx]
     B1 --> B1D[encoder.tsx]
     B1 --> B1E[decoder.tsx]
-    B1 --> B1F[customize.tsx]
+    B1 --> B1F[settings.tsx]
     
     B2 --> B2A[Slide1Welcome]
     B2 --> B2B[Slide2Tabs]
@@ -327,7 +327,7 @@ Passify/
 │       ├── transfer.tsx                # Import/Export hub
 │       ├── encoder.tsx                 # Data-to-image encryption
 │       ├── decoder.tsx                 # Image-to-data decryption
-│       └── customize.tsx               # Settings & customization
+│       └── settings.tsx               # Settings & customization
 │
 ├── 🔧 src/                              # Source code
 │   ├── 🧩 components/                  # Reusable UI components (20 files)
@@ -564,7 +564,7 @@ Password: GitHubPass456
 
 ### 🎨 Customization
 
-Navigate to **Customize** tab:
+Navigate to **Settings** tab:
 - **Themes:** Nord, Sky, Tokyo Night, Lavender, Vaporwave, Peach, etc.
 - **Fonts:** Inter, Lexend, Poppins, Roboto Mono, JetBrains Mono, etc.
 - **Transitions:** Slide, Fade, Scale, Flip, etc.

@@ -419,7 +419,7 @@ export default function ManageScreen() {
             )
           ) : (
             <Pressable
-              onPress={() => router.push("/customize")}
+              onPress={() => router.push("/settings")}
               style={[
                 styles.settingsBtn,
                 {
@@ -429,7 +429,7 @@ export default function ManageScreen() {
               ]}
               android_ripple={{ color: colors.accent + "33" }}
             >
-              <Ionicons name="color-palette-outline" size={18} color={colors.accent} />
+              <Ionicons name="settings-outline" size={18} color={colors.accent} />
               <Text
                 style={{
                   ...styles.settingsBtnText,
@@ -437,7 +437,7 @@ export default function ManageScreen() {
                   fontFamily: fontConfig.regular,
                 }}
               >
-                Customize
+                Settings
               </Text>
             </Pressable>
           )}

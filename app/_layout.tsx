@@ -98,7 +98,7 @@ function RootStack() {
               }}
             />
             <Stack.Screen
-              name="customize"
+              name="settings"
               options={{
                 animation: "flip",
                 animationDuration: 200,

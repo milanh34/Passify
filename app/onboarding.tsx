@@ -249,7 +249,7 @@ export default function OnboardingScreen() {
       <ConfirmModal
         visible={showSkipModal}
         title="Skip Tutorial?"
-        message="You can always replay this from Settings > Customize > Tutorial & Help whenever you want!"
+        message="You can always replay this from Settings > Tutorial & Help whenever you want!"
         confirmText="Skip"
         cancelText="Continue"
         type="warning"

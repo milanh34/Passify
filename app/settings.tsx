@@ -1,4 +1,4 @@
-// app/customize.tsx
+// app/settings.tsx
 
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from "react-native";
 import { useTheme } from "../src/context/ThemeContext";
@@ -18,7 +18,7 @@ import { authenticateWithBiometric, getBiometricTypeName } from "../src/utils/bi
 import { InactivityTimeout, getTimeoutLabel } from "../src/utils/inactivityTracker";
 import { resetOnboarding } from "../src/utils/onboardingState";
 
-export default function Customize() {
+export default function Settings() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } =
     useTheme();
   const { currentAnimation, changeAnimation, ANIMATION_PRESETS } = useAnimation();
@@ -221,7 +221,7 @@ export default function Customize() {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          Customize
+          Settings
         </Text>
         <View style={{ width: 40 }} />
       </View>
