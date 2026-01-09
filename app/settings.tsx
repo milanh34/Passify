@@ -1,6 +1,6 @@
 // app/settings.tsx
 
-import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Linking } from "react-native";
 import { useTheme } from "../src/context/ThemeContext";
 import { useAnimation } from "../src/context/AnimationContext";
 import { useAuth } from "../src/context/AuthContext";
@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MotiView } from "moti";
+import { MotiView, AnimatePresence } from "moti";
 import Toast from "../src/components/Toast";
 import ConfirmModal from "../src/components/ConfirmModal";
 import PINInputModal from "../src/components/PINInputModal";
@@ -228,7 +228,7 @@ export default function Settings() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40, paddingTop: 16 }}
+        contentContainerStyle={{ paddingBottom: 90, paddingTop: 16 }}
       >
         <View style={styles.section} key={`color-section-${renderKey}`}>
           <Pressable
@@ -262,35 +262,38 @@ export default function Settings() {
             />
           </Pressable>
 
-          {expandedSection === "theme" && (
-            <MotiView
-              key={`theme-${renderKey}`}
-              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-              animate={{ opacity: 1, translateY: 0, scale: 1 }}
-              transition={{ type: "timing", duration: 300 }}
-            >
-              <View style={styles.grid}>
-                <ThemeOption
-                  label="System"
-                  active={mode === "system"}
-                  onPress={() => changeTheme("system")}
-                  colors={colors}
-                  fontConfig={fontConfig}
-                />
-                {Object.entries(THEMES).map(([key, theme]) => (
+          <AnimatePresence>
+            {expandedSection === "theme" && (
+              <MotiView
+                key={`theme-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+              >
+                <View style={styles.grid}>
                   <ThemeOption
-                    key={key}
-                    label={theme.name}
-                    active={mode === key}
-                    onPress={() => changeTheme(key as any)}
+                    label="System"
+                    active={mode === "system"}
+                    onPress={() => changeTheme("system")}
                     colors={colors}
-                    preview={[theme.accent, theme.accent2, theme.subtext]}
                     fontConfig={fontConfig}
                   />
-                ))}
-              </View>
-            </MotiView>
-          )}
+                  {Object.entries(THEMES).map(([key, theme]) => (
+                    <ThemeOption
+                      key={key}
+                      label={theme.name}
+                      active={mode === key}
+                      onPress={() => changeTheme(key as any)}
+                      colors={colors}
+                      preview={[theme.accent, theme.accent2, theme.subtext]}
+                      fontConfig={fontConfig}
+                    />
+                  ))}
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
         </View>
 
         <View style={[styles.section, { marginTop: 20 }]} key={`font-section-${renderKey}`}>
@@ -319,29 +322,31 @@ export default function Settings() {
               color={colors.accent}
             />
           </Pressable>
-
-          {expandedSection === "font" && (
-            <MotiView
-              key={`font-${renderKey}`}
-              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-              animate={{ opacity: 1, translateY: 0, scale: 1 }}
-              transition={{ type: "timing", duration: 300 }}
-            >
-              <View style={styles.grid}>
-                {Object.entries(FONTS).map(([key, f]) => (
-                  <FontOption
-                    key={key}
-                    label={f.label}
-                    active={font === key}
-                    onPress={() => changeFont(key as any)}
-                    colors={colors}
-                    sampleFamily={f.bold}
-                    fontConfig={fontConfig}
-                  />
-                ))}
-              </View>
-            </MotiView>
-          )}
+          <AnimatePresence>
+            {expandedSection === "font" && (
+              <MotiView
+                key={`font-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+              >
+                <View style={styles.grid}>
+                  {Object.entries(FONTS).map(([key, f]) => (
+                    <FontOption
+                      key={key}
+                      label={f.label}
+                      active={font === key}
+                      onPress={() => changeFont(key as any)}
+                      colors={colors}
+                      sampleFamily={f.bold}
+                      fontConfig={fontConfig}
+                    />
+                  ))}
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
         </View>
 
         <View style={[styles.section, { marginTop: 20 }]} key={`animation-section-${renderKey}`}>
@@ -370,29 +375,31 @@ export default function Settings() {
               color={colors.accent}
             />
           </Pressable>
-
-          {expandedSection === "animation" && (
-            <MotiView
-              key={`animation-${renderKey}`}
-              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-              animate={{ opacity: 1, translateY: 0, scale: 1 }}
-              transition={{ type: "timing", duration: 300 }}
-            >
-              <View style={styles.grid}>
-                {ANIMATION_PRESETS.map((preset) => (
-                  <AnimationOption
-                    key={preset.id}
-                    label={preset.name}
-                    icon={getAnimationIcon(preset.id)}
-                    active={currentAnimation === preset.id}
-                    onPress={() => changeAnimation(preset.id)}
-                    colors={colors}
-                    fontConfig={fontConfig}
-                  />
-                ))}
-              </View>
-            </MotiView>
-          )}
+          <AnimatePresence>
+            {expandedSection === "animation" && (
+              <MotiView
+                key={`animation-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+              >
+                <View style={styles.grid}>
+                  {ANIMATION_PRESETS.map((preset) => (
+                    <AnimationOption
+                      key={preset.id}
+                      label={preset.name}
+                      icon={getAnimationIcon(preset.id)}
+                      active={currentAnimation === preset.id}
+                      onPress={() => changeAnimation(preset.id)}
+                      colors={colors}
+                      fontConfig={fontConfig}
+                    />
+                  ))}
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
         </View>
 
         <View style={[styles.section, { marginTop: 20 }]} key={`security-section-${renderKey}`}>
@@ -426,281 +433,285 @@ export default function Settings() {
               color={colors.accent}
             />
           </Pressable>
-
-          {expandedSection === "security" && (
-            <MotiView
-              key={`security-${renderKey}`}
-              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-              animate={{ opacity: 1, translateY: 0, scale: 1 }}
-              transition={{ type: "timing", duration: 300 }}
-              style={styles.securityContent}
-            >
-              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
-                <View style={styles.securityLeft}>
-                  <Ionicons name="finger-print" size={24} color={colors.accent} />
-                  <View style={styles.securityTextContainer}>
-                    <Text
-                      style={[
-                        styles.securityTitle,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
-                    >
-                      Biometric Authentication
-                    </Text>
-                    <Text
-                      style={[
-                        styles.securitySubtitle,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      {biometricCapability?.isAvailable
-                        ? `Use ${getBiometricTypeName(biometricCapability.biometricType)}`
-                        : "Not available on this device"}
-                    </Text>
-                  </View>
-                </View>
-                <Switch
-                  value={preferences.biometricEnabled}
-                  onValueChange={handleBiometricToggle}
-                  disabled={!biometricCapability?.isAvailable || !isPINConfigured}
-                  trackColor={{
-                    false: colors.cardBorder,
-                    true: colors.accent + "60",
-                  }}
-                  thumbColor={preferences.biometricEnabled ? colors.accent : colors.card}
-                />
-              </View>
-
-              {biometricCapability?.isAvailable && (
-                <Pressable
-                  onPress={handleTestBiometric}
-                  style={[
-                    styles.securityButton,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.cardBorder,
-                    },
-                  ]}
-                  android_ripple={{ color: colors.accent + "22" }}
-                >
-                  <Ionicons name="scan-outline" size={20} color={colors.accent} />
-                  <Text
-                    style={[
-                      styles.securityButtonText,
-                      { color: colors.text, fontFamily: fontConfig.regular },
-                    ]}
-                  >
-                    Test Biometric
-                  </Text>
-                </Pressable>
-              )}
-
-              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
-                <View style={styles.securityLeft}>
-                  <Ionicons name="keypad" size={24} color={colors.accent} />
-                  <View style={styles.securityTextContainer}>
-                    <Text
-                      style={[
-                        styles.securityTitle,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
-                    >
-                      PIN Code
-                    </Text>
-                    <Text
-                      style={[
-                        styles.securitySubtitle,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      {isPINConfigured ? "PIN is configured" : "No PIN set"}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.securityButtonGroup}>
-                {!isPINConfigured ? (
-                  <Pressable
-                    onPress={handleSetupPIN}
-                    style={[styles.securityButton, { backgroundColor: colors.accent, flex: 1 }]}
-                    android_ripple={{ color: colors.bg[0] }}
-                  >
-                    <Ionicons name="add-circle-outline" size={20} color="#fff" />
-                    <Text
-                      style={[
-                        styles.securityButtonText,
-                        { color: "#fff", fontFamily: fontConfig.bold },
-                      ]}
-                    >
-                      Set Up PIN
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <>
-                    <Pressable
-                      onPress={handleChangePIN}
-                      style={[
-                        styles.securityButton,
-                        {
-                          backgroundColor: colors.card,
-                          borderColor: colors.cardBorder,
-                          flex: 1,
-                        },
-                      ]}
-                      android_ripple={{ color: colors.accent + "22" }}
-                    >
-                      <Ionicons name="create-outline" size={20} color={colors.accent} />
+          <AnimatePresence>
+            {expandedSection === "security" && (
+              <MotiView
+                key={`security-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+                style={styles.securityContent}
+              >
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="finger-print" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
                       <Text
                         style={[
-                          styles.securityButtonText,
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Biometric Authentication
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
                           {
-                            color: colors.text,
+                            color: colors.subtext,
                             fontFamily: fontConfig.regular,
                           },
                         ]}
                       >
-                        Change PIN
+                        {biometricCapability?.isAvailable
+                          ? `Use ${getBiometricTypeName(biometricCapability.biometricType)}`
+                          : "Not available on this device"}
                       </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={handleRemovePIN}
-                      style={[
-                        styles.securityButton,
-                        {
-                          backgroundColor: colors.card,
-                          borderColor: colors.cardBorder,
-                          flex: 1,
-                        },
-                      ]}
-                      android_ripple={{ color: colors.danger + "22" }}
-                    >
-                      <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                      <Text
-                        style={[
-                          styles.securityButtonText,
-                          {
-                            color: colors.danger,
-                            fontFamily: fontConfig.regular,
-                          },
-                        ]}
-                      >
-                        Remove PIN
-                      </Text>
-                    </Pressable>
-                  </>
-                )}
-              </View>
-
-              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
-                <View style={styles.securityLeft}>
-                  <Ionicons name="timer-outline" size={24} color={colors.accent} />
-                  <View style={styles.securityTextContainer}>
-                    <Text
-                      style={[
-                        styles.securityTitle,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
-                    >
-                      Auto-lock Timeout
-                    </Text>
-                    <Text
-                      style={[
-                        styles.securitySubtitle,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      {getTimeoutLabel(preferences.inactivityTimeout)}
-                    </Text>
+                    </View>
                   </View>
+                  <Switch
+                    value={preferences.biometricEnabled}
+                    onValueChange={handleBiometricToggle}
+                    disabled={!biometricCapability?.isAvailable || !isPINConfigured}
+                    trackColor={{
+                      false: colors.cardBorder,
+                      true: colors.accent + "60",
+                    }}
+                    thumbColor={preferences.biometricEnabled ? colors.accent : colors.card}
+                  />
                 </View>
-              </View>
 
-              <View style={styles.timeoutGrid}>
-                {([1, 5, 10, 30, 0] as const).map((minutes) => (
+                {biometricCapability?.isAvailable && (
                   <Pressable
-                    key={minutes}
-                    onPress={() => handleTimeoutChange(minutes as InactivityTimeout)}
+                    onPress={handleTestBiometric}
                     style={[
-                      styles.timeoutButton,
+                      styles.securityButton,
                       {
-                        backgroundColor:
-                          preferences.inactivityTimeout === minutes
-                            ? colors.accent + "15"
-                            : colors.card,
-                        borderWidth: preferences.inactivityTimeout === minutes ? 2 : 1,
-                        borderColor:
-                          preferences.inactivityTimeout === minutes
-                            ? colors.accent
-                            : colors.cardBorder,
+                        backgroundColor: colors.card,
+                        borderColor: colors.cardBorder,
                       },
                     ]}
                     android_ripple={{ color: colors.accent + "22" }}
                   >
+                    <Ionicons name="scan-outline" size={20} color={colors.accent} />
                     <Text
                       style={[
-                        styles.timeoutButtonText,
-                        {
-                          color:
-                            preferences.inactivityTimeout === minutes ? colors.accent : colors.text,
-                          fontFamily: fontConfig.bold,
-                        },
+                        styles.securityButtonText,
+                        { color: colors.text, fontFamily: fontConfig.regular },
                       ]}
                     >
-                      {getTimeoutLabel(minutes as InactivityTimeout)}
+                      Test Biometric
                     </Text>
                   </Pressable>
-                ))}
-              </View>
+                )}
 
-              {preferences.lastUnlockTime > 0 && (
-                <View
-                  style={[
-                    styles.infoBox,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.cardBorder,
-                    },
-                  ]}
-                >
-                  <Ionicons name="information-circle-outline" size={20} color={colors.subtext} />
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[
-                        styles.infoText,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      Last unlocked: {new Date(preferences.lastUnlockTime).toLocaleString()}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.infoText,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      Method: {preferences.lastUnlockMethod === "biometric" ? "Biometric" : "PIN"}
-                    </Text>
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="keypad" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
+                      <Text
+                        style={[
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        PIN Code
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {isPINConfigured ? "PIN is configured" : "No PIN set"}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              )}
-            </MotiView>
-          )}
+
+                <View style={styles.securityButtonGroup}>
+                  {!isPINConfigured ? (
+                    <Pressable
+                      onPress={handleSetupPIN}
+                      style={[styles.securityButton, { backgroundColor: colors.accent, flex: 1 }]}
+                      android_ripple={{ color: colors.bg[0] }}
+                    >
+                      <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                      <Text
+                        style={[
+                          styles.securityButtonText,
+                          { color: "#fff", fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Set Up PIN
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    <>
+                      <Pressable
+                        onPress={handleChangePIN}
+                        style={[
+                          styles.securityButton,
+                          {
+                            backgroundColor: colors.card,
+                            borderColor: colors.cardBorder,
+                            flex: 1,
+                          },
+                        ]}
+                        android_ripple={{ color: colors.accent + "22" }}
+                      >
+                        <Ionicons name="create-outline" size={20} color={colors.accent} />
+                        <Text
+                          style={[
+                            styles.securityButtonText,
+                            {
+                              color: colors.text,
+                              fontFamily: fontConfig.regular,
+                            },
+                          ]}
+                        >
+                          Change PIN
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={handleRemovePIN}
+                        style={[
+                          styles.securityButton,
+                          {
+                            backgroundColor: colors.card,
+                            borderColor: colors.cardBorder,
+                            flex: 1,
+                          },
+                        ]}
+                        android_ripple={{ color: colors.danger + "22" }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                        <Text
+                          style={[
+                            styles.securityButtonText,
+                            {
+                              color: colors.danger,
+                              fontFamily: fontConfig.regular,
+                            },
+                          ]}
+                        >
+                          Remove PIN
+                        </Text>
+                      </Pressable>
+                    </>
+                  )}
+                </View>
+
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="timer-outline" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
+                      <Text
+                        style={[
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Auto-lock Timeout
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {getTimeoutLabel(preferences.inactivityTimeout)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.timeoutGrid}>
+                  {([1, 5, 10, 30, 0] as const).map((minutes) => (
+                    <Pressable
+                      key={minutes}
+                      onPress={() => handleTimeoutChange(minutes as InactivityTimeout)}
+                      style={[
+                        styles.timeoutButton,
+                        {
+                          backgroundColor:
+                            preferences.inactivityTimeout === minutes
+                              ? colors.accent + "15"
+                              : colors.card,
+                          borderWidth: preferences.inactivityTimeout === minutes ? 2 : 1,
+                          borderColor:
+                            preferences.inactivityTimeout === minutes
+                              ? colors.accent
+                              : colors.cardBorder,
+                        },
+                      ]}
+                      android_ripple={{ color: colors.accent + "22" }}
+                    >
+                      <Text
+                        style={[
+                          styles.timeoutButtonText,
+                          {
+                            color:
+                              preferences.inactivityTimeout === minutes
+                                ? colors.accent
+                                : colors.text,
+                            fontFamily: fontConfig.bold,
+                          },
+                        ]}
+                      >
+                        {getTimeoutLabel(minutes as InactivityTimeout)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {preferences.lastUnlockTime > 0 && (
+                  <View
+                    style={[
+                      styles.infoBox,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.cardBorder,
+                      },
+                    ]}
+                  >
+                    <Ionicons name="information-circle-outline" size={20} color={colors.subtext} />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[
+                          styles.infoText,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        Last unlocked: {new Date(preferences.lastUnlockTime).toLocaleString()}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.infoText,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        Method: {preferences.lastUnlockMethod === "biometric" ? "Biometric" : "PIN"}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </MotiView>
+            )}
+          </AnimatePresence>
         </View>
 
         <View style={[styles.section, { marginTop: 20 }]} key={`tutorial-section-${renderKey}`}>
@@ -729,66 +740,98 @@ export default function Settings() {
               color={colors.accent}
             />
           </Pressable>
-
-          {expandedSection === "tutorial" && (
-            <MotiView
-              key={`tutorial-${renderKey}`}
-              from={{ opacity: 0, translateY: -20, scale: 0.95 }}
-              animate={{ opacity: 1, translateY: 0, scale: 1 }}
-              transition={{ type: "timing", duration: 300 }}
-              style={styles.securityContent}
-            >
-              <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
-                <View style={styles.securityLeft}>
-                  <Ionicons name="play-circle" size={24} color={colors.accent} />
-                  <View style={styles.securityTextContainer}>
-                    <Text
-                      style={[
-                        styles.securityTitle,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
-                    >
-                      Replay Tutorial
-                    </Text>
-                    <Text
-                      style={[
-                        styles.securitySubtitle,
-                        {
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        },
-                      ]}
-                    >
-                      Go through the onboarding slides again
-                    </Text>
+          <AnimatePresence>
+            {expandedSection === "tutorial" && (
+              <MotiView
+                key={`tutorial-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+                style={styles.securityContent}
+              >
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="play-circle" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
+                      <Text
+                        style={[
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Replay Tutorial
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        Go through the onboarding slides again
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <Pressable
-                onPress={handleReplayTutorial}
-                style={[
-                  styles.securityButton,
-                  {
-                    backgroundColor: colors.accent,
-                  },
-                ]}
-                android_ripple={{ color: colors.bg[0] }}
-              >
-                <Ionicons name="refresh" size={20} color="#fff" />
-                <Text
+                <Pressable
+                  onPress={handleReplayTutorial}
                   style={[
-                    styles.securityButtonText,
-                    { color: "#fff", fontFamily: fontConfig.bold },
+                    styles.securityButton,
+                    {
+                      backgroundColor: colors.accent,
+                    },
                   ]}
+                  android_ripple={{ color: colors.bg[0] }}
                 >
-                  Start Tutorial
-                </Text>
-              </Pressable>
-            </MotiView>
-          )}
+                  <Ionicons name="refresh" size={20} color="#fff" />
+                  <Text
+                    style={[
+                      styles.securityButtonText,
+                      { color: "#fff", fontFamily: fontConfig.bold },
+                    ]}
+                  >
+                    Start Tutorial
+                  </Text>
+                </Pressable>
+              </MotiView>
+            )}
+          </AnimatePresence>
         </View>
       </ScrollView>
+
+      <View
+        style={{
+          position: "absolute",
+          bottom: insets.bottom + 12,
+          left: 0,
+          right: 0,
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 12,
+            color: colors.subtext,
+            fontFamily: fontConfig.regular,
+            opacity: 0.75,
+          }}
+        >
+          Passify · Made by{" "}
+          <Text
+            style={{
+              color: colors.accent,
+              fontFamily: fontConfig.bold,
+            }}
+            onPress={() => Linking.openURL("https://github.com/milanh34")}
+          >
+            Milan Haria
+          </Text>
+        </Text>
+      </View>
 
       <PINInputModal
         visible={showOldPINModal}
