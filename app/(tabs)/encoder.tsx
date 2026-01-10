@@ -30,21 +30,19 @@ import {
   encodeToPixels,
   BLOCK_CONSTANTS,
 } from "../../src/utils/blocks";
-import { savePixelsAsPNG } from "../../src/utils/image";
-import { downloadImage, shareFile, isExpoGo } from "../../src/utils/fileSharing";
+import { savePixelsAsPNG, getBase64FromUri } from "../../src/utils/image";
+import { saveFileWithSAF, shareFile } from "../../src/utils/safFileManager";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { useAnimation } from "../../src/context/AnimationContext";
 import { MotiView } from "moti";
+import { Platform } from "react-native";
 
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
-
   const { TAB_ANIMATION } = useAnimation();
-
   const [animationKey, setAnimationKey] = useState(0);
-
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
@@ -54,9 +52,11 @@ export default function EncoderScreen() {
   const [filename, setFilename] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
+
   const [downloadModalVisible, setDownloadModalVisible] = useState(false);
 
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
@@ -80,7 +80,6 @@ export default function EncoderScreen() {
   useFocusEffect(
     React.useCallback(() => {
       setAnimationKey((prev) => prev + 1);
-
       if (isAuthEnabled && !isProcessingRef.current) {
         updateActivity();
       }
@@ -96,7 +95,9 @@ export default function EncoderScreen() {
     setToastType(type);
     setShowToast(true);
     setTimeout(() => {
-      if (isMountedRef.current) setShowToast(false);
+      if (isMountedRef.current) {
+        setShowToast(false);
+      }
     }, 3000);
   };
 
@@ -116,7 +117,7 @@ export default function EncoderScreen() {
 
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
-      console.log("🛑 Cancelling ongoing encode...");
+      console.log("Cancelling ongoing encode...");
       cleanup();
     }
 
@@ -134,7 +135,10 @@ export default function EncoderScreen() {
     });
 
     await new Promise((r) => setTimeout(r, 300));
-    if (isMountedRef.current) setRefreshing(false);
+
+    if (isMountedRef.current) {
+      setRefreshing(false);
+    }
 
     if (isAuthEnabled) {
       updateActivity();
@@ -143,7 +147,7 @@ export default function EncoderScreen() {
 
   const onProgress = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
-      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
+      console.log(`Progress: ${update.phase} - ${Math.round(update.percent)}%`);
       setProgressUpdate(update);
     }
   };
@@ -169,17 +173,12 @@ export default function EncoderScreen() {
 
     try {
       let dataToEncrypt: string;
-      let dataBytes: Uint8Array;
-
       try {
         dataToEncrypt = JSON.stringify({ database, schemas });
-        const encoder = new TextEncoder();
-        dataBytes = encoder.encode(dataToEncrypt);
-
         onProgress({
           phase: "stringify",
-          processedBytes: dataBytes.length,
-          totalBytes: dataBytes.length,
+          processedBytes: dataToEncrypt.length,
+          totalBytes: dataToEncrypt.length,
           percent: 100,
         });
       } catch (error: any) {
@@ -236,16 +235,17 @@ export default function EncoderScreen() {
       if (!isProcessingRef.current) return;
       await new Promise((r) => setTimeout(r, 100));
 
-      let pngUri: string;
       const generatedFilename = `passify_backup_${Date.now()}.png`;
+      let cacheUri: string;
+      let base64Content: string;
 
       try {
-        pngUri = await savePixelsAsPNG(
+        const result = await savePixelsAsPNG(
           pixels,
           width,
           height,
           generatedFilename,
-          (phase, percent) => {
+          (phase: string, percent: number) => {
             onProgress({
               phase: phase as any,
               processedBytes: percent,
@@ -254,6 +254,9 @@ export default function EncoderScreen() {
             });
           }
         );
+
+        cacheUri = result.cacheUri;
+        base64Content = result.base64;
       } catch (error: any) {
         throw new Error(`Failed to save image: ${error.message}`);
       }
@@ -261,19 +264,20 @@ export default function EncoderScreen() {
       if (!isProcessingRef.current) return;
 
       if (isMountedRef.current) {
-        setImageUri(pngUri);
+        setImageUri(cacheUri);
         setFilename(generatedFilename);
+
         onProgress({
           phase: "done",
           processedBytes: 100,
           totalBytes: 100,
           percent: 100,
         });
-        showToastMessage("Image generated successfully!", "success");
+
+        showToastMessage("Image generated successfully! Use Download or Share to save.", "success");
       }
     } catch (error: any) {
-      console.error("🔴 Encoding error:", error);
-
+      console.error("Encoding error:", error);
       if (isMountedRef.current && isProcessingRef.current) {
         const errorMessage = error.message || "An unexpected error occurred during encoding";
         showToastMessage(errorMessage, "error");
@@ -281,7 +285,9 @@ export default function EncoderScreen() {
     } finally {
       cleanup();
       setTimeout(() => {
-        if (isMountedRef.current) setShowProgress(false);
+        if (isMountedRef.current) {
+          setShowProgress(false);
+        }
       }, 1000);
 
       if (isAuthEnabled) {
@@ -292,37 +298,43 @@ export default function EncoderScreen() {
 
   const handleSharePress = async () => {
     if (!imageUri) return;
+
     setLoading(true);
-    await shareFile(imageUri, "image/png");
+    const success = await shareFile(imageUri, "image/png");
     setLoading(false);
+
+    if (!success) {
+      showToastMessage("Failed to share file", "error");
+    }
+
     if (isAuthEnabled) {
       updateActivity();
     }
   };
 
-  const handleDownloadPress = () => {
-    if (!imageUri) return;
-    if (isExpoGo()) {
-      setDownloadModalVisible(true);
-    } else {
-      handleDownloadConfirm();
-    }
-    if (isAuthEnabled) {
-      updateActivity();
-    }
-  };
-
-  const handleDownloadConfirm = async () => {
-    setDownloadModalVisible(false);
+  const handleDownloadPress = async () => {
     if (!imageUri || !filename) return;
-    setLoading(true);
-    const success = await downloadImage(imageUri, filename);
-    setLoading(false);
-    if (success) {
-      showToastMessage("Download successful!", "info");
-    }
+
     if (isAuthEnabled) {
       updateActivity();
+    }
+
+    setLoading(true);
+
+    try {
+      const base64Content = await getBase64FromUri(imageUri);
+
+      const result = await saveFileWithSAF(filename, base64Content, "image/png");
+
+      if (result.success) {
+        showToastMessage("✅ File saved successfully!", "success");
+      } else {
+        showToastMessage(result.error || "Failed to save file", "error");
+      }
+    } catch (error: any) {
+      showToastMessage(error.message || "Failed to save file", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -363,10 +375,7 @@ export default function EncoderScreen() {
             <View
               style={[
                 styles.inputContainer,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
-                },
+                { backgroundColor: colors.card, borderColor: colors.cardBorder },
               ]}
             >
               <TextInput
@@ -429,24 +438,16 @@ export default function EncoderScreen() {
           </Pressable>
 
           {imageUri && !loading && (
-            <>
-              <View style={styles.section}>
-                <Text
-                  style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}
-                >
-                  Generated Backup Image
-                </Text>
-                <Image
-                  source={{ uri: imageUri }}
-                  style={styles.imagePreview}
-                  resizeMode="contain"
-                />
-                <Text
-                  style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}
-                >
-                  {filename}
-                </Text>
-              </View>
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                Generated Backup Image
+              </Text>
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
+              <Text
+                style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}
+              >
+                {filename}
+              </Text>
 
               <View style={styles.buttonRow}>
                 <Pressable
@@ -470,76 +471,20 @@ export default function EncoderScreen() {
                 </Pressable>
               </View>
 
-              {isExpoGo() && (
+              {Platform.OS === "android" && (
                 <Text
                   style={[
                     styles.infoText,
-                    { color: colors.danger, fontFamily: fontConfig.regular },
+                    { color: colors.accent, fontFamily: fontConfig.regular },
                   ]}
                 >
-                  ⚠️ Running in Expo Go: Download will save to app directory. Use Share to export.
+                  💡 Download will let you choose where to save the file
                 </Text>
               )}
-            </>
+            </View>
           )}
         </ScrollView>
       </MotiView>
-
-      <Modal visible={downloadModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <Ionicons name="information-circle" size={48} color={colors.accent} />
-            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
-              Development Mode
-            </Text>
-            <Text
-              style={[styles.modalMessage, { color: colors.text, fontFamily: fontConfig.regular }]}
-            >
-              Download to device storage is only available in production builds.
-              {"\n\n"}
-              File saved to app directory. Use the Share button to export this file.
-            </Text>
-
-            <View style={styles.modalButtons}>
-              <Pressable
-                onPress={() => {
-                  setDownloadModalVisible(false);
-                  if (isAuthEnabled) {
-                    updateActivity();
-                  }
-                }}
-                style={[styles.modalButton, { backgroundColor: colors.cardBorder }]}
-              >
-                <Text
-                  style={[
-                    styles.modalButtonText,
-                    { color: colors.text, fontFamily: fontConfig.regular },
-                  ]}
-                >
-                  OK
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  setDownloadModalVisible(false);
-                  handleSharePress();
-                }}
-                style={[styles.modalButton, { backgroundColor: colors.accent }]}
-              >
-                <Text
-                  style={[
-                    styles.modalButtonText,
-                    { color: "#fff", fontFamily: fontConfig.regular },
-                  ]}
-                >
-                  Share Now
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       <Toast message={toastMessage} visible={showToast} type={toastType} />
     </View>
@@ -547,12 +492,27 @@ export default function EncoderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 20 },
-  title: { fontSize: 28, marginBottom: 8 },
-  subtitle: { fontSize: 16, marginBottom: 24 },
-  section: { marginVertical: 12 },
-  label: { fontSize: 16, marginBottom: 8 },
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+  },
+  section: {
+    marginVertical: 12,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -560,8 +520,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
   },
-  input: { flex: 1, paddingVertical: 14, fontSize: 16 },
-  eyeIcon: { paddingLeft: 12 },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    paddingLeft: 12,
+  },
   button: {
     paddingVertical: 16,
     borderRadius: 12,
@@ -571,7 +537,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  buttonText: { color: "#fff", fontSize: 16 },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
   buttonRow: {
     flexDirection: "row",
     gap: 12,
@@ -603,45 +572,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 12,
     paddingHorizontal: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalContent: {
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 20,
-    marginTop: 16,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalMessage: {
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-    width: "100%",
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  modalButtonText: {
-    fontSize: 16,
   },
 });
