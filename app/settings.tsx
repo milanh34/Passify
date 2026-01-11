@@ -801,6 +801,179 @@ export default function Settings() {
             )}
           </AnimatePresence>
         </View>
+        <View style={[styles.section, { marginTop: 20 }]} key={`legal-section-${renderKey}`}>
+          <Pressable
+            onPress={() => toggleSection("legal")}
+            style={[
+              styles.sectionHeader,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+            android_ripple={{ color: colors.accent + "22" }}
+          >
+            <View style={styles.headerLeft}>
+              <Ionicons
+                name="document-text"
+                size={22}
+                color={colors.accent}
+                style={{ marginRight: 12 }}
+              />
+              <Text
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+              >
+                Legal
+              </Text>
+            </View>
+            <Ionicons
+              name={expandedSection === "legal" ? "chevron-up" : "chevron-down"}
+              size={24}
+              color={colors.accent}
+            />
+          </Pressable>
+          <AnimatePresence>
+            {expandedSection === "legal" && (
+              <MotiView
+                key={`legal-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+                style={styles.securityContent}
+              >
+                <Pressable
+                  onPress={() => router.push("/legal?type=privacy")}
+                  style={[
+                    styles.legalItem,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.cardBorder,
+                    },
+                  ]}
+                  android_ripple={{ color: colors.accent + "22" }}
+                >
+                  <View style={styles.legalItemLeft}>
+                    <Ionicons name="shield-checkmark" size={24} color={colors.accent} />
+                    <View style={styles.legalItemText}>
+                      <Text
+                        style={[
+                          styles.legalItemTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Privacy Policy
+                      </Text>
+                      <Text
+                        style={[
+                          styles.legalItemSubtitle,
+                          { color: colors.subtext, fontFamily: fontConfig.regular },
+                        ]}
+                      >
+                        How we handle your data (we don't!)
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push("/legal?type=terms")}
+                  style={[
+                    styles.legalItem,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.cardBorder,
+                    },
+                  ]}
+                  android_ripple={{ color: colors.accent + "22" }}
+                >
+                  <View style={styles.legalItemLeft}>
+                    <Ionicons name="document-text-outline" size={24} color={colors.accent} />
+                    <View style={styles.legalItemText}>
+                      <Text
+                        style={[
+                          styles.legalItemTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Terms of Service
+                      </Text>
+                      <Text
+                        style={[
+                          styles.legalItemSubtitle,
+                          { color: colors.subtext, fontFamily: fontConfig.regular },
+                        ]}
+                      >
+                        Rules for using Passify
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push("/legal?type=licenses")}
+                  style={[
+                    styles.legalItem,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.cardBorder,
+                    },
+                  ]}
+                  android_ripple={{ color: colors.accent + "22" }}
+                >
+                  <View style={styles.legalItemLeft}>
+                    <Ionicons name="code-slash" size={24} color={colors.accent} />
+                    <View style={styles.legalItemText}>
+                      <Text
+                        style={[
+                          styles.legalItemTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Open Source Licenses
+                      </Text>
+                      <Text
+                        style={[
+                          styles.legalItemSubtitle,
+                          { color: colors.subtext, fontFamily: fontConfig.regular },
+                        ]}
+                      >
+                        Third-party libraries we use
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                </Pressable>
+                <View
+                  style={[
+                    styles.versionBox,
+                    {
+                      backgroundColor: colors.bg[0],
+                      borderColor: colors.cardBorder,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.versionLabel,
+                      { color: colors.muted, fontFamily: fontConfig.regular },
+                    ]}
+                  >
+                    App Version
+                  </Text>
+                  <Text
+                    style={[
+                      styles.versionNumber,
+                      { color: colors.text, fontFamily: fontConfig.bold },
+                    ]}
+                  >
+                    1.0.0
+                  </Text>
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
+        </View>
       </ScrollView>
 
       <View
@@ -1125,4 +1298,42 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   infoText: { fontSize: 12, lineHeight: 18 },
+  legalItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  legalItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  legalItemText: {
+    flex: 1,
+  },
+  legalItemTitle: {
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  legalItemSubtitle: {
+    fontSize: 13,
+  },
+  versionBox: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  versionLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  versionNumber: {
+    fontSize: 18,
+  },
 });
