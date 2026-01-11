@@ -3,12 +3,13 @@
 import { Stack } from "expo-router";
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
 import { AnimationProvider } from "../src/context/AnimationContext";
-import { DbProvider } from "../src/context/DbContext";
+import { DbProvider, useDb } from "../src/context/DbContext";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { StatusBar } from "expo-status-bar";
-import { View, LogBox, ActivityIndicator } from "react-native";
+import { View, LogBox, ActivityIndicator, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ErrorBoundary from "../src/components/ErrorBoundary";
+import DatabaseErrorScreen from "../src/components/DatabaseErrorScreen";
 import BiometricUnlockScreen from "./screens/BiometricUnlockScreen";
 import { useState, useEffect } from "react";
 import { useRouter, useSegments, useRootNavigationState } from "expo-router";
@@ -77,6 +78,42 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function DatabaseGate({ children }: { children: React.ReactNode }) {
+  const { isDbLoading, dbError, refreshDatabase } = useDb();
+  const { colors, fontConfig } = useTheme();
+
+  if (isDbLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.bg[0],
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 16,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text
+          style={{
+            color: colors.subtext,
+            fontFamily: fontConfig.regular,
+            fontSize: 14,
+          }}
+        >
+          Loading encrypted database...
+        </Text>
+      </View>
+    );
+  }
+
+  if (dbError) {
+    return <DatabaseErrorScreen error={dbError} onRetry={refreshDatabase} />;
+  }
+
+  return <>{children}</>;
+}
+
 function RootStack() {
   const { colors } = useTheme();
 
@@ -84,35 +121,44 @@ function RootStack() {
     <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
       <OnboardingGate>
         <AuthGate>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: "fade",
-              animationDuration: 200,
-            }}
-          >
-            <Stack.Screen
-              name="(tabs)"
-              options={{
-                animation: "none",
-              }}
-            />
-            <Stack.Screen
-              name="settings"
-              options={{
-                animation: "flip",
+          <DatabaseGate>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: "fade",
                 animationDuration: 200,
               }}
-            />
-            <Stack.Screen
-              name="onboarding"
-              options={{
-                animation: "fade",
-                animationDuration: 300,
-                gestureEnabled: false,
-              }}
-            />
-          </Stack>
+            >
+              <Stack.Screen
+                name="(tabs)"
+                options={{
+                  animation: "none",
+                }}
+              />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  animation: "flip",
+                  animationDuration: 200,
+                }}
+              />
+              <Stack.Screen
+                name="onboarding"
+                options={{
+                  animation: "fade",
+                  animationDuration: 300,
+                  gestureEnabled: false,
+                }}
+              />
+              <Stack.Screen
+                name="legal"
+                options={{
+                  animation: "slide_from_right",
+                  animationDuration: 200,
+                }}
+              />
+            </Stack>
+          </DatabaseGate>
         </AuthGate>
       </OnboardingGate>
     </View>
