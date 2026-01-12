@@ -10,6 +10,7 @@ export default function TabsLayout() {
   const segments = useSegments();
 
   const isOnAccounts = segments[segments.length - 1] === "accounts";
+  const isOnConnectedAccounts = segments[segments.length - 1] === "connected-accounts";
 
   return (
     <Tabs
@@ -42,9 +43,9 @@ export default function TabsLayout() {
           title: "Manage",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused || isOnAccounts ? "grid" : "grid-outline"}
+              name={focused || isOnAccounts || isOnConnectedAccounts ? "grid" : "grid-outline"}
               size={22}
-              color={focused || isOnAccounts ? colors.accent : color}
+              color={focused || isOnAccounts || isOnConnectedAccounts ? colors.accent : color}
             />
           ),
           tabBarLabel: ({ focused }) => (
@@ -52,7 +53,8 @@ export default function TabsLayout() {
               style={{
                 fontFamily: fontConfig.bold,
                 fontSize: 11,
-                color: focused || isOnAccounts ? colors.accent : colors.subtext,
+                color:
+                  focused || isOnAccounts || isOnConnectedAccounts ? colors.accent : colors.subtext,
               }}
             >
               Manage
@@ -96,6 +98,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen name="accounts" options={{ href: null, title: "Accounts" }} />
+      <Tabs.Screen
+        name="connected-accounts"
+        options={{ href: null, title: "Connected Accounts" }}
+      />
     </Tabs>
   );
 }

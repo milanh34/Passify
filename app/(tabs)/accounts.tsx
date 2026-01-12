@@ -2,11 +2,12 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl } from "react-native";
-import { useLocalSearchParams, useNavigation, useFocusEffect } from "expo-router";
+import { useLocalSearchParams, useNavigation, useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { useAuth } from "../../src/context/AuthContext";
@@ -21,7 +22,11 @@ import AccountSortModal from "../../src/components/AccountSortModal";
 import PlatformIcon from "../../src/components/PlatformIcon";
 import { searchAccounts, debounceSearch } from "../../src/utils/searchAccounts";
 import { sortAccounts, AccountSortOption } from "../../src/utils/sortAccounts";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  isPlatformSupportedForConnections,
+  getPrimaryEmail,
+  countConnectedPlatforms,
+} from "../../src/utils/connectedAccounts";
 
 const ACCOUNT_SORT_PREFERENCE_KEY = "@PM:account_sort_preference";
 
@@ -60,6 +65,7 @@ export default function AccountsScreen() {
   const insets = useSafeAreaInsets();
 
   const { isAuthEnabled } = useAuth();
+  const router = useRouter();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
   const accounts: Account[] = useMemo(
@@ -74,6 +80,10 @@ export default function AccountsScreen() {
       ? platformSchema
       : ["name", "password"];
   }, [schemas, platformKey]);
+
+  const isConnectionSupportedPlatform = useMemo(() => {
+    return platformKey ? isPlatformSupportedForConnections(String(platformKey)) : false;
+  }, [platformKey]);
 
   const [accModal, setAccModal] = useState<{
     visible: boolean;
@@ -541,6 +551,26 @@ export default function AccountsScreen() {
     }
   };
 
+  const handleViewConnectedPlatforms = (account: any) => {
+    const primaryEmail = getPrimaryEmail(account);
+
+    if (!primaryEmail || !platformKey) return;
+
+    router.push({
+      pathname: "/(tabs)/connected-accounts",
+      params: {
+        email: primaryEmail.value,
+        sourcePlatform: String(platformKey),
+        sourceAccountId: account.id,
+        sourceAccountName: account.name || "Account",
+      },
+    });
+
+    if (isAuthEnabled) {
+      updateActivity();
+    }
+  };
+
   return (
     <View style={[styles.root, { backgroundColor: colors.bg[0], paddingTop: insets.top + 60 }]}>
       {showHighlightBanner && highlightedAccountIds.size > 0 && (
@@ -862,6 +892,67 @@ export default function AccountsScreen() {
                             </Text>
                           </Pressable>
                         </View>
+
+                        {isConnectionSupportedPlatform &&
+                          (() => {
+                            const primaryEmail = getPrimaryEmail(item);
+                            if (!primaryEmail) return null;
+
+                            const connectedCount = countConnectedPlatforms(
+                              database,
+                              primaryEmail.value,
+                              String(platformKey)
+                            );
+
+                            return (
+                              <Pressable
+                                onPress={() => handleViewConnectedPlatforms(item)}
+                                style={[
+                                  styles.connectedPlatformsButton,
+                                  {
+                                    backgroundColor:
+                                      connectedCount > 0 ? colors.accent + "10" : colors.card,
+                                    borderColor:
+                                      connectedCount > 0 ? colors.accent + "40" : colors.cardBorder,
+                                  },
+                                ]}
+                                android_ripple={{ color: colors.accent + "22" }}
+                              >
+                                <View style={styles.connectedPlatformsLeft}>
+                                  <Ionicons
+                                    name="link"
+                                    size={20}
+                                    color={connectedCount > 0 ? colors.accent : colors.muted}
+                                  />
+                                  <View>
+                                    <Text
+                                      style={[
+                                        styles.connectedPlatformsText,
+                                        {
+                                          color: connectedCount > 0 ? colors.accent : colors.text,
+                                          fontFamily: fontConfig.bold,
+                                        },
+                                      ]}
+                                    >
+                                      View Connected Platforms
+                                    </Text>
+                                    {connectedCount > 0 && (
+                                      <Text
+                                        style={[
+                                          styles.connectedPlatformsCount,
+                                          { color: colors.accent, fontFamily: fontConfig.regular },
+                                        ]}
+                                      >
+                                        Used in {connectedCount} other platform
+                                        {connectedCount !== 1 ? "s" : ""}
+                                      </Text>
+                                    )}
+                                  </View>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                              </Pressable>
+                            );
+                          })()}
                       </View>
                     </MotiView>
                   )}
@@ -1098,5 +1189,27 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: "absolute",
     right: 20,
+  },
+  connectedPlatformsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  connectedPlatformsLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  connectedPlatformsText: {
+    fontSize: 14,
+  },
+  connectedPlatformsCount: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });
