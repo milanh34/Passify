@@ -1,11 +1,20 @@
 // src/components/PINInputModal.tsx
 
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, Modal, Vibration } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Modal,
+  Vibration,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import { useTheme } from "../context/ThemeContext";
-import { validatePINFormat } from "../utils/pinCode";
+import { validatePINFormat, getPINLockoutStatus } from "../utils/pinCode";
+import { formatRemainingTime, getAttemptsUntilNextLockout } from "../utils/pinAttemptTracker";
 
 interface PINInputModalProps {
   visible: boolean;
@@ -32,16 +41,79 @@ export default function PINInputModal({
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutRemainingMs, setLockoutRemainingMs] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [attemptsRemaining, setAttemptsRemaining] = useState(0);
+
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      checkAndUpdateLockoutStatus();
+    }
+
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    if (isLockedOut && lockoutRemainingMs > 0) {
+      countdownIntervalRef.current = setInterval(() => {
+        setLockoutRemainingMs((prev) => {
+          const newRemaining = prev - 1000;
+          if (newRemaining <= 0) {
+            setIsLockedOut(false);
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+            }
+            return 0;
+          }
+          return newRemaining;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [isLockedOut]);
+
+  const checkAndUpdateLockoutStatus = useCallback(async () => {
+    try {
+      const status = await getPINLockoutStatus();
+      setIsLockedOut(status.isLockedOut);
+      setLockoutRemainingMs(status.remainingMs);
+      setFailedAttempts(status.failedAttempts);
+
+      if (!status.isLockedOut) {
+        const nextLockout = await getAttemptsUntilNextLockout();
+        setAttemptsRemaining(nextLockout.attemptsRemaining);
+      }
+    } catch (error) {
+      console.error("Failed to check lockout status:", error);
+    }
+  }, []);
 
   useEffect(() => {
     if (visible) {
       setPin("");
       setError("");
       setIsLoading(false);
+      setIsVerifying(false);
     }
   }, [visible]);
 
   const handleNumberPress = (num: number) => {
+    if (isLockedOut || isLoading || isVerifying) return;
+
     if (pin.length < maxLength) {
       const newPin = pin + num.toString();
       setPin(newPin);
@@ -54,12 +126,19 @@ export default function PINInputModal({
   };
 
   const handleBackspace = () => {
+    if (isLockedOut || isLoading || isVerifying) return;
     setPin(pin.slice(0, -1));
     setError("");
   };
 
   const handleSubmit = async (pinToSubmit?: string) => {
     const currentPin = pinToSubmit || pin;
+
+    if (isLockedOut) {
+      setError(`Locked out. Wait ${formatRemainingTime(lockoutRemainingMs)}`);
+      Vibration.vibrate(100);
+      return;
+    }
 
     if (currentPin.length < minLength) {
       setError(`PIN must be at least ${minLength} digits`);
@@ -74,14 +153,37 @@ export default function PINInputModal({
       return;
     }
 
+    setIsVerifying(true);
     setIsLoading(true);
-    const success = await onSubmit(currentPin);
-    setIsLoading(false);
 
-    if (!success) {
-      setError("Incorrect PIN. Try again.");
+    try {
+      const success = await onSubmit(currentPin);
+
+      if (!success) {
+        await checkAndUpdateLockoutStatus();
+
+        if (isLockedOut) {
+          setError(`Too many attempts. Wait ${formatRemainingTime(lockoutRemainingMs)}`);
+        } else {
+          const nextLockout = await getAttemptsUntilNextLockout();
+          if (nextLockout.attemptsRemaining <= 3) {
+            setError(`Incorrect PIN. ${nextLockout.attemptsRemaining} attempts remaining.`);
+          } else {
+            setError("Incorrect PIN. Try again.");
+          }
+        }
+
+        setPin("");
+        Vibration.vibrate([100, 50, 100]);
+        setIsLoading(false);
+        setIsVerifying(false);
+      }
+    } catch (error) {
+      console.error("PIN submit error:", error);
+      setError("An error occurred. Please try again.");
       setPin("");
-      Vibration.vibrate([100, 50, 100]);
+      setIsLoading(false);
+      setIsVerifying(false);
     }
   };
 
@@ -92,6 +194,8 @@ export default function PINInputModal({
       [7, 8, 9],
       ["", 0, "backspace"],
     ];
+
+    const isDisabled = isLockedOut || isLoading || isVerifying;
 
     return (
       <View style={styles.keypad}>
@@ -107,12 +211,13 @@ export default function PINInputModal({
                   <Pressable
                     key={keyIndex}
                     onPress={handleBackspace}
-                    disabled={pin.length === 0 || isLoading}
+                    disabled={pin.length === 0 || isDisabled}
                     style={[
                       styles.keyButton,
                       {
                         backgroundColor: colors.card,
                         borderColor: colors.cardBorder,
+                        opacity: isDisabled ? 0.5 : 1,
                       },
                     ]}
                     android_ripple={{ color: colors.accent + "22" }}
@@ -120,7 +225,7 @@ export default function PINInputModal({
                     <Ionicons
                       name="backspace-outline"
                       size={28}
-                      color={pin.length === 0 ? colors.subtext : colors.text}
+                      color={pin.length === 0 || isDisabled ? colors.subtext : colors.text}
                     />
                   </Pressable>
                 );
@@ -130,12 +235,13 @@ export default function PINInputModal({
                 <Pressable
                   key={keyIndex}
                   onPress={() => handleNumberPress(key as number)}
-                  disabled={pin.length >= maxLength || isLoading}
+                  disabled={pin.length >= maxLength || isDisabled}
                   style={[
                     styles.keyButton,
                     {
                       backgroundColor: colors.card,
                       borderColor: colors.cardBorder,
+                      opacity: isDisabled ? 0.5 : 1,
                     },
                   ]}
                   android_ripple={{ color: colors.accent + "22" }}
@@ -144,7 +250,7 @@ export default function PINInputModal({
                     style={[
                       styles.keyText,
                       {
-                        color: colors.text,
+                        color: isDisabled ? colors.subtext : colors.text,
                         fontFamily: fontConfig.bold,
                       },
                     ]}
@@ -184,9 +290,121 @@ export default function PINInputModal({
     );
   };
 
+  const renderLockoutOverlay = () => {
+    if (!isLockedOut) return null;
+
+    return (
+      <MotiView
+        from={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ type: "timing", duration: 200 }}
+        style={styles.lockoutOverlay}
+      >
+        <View
+          style={[
+            styles.lockoutCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.danger,
+            },
+          ]}
+        >
+          <Ionicons name="lock-closed" size={48} color={colors.danger} />
+          <Text
+            style={[
+              styles.lockoutTitle,
+              {
+                color: colors.danger,
+                fontFamily: fontConfig.bold,
+              },
+            ]}
+          >
+            Too Many Attempts
+          </Text>
+          <Text
+            style={[
+              styles.lockoutSubtitle,
+              {
+                color: colors.subtext,
+                fontFamily: fontConfig.regular,
+              },
+            ]}
+          >
+            Please wait before trying again
+          </Text>
+
+          <View style={[styles.countdownContainer, { backgroundColor: colors.danger + "15" }]}>
+            <Ionicons name="time-outline" size={24} color={colors.danger} />
+            <Text
+              style={[
+                styles.countdownText,
+                {
+                  color: colors.danger,
+                  fontFamily: fontConfig.bold,
+                },
+              ]}
+            >
+              {formatRemainingTime(lockoutRemainingMs)}
+            </Text>
+          </View>
+
+          <Text
+            style={[
+              styles.lockoutWarning,
+              {
+                color: colors.muted,
+                fontFamily: fontConfig.regular,
+              },
+            ]}
+          >
+            {failedAttempts >= 15
+              ? "⚠️ Continued failed attempts may result in data wipe"
+              : `${failedAttempts} failed attempt${failedAttempts !== 1 ? "s" : ""}`}
+          </Text>
+        </View>
+      </MotiView>
+    );
+  };
+
+  const renderLoadingOverlay = () => {
+    if (!isVerifying) return null;
+
+    return (
+      <MotiView
+        from={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ type: "timing", duration: 150 }}
+        style={styles.loadingOverlay}
+      >
+        <View
+          style={[
+            styles.loadingCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.accent,
+            },
+          ]}
+        >
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text
+            style={[
+              styles.loadingText,
+              {
+                color: colors.text,
+                fontFamily: fontConfig.regular,
+              },
+            ]}
+          >
+            Verifying PIN...
+          </Text>
+        </View>
+      </MotiView>
+    );
+  };
+
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onCancel}>
-      <View style={[styles.modalOverlay, { backgroundColor: colors.bg[0] + "CC" }]}>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.bg[0] + "F5" }]}>
         <MotiView
           from={{ opacity: 0, translateY: 50 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -228,7 +446,7 @@ export default function PINInputModal({
           {renderPINDots()}
 
           <AnimatePresence>
-            {error && (
+            {error && !isLockedOut && (
               <MotiView
                 from={{ opacity: 0, translateY: -10 }}
                 animate={{ opacity: 1, translateY: 0 }}
@@ -252,32 +470,59 @@ export default function PINInputModal({
             )}
           </AnimatePresence>
 
+          {!isLockedOut &&
+            attemptsRemaining > 0 &&
+            attemptsRemaining <= 3 &&
+            failedAttempts > 0 && (
+              <View style={styles.attemptsWarning}>
+                <Ionicons name="warning-outline" size={14} color={colors.accent} />
+                <Text
+                  style={[
+                    styles.attemptsWarningText,
+                    {
+                      color: colors.accent,
+                      fontFamily: fontConfig.regular,
+                    },
+                  ]}
+                >
+                  {attemptsRemaining} attempt{attemptsRemaining !== 1 ? "s" : ""} until lockout
+                </Text>
+              </View>
+            )}
+
           {renderKeypad()}
 
           <View style={styles.actions}>
             {mode !== "unlock" && (
               <Pressable
                 onPress={() => handleSubmit()}
-                disabled={pin.length < minLength || isLoading}
+                disabled={pin.length < minLength || isLoading || isLockedOut}
                 style={[
                   styles.submitButton,
                   {
-                    backgroundColor: pin.length >= minLength ? colors.accent : colors.cardBorder,
+                    backgroundColor:
+                      pin.length >= minLength && !isLoading && !isLockedOut
+                        ? colors.accent
+                        : colors.cardBorder,
                   },
                 ]}
                 android_ripple={{ color: colors.bg[0] }}
               >
-                <Text
-                  style={[
-                    styles.submitButtonText,
-                    {
-                      color: pin.length >= minLength ? "#fff" : colors.subtext,
-                      fontFamily: fontConfig.bold,
-                    },
-                  ]}
-                >
-                  {isLoading ? "Verifying..." : "Submit"}
-                </Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text
+                    style={[
+                      styles.submitButtonText,
+                      {
+                        color: pin.length >= minLength && !isLockedOut ? "#fff" : colors.subtext,
+                        fontFamily: fontConfig.bold,
+                      },
+                    ]}
+                  >
+                    Submit
+                  </Text>
+                )}
               </Pressable>
             )}
 
@@ -297,6 +542,9 @@ export default function PINInputModal({
               </Pressable>
             )}
           </View>
+
+          {renderLockoutOverlay()}
+          {renderLoadingOverlay()}
         </MotiView>
       </View>
     </Modal>
@@ -317,6 +565,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 24,
     gap: 24,
+    position: "relative",
+    overflow: "hidden",
   },
   header: {
     alignItems: "center",
@@ -351,6 +601,15 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
   },
+  attemptsWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  attemptsWarningText: {
+    fontSize: 12,
+  },
   keypad: {
     gap: 12,
   },
@@ -377,6 +636,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48,
   },
   submitButtonText: {
     fontSize: 16,
@@ -387,5 +648,63 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 14,
+  },
+  lockoutOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    borderRadius: 24,
+  },
+  lockoutCard: {
+    padding: 32,
+    borderRadius: 20,
+    borderWidth: 2,
+    alignItems: "center",
+    gap: 12,
+    maxWidth: 300,
+  },
+  lockoutTitle: {
+    fontSize: 20,
+    textAlign: "center",
+  },
+  lockoutSubtitle: {
+    fontSize: 14,
+    textAlign: "center",
+  },
+  countdownContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  countdownText: {
+    fontSize: 24,
+  },
+  lockoutWarning: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 8,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 24,
+  },
+  loadingCard: {
+    padding: 32,
+    borderRadius: 20,
+    borderWidth: 2,
+    alignItems: "center",
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
   },
 });
