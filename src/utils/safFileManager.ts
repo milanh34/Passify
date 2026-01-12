@@ -3,6 +3,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
 import { Platform } from "react-native";
+import * as Sharing from "expo-sharing";
 
 const { StorageAccessFramework } = FileSystem;
 
@@ -34,13 +35,11 @@ export async function saveFileWithSAF(
     }
 
     const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-
     if (!permissions.granted) {
       return { success: false, error: "Storage permission denied by user" };
     }
 
     const directoryUri = permissions.directoryUri;
-
     const fileUri = await StorageAccessFramework.createFileAsync(directoryUri, filename, mimeType);
 
     await FileSystem.writeAsStringAsync(fileUri, base64Content, {
@@ -69,7 +68,6 @@ export async function readFileWithSAF(): Promise<ReadResult> {
     }
 
     const fileUri = result.assets[0].uri;
-
     const content = await FileSystem.readAsStringAsync(fileUri, {
       encoding: FileSystem.EncodingType.Base64,
     });
@@ -86,8 +84,6 @@ export async function readFileWithSAF(): Promise<ReadResult> {
 
 export async function shareFile(fileUri: string, mimeType: string = "image/png"): Promise<boolean> {
   try {
-    const { default: Sharing } = await import("expo-sharing");
-
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) {
       console.error("Sharing is not available on this device");

@@ -104,6 +104,19 @@ async function computeHMAC(key: Uint8Array, data: Uint8Array): Promise<Uint8Arra
   return new Uint8Array(outerHash.match(/.{2}/g)!.map((byte) => parseInt(byte, 16)));
 }
 
+function constantTimeCompare(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+
+  return result === 0;
+}
+
 export async function encryptData(
   data: string,
   password: string,
@@ -181,13 +194,8 @@ export async function decryptData(
     const dataToAuth = encryptedData.slice(0, -32);
     const computedHmac = await computeHMAC(hmacKey, dataToAuth);
 
-    let isValid = true;
-    for (let i = 0; i < 32; i++) {
-      if (hmac[i] !== computedHmac[i]) isValid = false;
-    }
-
-    if (!isValid) {
-      throw new Error("Authentication failed: wrong password or corrupted data");
+    if (!constantTimeCompare(hmac, computedHmac)) {
+      throw new Error("Authentication failed: wrong password, corrupted data, or tampered file");
     }
 
     const aesCtr = new aesjs.ModeOfOperation.ctr(aesKey, new aesjs.Counter(Array.from(iv)));
