@@ -1,6 +1,6 @@
 // app/screens/BiometricUnlockScreen.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable, StatusBar, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useAuth } from "../../src/context/AuthContext";
 import { authenticateWithBiometric } from "../../src/utils/biometricAuth";
-import { verifyPIN } from "../../src/utils/pinCode";
+import { verifyPINWithDetails, getPINLockoutStatus } from "../../src/utils/pinCode";
+import { formatRemainingTime } from "../../src/utils/pinAttemptTracker";
 import BiometricPrompt from "../../src/components/BiometricPrompt";
 import PINInputModal from "../../src/components/PINInputModal";
 import Toast from "../../src/components/Toast";
@@ -24,6 +25,9 @@ export default function BiometricUnlockScreen() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("error");
 
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState("");
+
   const showToastMessage = (
     message: string,
     type: "success" | "error" | "info" | "warning" = "error"
@@ -35,10 +39,51 @@ export default function BiometricUnlockScreen() {
   };
 
   useEffect(() => {
-    if (preferences.biometricEnabled && biometricCapability?.isAvailable && !isAuthenticating) {
-      handleBiometricAuth();
+    checkLockoutStatus();
+  }, []);
+
+  const checkLockoutStatus = useCallback(async () => {
+    try {
+      const status = await getPINLockoutStatus();
+      setIsLockedOut(status.isLockedOut);
+      if (status.isLockedOut) {
+        setLockoutRemaining(status.remainingFormatted);
+      }
+    } catch (error) {
+      console.error("Failed to check lockout status:", error);
     }
   }, []);
+
+  useEffect(() => {
+    if (
+      preferences.biometricEnabled &&
+      biometricCapability?.isAvailable &&
+      !isAuthenticating &&
+      !isLockedOut
+    ) {
+      handleBiometricAuth();
+    }
+  }, [isLockedOut]);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    if (isLockedOut) {
+      interval = setInterval(async () => {
+        const status = await getPINLockoutStatus();
+        if (!status.isLockedOut) {
+          setIsLockedOut(false);
+          setLockoutRemaining("");
+        } else {
+          setLockoutRemaining(status.remainingFormatted);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLockedOut]);
 
   const handleBiometricAuth = async () => {
     if (!biometricCapability?.isAvailable) {
@@ -72,12 +117,20 @@ export default function BiometricUnlockScreen() {
   };
 
   const handlePINSubmit = async (pin: string): Promise<boolean> => {
-    const isValid = await verifyPIN(pin);
-    if (isValid) {
+    const result = await verifyPINWithDetails(pin);
+
+    if (result.success) {
       await unlock("pin");
       setShowPINModal(false);
       return true;
     }
+
+    if (result.isLockedOut) {
+      setIsLockedOut(true);
+      setLockoutRemaining(formatRemainingTime(result.lockoutRemainingMs || 0));
+      showToastMessage(result.lockoutMessage || "Too many attempts", "error");
+    }
+
     return false;
   };
 
@@ -86,6 +139,12 @@ export default function BiometricUnlockScreen() {
       showToastMessage("No PIN configured. Please use biometric.", "warning");
       return;
     }
+
+    if (isLockedOut) {
+      showToastMessage(`Locked out. Try again in ${lockoutRemaining}`, "error");
+      return;
+    }
+
     setShowPINModal(true);
   };
 
@@ -150,7 +209,48 @@ export default function BiometricUnlockScreen() {
         </Text>
       </MotiView>
 
-      {canUseBiometric && (
+      {isLockedOut && (
+        <MotiView
+          from={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "timing", duration: 300 }}
+          style={[
+            styles.lockoutBanner,
+            {
+              backgroundColor: colors.danger + "15",
+              borderColor: colors.danger,
+            },
+          ]}
+        >
+          <Ionicons name="lock-closed" size={24} color={colors.danger} />
+          <View style={styles.lockoutBannerText}>
+            <Text
+              style={[
+                styles.lockoutTitle,
+                {
+                  color: colors.danger,
+                  fontFamily: fontConfig.bold,
+                },
+              ]}
+            >
+              Too Many Failed Attempts
+            </Text>
+            <Text
+              style={[
+                styles.lockoutCountdown,
+                {
+                  color: colors.danger,
+                  fontFamily: fontConfig.regular,
+                },
+              ]}
+            >
+              Try again in {lockoutRemaining}
+            </Text>
+          </View>
+        </MotiView>
+      )}
+
+      {canUseBiometric && !isLockedOut && (
         <View style={styles.biometricContainer}>
           <BiometricPrompt
             biometricType={biometricCapability!.biometricType}
@@ -168,38 +268,48 @@ export default function BiometricUnlockScreen() {
             style={[
               styles.fallbackButton,
               {
-                borderColor: colors.cardBorder,
+                borderColor: isLockedOut ? colors.danger : colors.cardBorder,
+                opacity: isLockedOut ? 0.6 : 1,
               },
             ]}
             android_ripple={{ color: colors.accent + "22" }}
           >
-            <Ionicons name="keypad-outline" size={20} color={colors.subtext} />
+            <Ionicons
+              name="keypad-outline"
+              size={20}
+              color={isLockedOut ? colors.danger : colors.subtext}
+            />
             <Text
               style={[
                 styles.fallbackText,
                 {
-                  color: colors.subtext,
+                  color: isLockedOut ? colors.danger : colors.subtext,
                   fontFamily: fontConfig.regular,
                 },
               ]}
             >
-              Use PIN Instead
+              {isLockedOut ? `Locked (${lockoutRemaining})` : "Use PIN Instead"}
             </Text>
           </Pressable>
         )}
 
         {!canUseBiometric && isPINConfigured && (
           <Pressable
-            onPress={() => setShowPINModal(true)}
+            onPress={() => !isLockedOut && setShowPINModal(true)}
+            disabled={isLockedOut}
             style={[
               styles.primaryButton,
               {
-                backgroundColor: colors.accent,
+                backgroundColor: isLockedOut ? colors.cardBorder : colors.accent,
               },
             ]}
             android_ripple={{ color: colors.bg[0] }}
           >
-            <Ionicons name="keypad-outline" size={24} color="#fff" />
+            <Ionicons
+              name={isLockedOut ? "lock-closed-outline" : "keypad-outline"}
+              size={24}
+              color="#fff"
+            />
             <Text
               style={[
                 styles.primaryButtonText,
@@ -208,7 +318,7 @@ export default function BiometricUnlockScreen() {
                 },
               ]}
             >
-              Enter PIN to Unlock
+              {isLockedOut ? `Locked (${lockoutRemaining})` : "Enter PIN to Unlock"}
             </Text>
           </Pressable>
         )}
@@ -292,6 +402,25 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     textAlign: "center",
+  },
+  lockoutBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    marginHorizontal: 20,
+  },
+  lockoutBannerText: {
+    flex: 1,
+  },
+  lockoutTitle: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  lockoutCountdown: {
+    fontSize: 14,
   },
   biometricContainer: {
     alignItems: "center",
