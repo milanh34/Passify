@@ -72,13 +72,11 @@ export default function PasswordGeneratorModal({
     }
   }, [options, mode, passphraseWords]);
 
-  // Generate on modal open
   useEffect(() => {
     if (visible) {
       setGenerated(null);
       setCopied(false);
       setPasswordVisible(true);
-      // Generate after a small delay to ensure modal is rendered
       const timer = setTimeout(() => {
         handleGenerate();
       }, 200);
@@ -137,7 +135,6 @@ export default function PasswordGeneratorModal({
             },
           ]}
         >
-          {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
             <View style={styles.headerLeft}>
               <View style={[styles.headerIcon, { backgroundColor: colors.accent + "20" }]}>
@@ -147,7 +144,9 @@ export default function PasswordGeneratorModal({
                 <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
                   Password Generator
                 </Text>
-                <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                <Text
+                  style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}
+                >
                   Create a secure password
                 </Text>
               </View>
@@ -160,14 +159,12 @@ export default function PasswordGeneratorModal({
             </Pressable>
           </View>
 
-          {/* Scrollable Content */}
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={true}
             bounces={false}
           >
-            {/* Mode Toggle */}
             <View style={styles.section}>
               <View style={styles.modeToggle}>
                 <Pressable
@@ -227,9 +224,10 @@ export default function PasswordGeneratorModal({
               </View>
             </View>
 
-            {/* Generated Password Display */}
             <View style={styles.section}>
-              <Text style={[styles.sectionLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}>
+              <Text
+                style={[styles.sectionLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}
+              >
                 GENERATED PASSWORD
               </Text>
               <View
@@ -244,7 +242,12 @@ export default function PasswordGeneratorModal({
                 {isGenerating ? (
                   <View style={styles.loadingBox}>
                     <ActivityIndicator size="small" color={colors.accent} />
-                    <Text style={[styles.loadingText, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                    <Text
+                      style={[
+                        styles.loadingText,
+                        { color: colors.muted, fontFamily: fontConfig.regular },
+                      ]}
+                    >
                       Generating...
                     </Text>
                   </View>
@@ -273,27 +276,44 @@ export default function PasswordGeneratorModal({
                 ) : (
                   <View style={styles.loadingBox}>
                     <Ionicons name="key-outline" size={28} color={colors.muted} />
-                    <Text style={[styles.loadingText, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                    <Text
+                      style={[
+                        styles.loadingText,
+                        { color: colors.muted, fontFamily: fontConfig.regular },
+                      ]}
+                    >
                       Tap Regenerate
                     </Text>
                   </View>
                 )}
               </View>
 
-              {/* Strength Indicator */}
               {generated && !isGenerating && (
                 <View style={styles.strengthBox}>
-                  <PasswordStrengthIndicator password={generated.password} showSuggestions={false} />
+                  <PasswordStrengthIndicator
+                    password={generated.password}
+                    showSuggestions={false}
+                  />
                   <View style={styles.statsRow}>
                     <View style={styles.statItem}>
                       <Ionicons name="shield-checkmark" size={14} color={colors.muted} />
-                      <Text style={[styles.statText, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                      <Text
+                        style={[
+                          styles.statText,
+                          { color: colors.muted, fontFamily: fontConfig.regular },
+                        ]}
+                      >
                         {generated.entropy} bits entropy
                       </Text>
                     </View>
                     <View style={styles.statItem}>
                       <Ionicons name="text" size={14} color={colors.muted} />
-                      <Text style={[styles.statText, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                      <Text
+                        style={[
+                          styles.statText,
+                          { color: colors.muted, fontFamily: fontConfig.regular },
+                        ]}
+                      >
                         {generated.password.length} chars
                       </Text>
                     </View>
@@ -302,7 +322,6 @@ export default function PasswordGeneratorModal({
               )}
             </View>
 
-            {/* Action Buttons */}
             <View style={styles.section}>
               <View style={styles.actionRow}>
                 <Pressable
@@ -318,7 +337,12 @@ export default function PasswordGeneratorModal({
                   ]}
                 >
                   <Ionicons name="refresh" size={18} color={colors.accent} />
-                  <Text style={[styles.actionBtnText, { color: colors.accent, fontFamily: fontConfig.bold }]}>
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      { color: colors.accent, fontFamily: fontConfig.bold },
+                    ]}
+                  >
                     Regenerate
                   </Text>
                 </Pressable>
@@ -334,7 +358,11 @@ export default function PasswordGeneratorModal({
                     },
                   ]}
                 >
-                  <Ionicons name={copied ? "checkmark" : "copy"} size={18} color={copied ? "#fff" : colors.accent} />
+                  <Ionicons
+                    name={copied ? "checkmark" : "copy"}
+                    size={18}
+                    color={copied ? "#fff" : colors.accent}
+                  />
                   <Text
                     style={[
                       styles.actionBtnText,
@@ -347,13 +375,21 @@ export default function PasswordGeneratorModal({
               </View>
             </View>
 
-            {/* Quick Presets (Password mode only) */}
             {mode === "password" && (
               <View style={styles.section}>
-                <Text style={[styles.sectionLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}>
+                <Text
+                  style={[
+                    styles.sectionLabel,
+                    { color: colors.muted, fontFamily: fontConfig.bold },
+                  ]}
+                >
                   QUICK PRESETS
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetsRow}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.presetsRow}
+                >
                   {PASSWORD_PRESETS.map((preset) => (
                     <Pressable
                       key={preset.id}
@@ -363,10 +399,20 @@ export default function PasswordGeneratorModal({
                         { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
                       ]}
                     >
-                      <Text style={[styles.presetName, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                      <Text
+                        style={[
+                          styles.presetName,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
                         {preset.name}
                       </Text>
-                      <Text style={[styles.presetDesc, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+                      <Text
+                        style={[
+                          styles.presetDesc,
+                          { color: colors.muted, fontFamily: fontConfig.regular },
+                        ]}
+                      >
                         {preset.description}
                       </Text>
                     </Pressable>
@@ -375,13 +421,20 @@ export default function PasswordGeneratorModal({
               </View>
             )}
 
-            {/* Advanced Options */}
             <View style={styles.section}>
               <Pressable
                 onPress={() => setShowAdvanced(!showAdvanced)}
-                style={[styles.advancedHeader, { backgroundColor: colors.bg[0], borderColor: colors.cardBorder }]}
+                style={[
+                  styles.advancedHeader,
+                  { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                ]}
               >
-                <Text style={[styles.advancedTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                <Text
+                  style={[
+                    styles.advancedTitle,
+                    { color: colors.text, fontFamily: fontConfig.bold },
+                  ]}
+                >
                   {mode === "password" ? "Advanced Options" : "Passphrase Options"}
                 </Text>
                 <Ionicons
@@ -392,17 +445,31 @@ export default function PasswordGeneratorModal({
               </Pressable>
 
               {showAdvanced && (
-                <View style={[styles.optionsBox, { backgroundColor: colors.bg[0], borderColor: colors.cardBorder }]}>
+                <View
+                  style={[
+                    styles.optionsBox,
+                    { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                  ]}
+                >
                   {mode === "password" ? (
                     <>
-                      {/* Length Slider */}
                       <View style={styles.optionItem}>
                         <View style={styles.optionLabelRow}>
-                          <Text style={[styles.optionLabel, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                          <Text
+                            style={[
+                              styles.optionLabel,
+                              { color: colors.text, fontFamily: fontConfig.regular },
+                            ]}
+                          >
                             Length
                           </Text>
                           <View style={[styles.badge, { backgroundColor: colors.accent + "20" }]}>
-                            <Text style={[styles.badgeText, { color: colors.accent, fontFamily: fontConfig.bold }]}>
+                            <Text
+                              style={[
+                                styles.badgeText,
+                                { color: colors.accent, fontFamily: fontConfig.bold },
+                              ]}
+                            >
                               {options.length}
                             </Text>
                           </View>
@@ -421,7 +488,6 @@ export default function PasswordGeneratorModal({
                         />
                       </View>
 
-                      {/* Toggles */}
                       {[
                         { key: "includeUppercase" as const, label: "Uppercase (A-Z)" },
                         { key: "includeLowercase" as const, label: "Lowercase (a-z)" },
@@ -429,8 +495,16 @@ export default function PasswordGeneratorModal({
                         { key: "includeSymbols" as const, label: "Symbols (!@#$)" },
                         { key: "excludeSimilar" as const, label: "Exclude Similar (i,l,1,O,0)" },
                       ].map((item) => (
-                        <View key={item.key} style={[styles.toggleItem, { borderTopColor: colors.cardBorder }]}>
-                          <Text style={[styles.toggleLabel, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                        <View
+                          key={item.key}
+                          style={[styles.toggleItem, { borderTopColor: colors.cardBorder }]}
+                        >
+                          <Text
+                            style={[
+                              styles.toggleLabel,
+                              { color: colors.text, fontFamily: fontConfig.regular },
+                            ]}
+                          >
                             {item.label}
                           </Text>
                           <Switch
@@ -448,11 +522,21 @@ export default function PasswordGeneratorModal({
                   ) : (
                     <View style={styles.optionItem}>
                       <View style={styles.optionLabelRow}>
-                        <Text style={[styles.optionLabel, { color: colors.text, fontFamily: fontConfig.regular }]}>
+                        <Text
+                          style={[
+                            styles.optionLabel,
+                            { color: colors.text, fontFamily: fontConfig.regular },
+                          ]}
+                        >
                           Number of Words
                         </Text>
                         <View style={[styles.badge, { backgroundColor: colors.accent + "20" }]}>
-                          <Text style={[styles.badgeText, { color: colors.accent, fontFamily: fontConfig.bold }]}>
+                          <Text
+                            style={[
+                              styles.badgeText,
+                              { color: colors.accent, fontFamily: fontConfig.bold },
+                            ]}
+                          >
                             {passphraseWords}
                           </Text>
                         </View>
@@ -476,8 +560,12 @@ export default function PasswordGeneratorModal({
             </View>
           </ScrollView>
 
-          {/* Footer */}
-          <View style={[styles.footer, { borderTopColor: colors.cardBorder, backgroundColor: colors.card }]}>
+          <View
+            style={[
+              styles.footer,
+              { borderTopColor: colors.cardBorder, backgroundColor: colors.card },
+            ]}
+          >
             <Pressable
               onPress={handleUsePassword}
               disabled={!generated || isGenerating}

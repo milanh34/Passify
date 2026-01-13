@@ -32,7 +32,7 @@ export default function PasswordStrengthIndicator({
   }
 
   const getBarWidth = (index: number): string => {
-    const filledBars = strength.score + 1; // score is 0-4, so add 1 for display
+    const filledBars = strength.score + 1;
     return index < filledBars ? "100%" : "0%";
   };
 
@@ -40,13 +40,7 @@ export default function PasswordStrengthIndicator({
     <View style={styles.container}>
       <View style={styles.barsContainer}>
         {[0, 1, 2, 3, 4].map((index) => (
-          <View
-            key={index}
-            style={[
-              styles.barBackground,
-              { backgroundColor: colors.cardBorder },
-            ]}
-          >
+          <View key={index} style={[styles.barBackground, { backgroundColor: colors.cardBorder }]}>
             <MotiView
               animate={{
                 width: getBarWidth(index),
@@ -58,7 +52,7 @@ export default function PasswordStrengthIndicator({
           </View>
         ))}
       </View>
-      
+
       <View style={styles.labelContainer}>
         <Text
           style={[
