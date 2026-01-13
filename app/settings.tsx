@@ -18,6 +18,13 @@ import { authenticateWithBiometric, getBiometricTypeName } from "../src/utils/bi
 import { InactivityTimeout, getTimeoutLabel } from "../src/utils/inactivityTracker";
 import { getScreenshotAllowed, setScreenshotAllowed } from "../src/utils/screenSecurity";
 import { resetOnboarding } from "../src/utils/onboardingState";
+import {
+  getDateFormat,
+  setDateFormat,
+  getDateFormatLabel,
+  DateFormatOption,
+  DATE_FORMAT_OPTIONS,
+} from "../src/utils/dateFormat";
 
 export default function Settings() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } =
@@ -38,7 +45,7 @@ export default function Settings() {
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [renderKey, setRenderKey] = useState(0);
-
+  const [dateFormat, setDateFormatState] = useState<DateFormatOption>("DD/MM/YYYY");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
@@ -65,6 +72,14 @@ export default function Settings() {
       setScreenshotAllowedState(allowed);
     };
     loadScreenshotSetting();
+  }, []);
+
+  useEffect(() => {
+    const loadDateFormat = async () => {
+      const format = await getDateFormat();
+      setDateFormatState(format);
+    };
+    loadDateFormat();
   }, []);
 
   const toggleSection = (section: string) => {
@@ -201,6 +216,12 @@ export default function Settings() {
       value ? "Screenshots enabled - Less secure" : "Screenshots blocked for security",
       value ? "warning" : "success"
     );
+  };
+
+  const handleDateFormatChange = async (format: DateFormatOption) => {
+    await setDateFormat(format);
+    setDateFormatState(format);
+    showToastMessage(`Date format set to ${getDateFormatLabel(format)}`, "success");
   };
 
   const handleReplayTutorial = () => {
@@ -763,6 +784,125 @@ export default function Settings() {
                     }}
                     thumbColor={!screenshotAllowed ? colors.accent : colors.card}
                   />
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
+        </View>
+
+        <View style={[styles.section, { marginTop: 20 }]} key={`display-section-${renderKey}`}>
+          <Pressable
+            onPress={() => toggleSection("display")}
+            style={[
+              styles.sectionHeader,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+            android_ripple={{ color: colors.accent + "22" }}
+          >
+            <View style={styles.headerLeft}>
+              <Ionicons
+                name="options"
+                size={22}
+                color={colors.accent}
+                style={{ marginRight: 12 }}
+              />
+              <Text
+                style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+              >
+                Display Options
+              </Text>
+            </View>
+            <Ionicons
+              name={expandedSection === "display" ? "chevron-up" : "chevron-down"}
+              size={24}
+              color={colors.accent}
+            />
+          </Pressable>
+          <AnimatePresence>
+            {expandedSection === "display" && (
+              <MotiView
+                key={`display-${renderKey}`}
+                from={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                exit={{ opacity: 0, translateY: -20, scale: 0.95 }}
+                transition={{ type: "timing", duration: 250 }}
+                style={styles.securityContent}
+              >
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="calendar-outline" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
+                      <Text
+                        style={[
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Date Format
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {getDateFormatLabel(dateFormat)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.dateFormatGrid}>
+                  {DATE_FORMAT_OPTIONS.map((option) => (
+                    <Pressable
+                      key={option.id}
+                      onPress={() => handleDateFormatChange(option.id)}
+                      style={[
+                        styles.dateFormatButton,
+                        {
+                          backgroundColor:
+                            dateFormat === option.id ? colors.accent + "15" : colors.card,
+                          borderWidth: dateFormat === option.id ? 2 : 1,
+                          borderColor: dateFormat === option.id ? colors.accent : colors.cardBorder,
+                        },
+                      ]}
+                      android_ripple={{ color: colors.accent + "22" }}
+                    >
+                      <Text
+                        style={[
+                          styles.dateFormatLabel,
+                          {
+                            color: dateFormat === option.id ? colors.accent : colors.text,
+                            fontFamily: fontConfig.bold,
+                          },
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.dateFormatExample,
+                          {
+                            color: dateFormat === option.id ? colors.accent : colors.muted,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {option.example}
+                      </Text>
+                      {dateFormat === option.id && (
+                        <View style={styles.dateFormatCheck}>
+                          <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
+                        </View>
+                      )}
+                    </Pressable>
+                  ))}
                 </View>
               </MotiView>
             )}
@@ -1390,5 +1530,25 @@ const styles = StyleSheet.create({
   },
   versionNumber: {
     fontSize: 18,
+  },
+  dateFormatGrid: {
+    gap: 8,
+  },
+  dateFormatButton: {
+    padding: 14,
+    borderRadius: 12,
+    position: "relative",
+  },
+  dateFormatLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  dateFormatExample: {
+    fontSize: 12,
+  },
+  dateFormatCheck: {
+    position: "absolute",
+    top: 12,
+    right: 12,
   },
 });

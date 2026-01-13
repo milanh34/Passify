@@ -27,6 +27,9 @@ import {
   getPrimaryEmail,
   countConnectedPlatforms,
 } from "../../src/utils/connectedAccounts";
+import { sortFieldsByOrder, isSensitiveField, isPasswordField } from "../../src/utils/fieldOrder";
+import { formatDate, getDateFormat, DateFormatOption } from "../../src/utils/dateFormat";
+import { getFieldType } from "../../src/utils/formValidation";
 
 const ACCOUNT_SORT_PREFERENCE_KEY = "@PM:account_sort_preference";
 
@@ -67,6 +70,7 @@ export default function AccountsScreen() {
   const { isAuthEnabled } = useAuth();
   const router = useRouter();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
+  const [dateFormat, setDateFormatState] = useState<DateFormatOption>("DD/MM/YYYY");
 
   const accounts: Account[] = useMemo(
     () => (platformKey ? database[String(platformKey)] || [] : []),
@@ -156,6 +160,14 @@ export default function AccountsScreen() {
       }
     }, [matchedIdsParam, searchQueryParam, isAuthEnabled, updateActivity])
   );
+
+  useEffect(() => {
+  const loadDateFormat = async () => {
+    const format = await getDateFormat();
+    setDateFormatState(format);
+  };
+  loadDateFormat();
+}, []);
 
   const debouncedSetQuery = useMemo(
     () =>
@@ -658,309 +670,329 @@ export default function AccountsScreen() {
           />
         }
         renderItem={({ item, index }) => {
-          const isExpanded = expandedCards.has(item.id);
-          const isHighlighted = highlightedAccountIds.has(item.id);
+  const isExpanded = expandedCards.has(item.id);
+  const isHighlighted = highlightedAccountIds.has(item.id);
+  
+  // Sort fields in proper order
+  const sortedFields = sortFieldsByOrder(
+    schema.filter((f) => f !== "id" && f !== "name" && f !== "createdAt" && f !== "updatedAt")
+  );
 
-          return (
-            <MotiView
-              key={item.id}
-              from={{ opacity: 0, translateY: 50 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{
-                type: "timing",
-                duration: 300,
-                delay: index * 50,
-              }}
-            >
-              <Pressable
-                onPress={() => handleCardPress(item.id)}
-                onLongPress={() => handleLongPress(item.id)}
-                delayLongPress={500}
+  return (
+    <MotiView
+      key={item.id}
+      from={{ opacity: 0, translateY: 50 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{
+        type: "timing",
+        duration: 300,
+        delay: index * 50,
+      }}
+    >
+      <Pressable
+        onPress={() => handleCardPress(item.id)}
+        onLongPress={() => handleLongPress(item.id)}
+        delayLongPress={500}
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: isHighlighted
+              ? colors.accent
+              : selectedAccounts.has(item.id)
+              ? colors.accent
+              : colors.cardBorder,
+            borderWidth: isHighlighted || selectedAccounts.has(item.id) ? 2 : 1,
+          },
+        ]}
+        android_ripple={{ color: colors.accent + "22" }}
+      >
+        {isSelectionMode && (
+          <View style={styles.selectionIndicator}>
+            <Ionicons
+              name={selectedAccounts.has(item.id) ? "checkmark-circle" : "ellipse-outline"}
+              size={24}
+              color={selectedAccounts.has(item.id) ? colors.accent : colors.muted}
+            />
+          </View>
+        )}
+        <View style={styles.cardHeader}>
+          <View style={styles.cardHeaderLeft}>
+            <Ionicons name="person-circle" size={28} color={colors.accent} />
+            <View style={{ flex: 1 }}>
+              <Text
                 style={[
-                  styles.card,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: isHighlighted
-                      ? colors.accent
-                      : selectedAccounts.has(item.id)
-                        ? colors.accent
-                        : colors.cardBorder,
-                    borderWidth: isHighlighted || selectedAccounts.has(item.id) ? 2 : 1,
-                  },
+                  styles.cardTitle,
+                  { color: colors.text, fontFamily: fontConfig.bold },
                 ]}
-                android_ripple={{ color: colors.accent + "22" }}
+                numberOfLines={2}
               >
-                {isSelectionMode && (
-                  <View style={styles.selectionIndicator}>
-                    <Ionicons
-                      name={selectedAccounts.has(item.id) ? "checkmark-circle" : "ellipse-outline"}
-                      size={24}
-                      color={selectedAccounts.has(item.id) ? colors.accent : colors.muted}
-                    />
-                  </View>
-                )}
+                {item.name || "Unnamed Account"}
+              </Text>
+              {isHighlighted && (
+                <Text
+                  style={[
+                    styles.matchBadge,
+                    {
+                      color: colors.accent,
+                      fontFamily: fontConfig.regular,
+                    },
+                  ]}
+                >
+                  <Ionicons name="search" size={12} /> Matched
+                </Text>
+              )}
+            </View>
+          </View>
+          {!isSelectionMode && (
+            <View style={styles.cardHeaderRight}>
+              <Ionicons
+                name={isExpanded ? "chevron-up" : "chevron-down"}
+                size={24}
+                color={colors.muted}
+              />
+            </View>
+          )}
+        </View>
+        <AnimatePresence>
+          {isExpanded && !isSelectionMode && (
+            <MotiView
+              from={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ type: "timing", duration: 200 }}
+            >
+              <View style={[styles.cardBody, { borderTopColor: colors.cardBorder }]}>
+                {sortedFields.map((fieldName) => {
+                  const value = item[fieldName];
+                  const fieldKey = `${item.id}-${fieldName}`;
+                  const isPassword = isPasswordField(fieldName);
+                  const isPwVisible = visiblePw[fieldKey];
+                  const fieldType = getFieldType(fieldName);
+                  const isSensitive = isSensitiveField(fieldName);
+                  
+                  // Format date fields
+                  let displayValue = value || "—";
+                  if (fieldType === "date" && value) {
+                    displayValue = formatDate(value, dateFormat);
+                  }
 
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardHeaderLeft}>
-                    <Ionicons name="person-circle" size={28} color={colors.accent} />
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={[
-                          styles.cardTitle,
-                          { color: colors.text, fontFamily: fontConfig.bold },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {item.name || "Unnamed Account"}
-                      </Text>
-                      {isHighlighted && (
+                  return (
+                    <View key={fieldName} style={styles.fieldRow}>
+                      <View style={styles.fieldLabelRow}>
+                        <Ionicons
+                          name={
+                            fieldType === "email"
+                              ? "mail-outline"
+                              : fieldType === "phone"
+                              ? "call-outline"
+                              : fieldType === "date"
+                              ? "calendar-outline"
+                              : isPassword
+                              ? "lock-closed-outline"
+                              : "text-outline"
+                          }
+                          size={14}
+                          color={isSensitive ? colors.accent : colors.muted}
+                        />
                         <Text
                           style={[
-                            styles.matchBadge,
+                            styles.fieldLabel,
                             {
-                              color: colors.accent,
+                              color: colors.subtext,
                               fontFamily: fontConfig.regular,
                             },
                           ]}
                         >
-                          <Ionicons name="search" size={12} /> Matched
+                          {fieldName.charAt(0).toUpperCase() +
+                            fieldName.slice(1).replace(/_/g, " ")}
                         </Text>
-                      )}
-                    </View>
-                  </View>
-
-                  {!isSelectionMode && (
-                    <View style={styles.cardHeaderRight}>
-                      <Ionicons
-                        name={isExpanded ? "chevron-up" : "chevron-down"}
-                        size={24}
-                        color={colors.muted}
-                      />
-                    </View>
-                  )}
-                </View>
-
-                <AnimatePresence>
-                  {isExpanded && !isSelectionMode && (
-                    <MotiView
-                      from={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ type: "timing", duration: 200 }}
-                    >
-                      <View style={[styles.cardBody, { borderTopColor: colors.cardBorder }]}>
-                        {schema
-                          .filter((f) => f !== "id" && f !== "name")
-                          .map((fieldName) => {
-                            const value = item[fieldName];
-                            const fieldKey = `${item.id}-${fieldName}`;
-                            const isPassword = fieldName.toLowerCase().includes("password");
-                            const isPwVisible = visiblePw[fieldKey];
-
-                            return (
-                              <View key={fieldName} style={styles.fieldRow}>
-                                <Text
-                                  style={[
-                                    styles.fieldLabel,
-                                    {
-                                      color: colors.subtext,
-                                      fontFamily: fontConfig.regular,
-                                    },
-                                  ]}
-                                >
-                                  {fieldName.charAt(0).toUpperCase() +
-                                    fieldName.slice(1).replace(/_/g, " ")}
-                                </Text>
-                                <View style={styles.fieldValueContainer}>
-                                  <Text
-                                    style={[
-                                      styles.fieldValue,
-                                      {
-                                        color: colors.text,
-                                        fontFamily: fontConfig.regular,
-                                      },
-                                    ]}
-                                    numberOfLines={1}
-                                  >
-                                    {isPassword && !isPwVisible ? "••••••••" : value || "—"}
-                                  </Text>
-                                  <View style={styles.fieldActions}>
-                                    {isPassword && (
-                                      <Pressable
-                                        onPress={() => {
-                                          setVisiblePw((prev) => ({
-                                            ...prev,
-                                            [fieldKey]: !prev[fieldKey],
-                                          }));
-                                          if (isAuthEnabled) {
-                                            updateActivity();
-                                          }
-                                        }}
-                                        style={styles.iconButton}
-                                        android_ripple={{
-                                          color: colors.accent + "33",
-                                        }}
-                                      >
-                                        <Ionicons
-                                          name={isPwVisible ? "eye-off-outline" : "eye-outline"}
-                                          size={18}
-                                          color={colors.muted}
-                                        />
-                                      </Pressable>
-                                    )}
-                                    <Pressable
-                                      onPress={() => copyToClipboard(value, fieldKey)}
-                                      style={styles.iconButton}
-                                      android_ripple={{
-                                        color: colors.accent + "33",
-                                      }}
-                                    >
-                                      <Ionicons
-                                        name={
-                                          copiedField === fieldKey ? "checkmark" : "copy-outline"
-                                        }
-                                        size={18}
-                                        color={
-                                          copiedField === fieldKey ? colors.accent : colors.muted
-                                        }
-                                      />
-                                    </Pressable>
-                                  </View>
-                                </View>
-                              </View>
-                            );
-                          })}
-
-                        <View style={styles.cardActions}>
-                          <Pressable
-                            onPress={() => {
-                              setAccModal({ visible: true, editing: item });
-                              if (isAuthEnabled) {
-                                updateActivity();
-                              }
-                            }}
-                            style={[
-                              styles.actionButton,
-                              {
-                                backgroundColor: colors.accent + "15",
-                                borderColor: colors.accent + "30",
-                              },
-                            ]}
-                            android_ripple={{ color: colors.accent + "33" }}
-                          >
-                            <Ionicons name="create-outline" size={18} color={colors.accent} />
-                            <Text
-                              style={[
-                                styles.actionButtonText,
-                                {
-                                  color: colors.accent,
-                                  fontFamily: fontConfig.bold,
-                                },
-                              ]}
+                      </View>
+                      <View style={styles.fieldValueContainer}>
+                        <Text
+                          style={[
+                            styles.fieldValue,
+                            {
+                              color: colors.text,
+                              fontFamily: fontConfig.regular,
+                            },
+                          ]}
+                          selectable={!isPassword || isPwVisible}
+                        >
+                          {isPassword && !isPwVisible ? "••••••••" : displayValue}
+                        </Text>
+                        <View style={styles.fieldActions}>
+                          {isPassword && (
+                            <Pressable
+                              onPress={() => {
+                                setVisiblePw((prev) => ({
+                                  ...prev,
+                                  [fieldKey]: !prev[fieldKey],
+                                }));
+                                if (isAuthEnabled) {
+                                  updateActivity();
+                                }
+                              }}
+                              style={styles.iconButton}
+                              android_ripple={{
+                                color: colors.accent + "33",
+                              }}
                             >
-                              Edit
-                            </Text>
-                          </Pressable>
-
+                              <Ionicons
+                                name={isPwVisible ? "eye-off-outline" : "eye-outline"}
+                                size={18}
+                                color={colors.muted}
+                              />
+                            </Pressable>
+                          )}
                           <Pressable
-                            onPress={() => {
-                              setDeleteModal({ visible: true, item });
-                              if (isAuthEnabled) {
-                                updateActivity();
-                              }
+                            onPress={() => copyToClipboard(isPassword && !isPwVisible ? value : displayValue, fieldKey)}
+                            style={styles.iconButton}
+                            android_ripple={{
+                              color: colors.accent + "33",
                             }}
-                            style={[
-                              styles.actionButton,
-                              {
-                                backgroundColor: colors.danger + "15",
-                                borderColor: colors.danger + "30",
-                              },
-                            ]}
-                            android_ripple={{ color: colors.danger + "33" }}
                           >
-                            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                            <Text
-                              style={[
-                                styles.actionButtonText,
-                                {
-                                  color: colors.danger,
-                                  fontFamily: fontConfig.bold,
-                                },
-                              ]}
-                            >
-                              Delete
-                            </Text>
+                            <Ionicons
+                              name={
+                                copiedField === fieldKey ? "checkmark" : "copy-outline"
+                              }
+                              size={18}
+                              color={
+                                copiedField === fieldKey ? colors.accent : colors.muted
+                              }
+                            />
                           </Pressable>
                         </View>
-
-                        {isConnectionSupportedPlatform &&
-                          (() => {
-                            const primaryEmail = getPrimaryEmail(item);
-                            if (!primaryEmail) return null;
-
-                            const connectedCount = countConnectedPlatforms(
-                              database,
-                              primaryEmail.value,
-                              String(platformKey)
-                            );
-
-                            return (
-                              <Pressable
-                                onPress={() => handleViewConnectedPlatforms(item)}
-                                style={[
-                                  styles.connectedPlatformsButton,
-                                  {
-                                    backgroundColor:
-                                      connectedCount > 0 ? colors.accent + "10" : colors.card,
-                                    borderColor:
-                                      connectedCount > 0 ? colors.accent + "40" : colors.cardBorder,
-                                  },
-                                ]}
-                                android_ripple={{ color: colors.accent + "22" }}
-                              >
-                                <View style={styles.connectedPlatformsLeft}>
-                                  <Ionicons
-                                    name="link"
-                                    size={20}
-                                    color={connectedCount > 0 ? colors.accent : colors.muted}
-                                  />
-                                  <View>
-                                    <Text
-                                      style={[
-                                        styles.connectedPlatformsText,
-                                        {
-                                          color: connectedCount > 0 ? colors.accent : colors.text,
-                                          fontFamily: fontConfig.bold,
-                                        },
-                                      ]}
-                                    >
-                                      View Connected Platforms
-                                    </Text>
-                                    {connectedCount > 0 && (
-                                      <Text
-                                        style={[
-                                          styles.connectedPlatformsCount,
-                                          { color: colors.accent, fontFamily: fontConfig.regular },
-                                        ]}
-                                      >
-                                        Used in {connectedCount} other platform
-                                        {connectedCount !== 1 ? "s" : ""}
-                                      </Text>
-                                    )}
-                                  </View>
-                                </View>
-                                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-                              </Pressable>
-                            );
-                          })()}
                       </View>
-                    </MotiView>
-                  )}
-                </AnimatePresence>
-              </Pressable>
+                    </View>
+                  );
+                })}
+                <View style={styles.cardActions}>
+                  <Pressable
+                    onPress={() => {
+                      setAccModal({ visible: true, editing: item });
+                      if (isAuthEnabled) {
+                        updateActivity();
+                      }
+                    }}
+                    style={[
+                      styles.actionButton,
+                      {
+                        backgroundColor: colors.accent + "15",
+                        borderColor: colors.accent + "30",
+                      },
+                    ]}
+                    android_ripple={{ color: colors.accent + "33" }}
+                  >
+                    <Ionicons name="create-outline" size={18} color={colors.accent} />
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        {
+                          color: colors.accent,
+                          fontFamily: fontConfig.bold,
+                        },
+                      ]}
+                    >
+                      Edit
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setDeleteModal({ visible: true, item });
+                      if (isAuthEnabled) {
+                        updateActivity();
+                      }
+                    }}
+                    style={[
+                      styles.actionButton,
+                      {
+                        backgroundColor: colors.danger + "15",
+                        borderColor: colors.danger + "30",
+                      },
+                    ]}
+                    android_ripple={{ color: colors.danger + "33" }}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        {
+                          color: colors.danger,
+                          fontFamily: fontConfig.bold,
+                        },
+                      ]}
+                    >
+                      Delete
+                    </Text>
+                  </Pressable>
+                </View>
+                {isConnectionSupportedPlatform &&
+                  (() => {
+                    const primaryEmail = getPrimaryEmail(item);
+                    if (!primaryEmail) return null;
+                    const connectedCount = countConnectedPlatforms(
+                      database,
+                      primaryEmail.value,
+                      String(platformKey)
+                    );
+                    return (
+                      <Pressable
+                        onPress={() => handleViewConnectedPlatforms(item)}
+                        style={[
+                          styles.connectedPlatformsButton,
+                          {
+                            backgroundColor:
+                              connectedCount > 0 ? colors.accent + "10" : colors.card,
+                            borderColor:
+                              connectedCount > 0 ? colors.accent + "40" : colors.cardBorder,
+                          },
+                        ]}
+                        android_ripple={{ color: colors.accent + "22" }}
+                      >
+                        <View style={styles.connectedPlatformsLeft}>
+                          <Ionicons
+                            name="link"
+                            size={20}
+                            color={connectedCount > 0 ? colors.accent : colors.muted}
+                          />
+                          <View>
+                            <Text
+                              style={[
+                                styles.connectedPlatformsText,
+                                {
+                                  color: connectedCount > 0 ? colors.accent : colors.text,
+                                  fontFamily: fontConfig.bold,
+                                },
+                              ]}
+                            >
+                              View Connected Platforms
+                            </Text>
+                            {connectedCount > 0 && (
+                              <Text
+                                style={[
+                                  styles.connectedPlatformsCount,
+                                  { color: colors.accent, fontFamily: fontConfig.regular },
+                                ]}
+                              >
+                                Used in {connectedCount} other platform
+                                {connectedCount !== 1 ? "s" : ""}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                      </Pressable>
+                    );
+                  })()}
+              </View>
             </MotiView>
-          );
-        }}
+          )}
+        </AnimatePresence>
+      </Pressable>
+    </MotiView>
+  );
+}}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons
@@ -1212,4 +1244,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  fieldLabelRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+},
 });
