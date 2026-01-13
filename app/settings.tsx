@@ -16,6 +16,7 @@ import PINInputModal from "../src/components/PINInputModal";
 import { storePIN, changePIN, isPINSet, removePIN } from "../src/utils/pinCode";
 import { authenticateWithBiometric, getBiometricTypeName } from "../src/utils/biometricAuth";
 import { InactivityTimeout, getTimeoutLabel } from "../src/utils/inactivityTracker";
+import { getScreenshotAllowed, setScreenshotAllowed } from "../src/utils/screenSecurity";
 import { resetOnboarding } from "../src/utils/onboardingState";
 
 export default function Settings() {
@@ -45,7 +46,7 @@ export default function Settings() {
   const [pinModalMode, setPinModalMode] = useState<"setup" | "change">("setup");
   const [oldPIN, setOldPIN] = useState("");
   const [showOldPINModal, setShowOldPINModal] = useState(false);
-
+  const [screenshotAllowed, setScreenshotAllowedState] = useState(false);
   const [showReplayTutorialModal, setShowReplayTutorialModal] = useState(false);
   const [showRemovePINModal, setShowRemovePINModal] = useState(false);
 
@@ -56,6 +57,14 @@ export default function Settings() {
   useEffect(() => {
     refreshBiometricCapability();
     checkPINStatus();
+  }, []);
+
+  useEffect(() => {
+    const loadScreenshotSetting = async () => {
+      const allowed = await getScreenshotAllowed();
+      setScreenshotAllowedState(allowed);
+    };
+    loadScreenshotSetting();
   }, []);
 
   const toggleSection = (section: string) => {
@@ -183,6 +192,15 @@ export default function Settings() {
     } else {
       showToastMessage(result.error || "Authentication failed", "error");
     }
+  };
+
+  const handleScreenshotToggle = async (value: boolean) => {
+    await setScreenshotAllowed(value);
+    setScreenshotAllowedState(value);
+    showToastMessage(
+      value ? "Screenshots enabled - Less secure" : "Screenshots blocked for security",
+      value ? "warning" : "success"
+    );
   };
 
   const handleReplayTutorial = () => {
@@ -709,6 +727,43 @@ export default function Settings() {
                     </View>
                   </View>
                 )}
+                <View style={[styles.securityRow, { borderBottomColor: colors.cardBorder }]}>
+                  <View style={styles.securityLeft}>
+                    <Ionicons name="camera-outline" size={24} color={colors.accent} />
+                    <View style={styles.securityTextContainer}>
+                      <Text
+                        style={[
+                          styles.securityTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
+                        ]}
+                      >
+                        Block Screenshots
+                      </Text>
+                      <Text
+                        style={[
+                          styles.securitySubtitle,
+                          {
+                            color: colors.subtext,
+                            fontFamily: fontConfig.regular,
+                          },
+                        ]}
+                      >
+                        {screenshotAllowed
+                          ? "Screenshots allowed (less secure)"
+                          : "Screenshots blocked on sensitive screens"}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={!screenshotAllowed}
+                    onValueChange={(value) => handleScreenshotToggle(!value)}
+                    trackColor={{
+                      false: colors.cardBorder,
+                      true: colors.accent + "60",
+                    }}
+                    thumbColor={!screenshotAllowed ? colors.accent : colors.card}
+                  />
+                </View>
               </MotiView>
             )}
           </AnimatePresence>
