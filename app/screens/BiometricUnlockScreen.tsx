@@ -10,6 +10,11 @@ import { useAuth } from "../../src/context/AuthContext";
 import { authenticateWithBiometric } from "../../src/utils/biometricAuth";
 import { verifyPINWithDetails, getPINLockoutStatus } from "../../src/utils/pinCode";
 import { formatRemainingTime } from "../../src/utils/pinAttemptTracker";
+import {
+  preventScreenCapture,
+  allowScreenCapture,
+  getScreenshotAllowed,
+} from "../../src/utils/screenSecurity";
 import BiometricPrompt from "../../src/components/BiometricPrompt";
 import PINInputModal from "../../src/components/PINInputModal";
 import Toast from "../../src/components/Toast";
@@ -40,6 +45,18 @@ export default function BiometricUnlockScreen() {
 
   useEffect(() => {
     checkLockoutStatus();
+  }, []);
+
+  useEffect(() => {
+    preventScreenCapture();
+
+    return () => {
+      getScreenshotAllowed().then((allowed) => {
+        if (allowed) {
+          allowScreenCapture();
+        }
+      });
+    };
   }, []);
 
   const checkLockoutStatus = useCallback(async () => {

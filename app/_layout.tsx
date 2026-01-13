@@ -14,6 +14,7 @@ import BiometricUnlockScreen from "./screens/BiometricUnlockScreen";
 import { useState, useEffect } from "react";
 import { useRouter, useSegments, useRootNavigationState } from "expo-router";
 import { isOnboardingComplete } from "../src/utils/onboardingState";
+import { initializeScreenSecurity } from "../src/utils/screenSecurity";
 
 LogBox.ignoreLogs(["Non-serializable values were found in the navigation state"]);
 
@@ -55,6 +56,10 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLocked, isInitialized } = useAuth();
   const { colors } = useTheme();
+
+  useEffect(() => {
+    initializeScreenSecurity();
+  }, []);
 
   if (!isInitialized) {
     return (
