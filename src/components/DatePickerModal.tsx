@@ -1,13 +1,7 @@
 // src/components/DatePickerModal.tsx
+
 import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-} from "react-native";
+import { Modal, View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { useTheme } from "../context/ThemeContext";
@@ -21,14 +15,24 @@ interface DatePickerModalProps {
 }
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 function isLeapYear(year: number): boolean {
-  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
 
 function getDaysInMonth(month: number, year: number): number {
@@ -44,10 +48,10 @@ export default function DatePickerModal({
   format = "DD/MM/YYYY",
 }: DatePickerModalProps) {
   const { colors, fontConfig } = useTheme();
-  
+
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-  
+
   const [selectedDay, setSelectedDay] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState(0);
   const [selectedYear, setSelectedYear] = useState(currentYear - 20);
@@ -57,7 +61,7 @@ export default function DatePickerModal({
     if (visible && initialDate) {
       try {
         let day: number, month: number, year: number;
-        
+
         if (format === "DD/MM/YYYY") {
           const parts = initialDate.split("/");
           day = parseInt(parts[0], 10);
@@ -74,15 +78,13 @@ export default function DatePickerModal({
           month = parseInt(parts[1], 10) - 1;
           day = parseInt(parts[2], 10);
         }
-        
+
         if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
           setSelectedDay(day);
           setSelectedMonth(month);
           setSelectedYear(year);
         }
-      } catch (e) {
-        // Use defaults
-      }
+      } catch (e) {}
     }
   }, [visible, initialDate, format]);
 
@@ -99,7 +101,7 @@ export default function DatePickerModal({
     const dayStr = selectedDay.toString().padStart(2, "0");
     const monthStr = (selectedMonth + 1).toString().padStart(2, "0");
     const yearStr = selectedYear.toString();
-    
+
     let formattedDate: string;
     if (format === "DD/MM/YYYY") {
       formattedDate = `${dayStr}/${monthStr}/${yearStr}`;
@@ -108,7 +110,7 @@ export default function DatePickerModal({
     } else {
       formattedDate = `${yearStr}-${monthStr}-${dayStr}`;
     }
-    
+
     onSelect(formattedDate);
     onClose();
   };
@@ -144,29 +146,32 @@ export default function DatePickerModal({
           ]}
           onStartShouldSetResponder={() => true}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Ionicons name="calendar" size={24} color={colors.accent} />
             <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
               Select Date
             </Text>
-            <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.bg[0] }]}>
+            <Pressable
+              onPress={onClose}
+              style={[styles.closeButton, { backgroundColor: colors.bg[0] }]}
+            >
               <Ionicons name="close" size={20} color={colors.muted} />
             </Pressable>
           </View>
 
-          {/* Selected Date Preview */}
           <View style={[styles.previewContainer, { backgroundColor: colors.accent + "15" }]}>
-            <Text style={[styles.previewText, { color: colors.accent, fontFamily: fontConfig.bold }]}>
+            <Text
+              style={[styles.previewText, { color: colors.accent, fontFamily: fontConfig.bold }]}
+            >
               {selectedDay} {MONTHS[selectedMonth]} {selectedYear}
             </Text>
           </View>
 
-          {/* Date Columns */}
           <View style={styles.columnsContainer}>
-            {/* Day Column */}
             <View style={styles.columnWrapper}>
-              <Text style={[styles.columnLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}>
+              <Text
+                style={[styles.columnLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}
+              >
                 Day
               </Text>
               <ScrollView
@@ -205,10 +210,11 @@ export default function DatePickerModal({
                 })}
               </ScrollView>
             </View>
-            
-            {/* Month Column */}
+
             <View style={[styles.columnWrapper, { flex: 1.5 }]}>
-              <Text style={[styles.columnLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}>
+              <Text
+                style={[styles.columnLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}
+              >
                 Month
               </Text>
               <ScrollView
@@ -247,10 +253,11 @@ export default function DatePickerModal({
                 })}
               </ScrollView>
             </View>
-            
-            {/* Year Column */}
+
             <View style={styles.columnWrapper}>
-              <Text style={[styles.columnLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}>
+              <Text
+                style={[styles.columnLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}
+              >
                 Year
               </Text>
               <ScrollView
@@ -291,22 +298,35 @@ export default function DatePickerModal({
             </View>
           </View>
 
-          {/* Actions */}
           <View style={styles.actions}>
             <Pressable
               onPress={onClose}
-              style={[styles.actionButton, { backgroundColor: colors.bg[0], borderColor: colors.cardBorder }]}
+              style={[
+                styles.actionButton,
+                { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+              ]}
             >
-              <Text style={[styles.actionButtonText, { color: colors.text, fontFamily: fontConfig.bold }]}>
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  { color: colors.text, fontFamily: fontConfig.bold },
+                ]}
+              >
                 Cancel
               </Text>
             </Pressable>
             <Pressable
               onPress={handleConfirm}
-              style={[styles.actionButton, styles.confirmButton, { backgroundColor: colors.accent }]}
+              style={[
+                styles.actionButton,
+                styles.confirmButton,
+                { backgroundColor: colors.accent },
+              ]}
             >
               <Ionicons name="checkmark" size={18} color="#fff" />
-              <Text style={[styles.actionButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}>
+              <Text
+                style={[styles.actionButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
+              >
                 Confirm
               </Text>
             </Pressable>
