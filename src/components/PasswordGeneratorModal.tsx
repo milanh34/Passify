@@ -1,5 +1,6 @@
 // src/components/PasswordGeneratorModal.tsx
-import React, { useState, useEffect, useCallback } from "react";
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Modal,
   View,
@@ -41,6 +42,7 @@ export default function PasswordGeneratorModal({
   initialPassword = "",
 }: PasswordGeneratorModalProps) {
   const { colors, fontConfig } = useTheme();
+
   const [options, setOptions] = useState<PasswordOptions>(DEFAULT_PASSWORD_OPTIONS);
   const [generated, setGenerated] = useState<GeneratedPassword | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -50,36 +52,54 @@ export default function PasswordGeneratorModal({
   const [passphraseWords, setPassphraseWords] = useState(4);
   const [passwordVisible, setPasswordVisible] = useState(true);
 
-  const handleGenerate = useCallback(async () => {
-    setIsGenerating(true);
-    setCopied(false);
+  const shouldGenerateRef = useRef(false);
+  const isGeneratingRef = useRef(false);
 
-    try {
-      let result: GeneratedPassword;
+  const generateWithParams = useCallback(
+    async (
+      genMode: "password" | "passphrase",
+      genOptions: PasswordOptions,
+      genPassphraseWords: number
+    ) => {
+      if (isGeneratingRef.current) return;
 
-      if (mode === "passphrase") {
-        result = await generatePassphrase(passphraseWords);
-      } else {
-        result = await generatePassword(options);
+      isGeneratingRef.current = true;
+      setIsGenerating(true);
+      setCopied(false);
+
+      try {
+        let result: GeneratedPassword;
+        if (genMode === "passphrase") {
+          result = await generatePassphrase(genPassphraseWords);
+        } else {
+          result = await generatePassword(genOptions);
+        }
+        setGenerated(result);
+        setPasswordVisible(true);
+      } catch (error: any) {
+        console.error("Password generation error:", error);
+      } finally {
+        setIsGenerating(false);
+        isGeneratingRef.current = false;
       }
+    },
+    []
+  );
 
-      setGenerated(result);
-      setPasswordVisible(true);
-    } catch (error: any) {
-      console.error("Password generation error:", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [options, mode, passphraseWords]);
+  const handleGenerate = useCallback(() => {
+    generateWithParams(mode, options, passphraseWords);
+  }, [mode, options, passphraseWords, generateWithParams]);
 
   useEffect(() => {
     if (visible) {
       setGenerated(null);
       setCopied(false);
       setPasswordVisible(true);
+
       const timer = setTimeout(() => {
-        handleGenerate();
+        generateWithParams(mode, options, passphraseWords);
       }, 200);
+
       return () => clearTimeout(timer);
     }
   }, [visible]);
@@ -103,17 +123,50 @@ export default function PasswordGeneratorModal({
     if (preset) {
       setOptions(preset.options);
       setMode("password");
-      setTimeout(() => handleGenerate(), 100);
+      generateWithParams("password", preset.options, passphraseWords);
     }
   };
 
   const handleModeChange = (newMode: "password" | "passphrase") => {
     setMode(newMode);
-    setTimeout(() => handleGenerate(), 100);
+    generateWithParams(newMode, options, passphraseWords);
+  };
+
+  const updateOptionAndGenerate = <K extends keyof PasswordOptions>(
+    key: K,
+    value: PasswordOptions[K]
+  ) => {
+    const newOptions = { ...options, [key]: value };
+    setOptions(newOptions);
+    generateWithParams(mode, newOptions, passphraseWords);
   };
 
   const updateOption = <K extends keyof PasswordOptions>(key: K, value: PasswordOptions[K]) => {
     setOptions((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSliderComplete = () => {
+    handleGenerate();
+  };
+
+  const handleLengthChange = (value: number) => {
+    updateOption("length", Math.round(value));
+  };
+
+  const handleLengthComplete = (value: number) => {
+    const newOptions = { ...options, length: Math.round(value) };
+    setOptions(newOptions);
+    generateWithParams(mode, newOptions, passphraseWords);
+  };
+
+  const handlePassphraseWordsChange = (value: number) => {
+    setPassphraseWords(Math.round(value));
+  };
+
+  const handlePassphraseWordsComplete = (value: number) => {
+    const newWords = Math.round(value);
+    setPassphraseWords(newWords);
+    generateWithParams(mode, options, newWords);
   };
 
   const maskPassword = (password: string): string => {
@@ -480,8 +533,8 @@ export default function PasswordGeneratorModal({
                           maximumValue={64}
                           step={1}
                           value={options.length}
-                          onValueChange={(value) => updateOption("length", Math.round(value))}
-                          onSlidingComplete={() => handleGenerate()}
+                          onValueChange={handleLengthChange}
+                          onSlidingComplete={handleLengthComplete}
                           minimumTrackTintColor={colors.accent}
                           maximumTrackTintColor={colors.cardBorder}
                           thumbTintColor={colors.accent}
@@ -509,10 +562,7 @@ export default function PasswordGeneratorModal({
                           </Text>
                           <Switch
                             value={options[item.key]}
-                            onValueChange={(value) => {
-                              updateOption(item.key, value);
-                              setTimeout(() => handleGenerate(), 100);
-                            }}
+                            onValueChange={(value) => updateOptionAndGenerate(item.key, value)}
                             trackColor={{ false: colors.cardBorder, true: colors.accent + "60" }}
                             thumbColor={options[item.key] ? colors.accent : colors.card}
                           />
@@ -547,8 +597,8 @@ export default function PasswordGeneratorModal({
                         maximumValue={8}
                         step={1}
                         value={passphraseWords}
-                        onValueChange={(value) => setPassphraseWords(Math.round(value))}
-                        onSlidingComplete={() => handleGenerate()}
+                        onValueChange={handlePassphraseWordsChange}
+                        onSlidingComplete={handlePassphraseWordsComplete}
                         minimumTrackTintColor={colors.accent}
                         maximumTrackTintColor={colors.cardBorder}
                         thumbTintColor={colors.accent}
@@ -672,8 +722,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     padding: 16,
-    minHeight: 80,
+    height: 100,
     justifyContent: "center",
+    overflow: "hidden",
   },
   loadingBox: {
     alignItems: "center",
@@ -690,8 +741,9 @@ const styles = StyleSheet.create({
   },
   passwordText: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
+    maxHeight: 66,
   },
   eyeButton: {
     padding: 8,
