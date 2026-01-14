@@ -1,5 +1,7 @@
 // src/utils/searchFilter.ts
 
+import { isFuzzyMatch, fuzzyMatchScore } from "./fuzzySearch";
+
 export interface Platform {
   key: string;
   name: string;
@@ -12,7 +14,8 @@ export interface Platform {
 export interface SearchResult {
   platform: Platform;
   matchType: "platform" | "account";
-  matchedAccounts?: string[];
+  matchedAccounts?: any[];
+  score: number;
 }
 
 export function searchPlatforms(
@@ -24,6 +27,86 @@ export function searchPlatforms(
     return platforms.map((p) => ({
       platform: p,
       matchType: "platform" as const,
+      score: 0,
+    }));
+  }
+
+  const lowerQuery = query.toLowerCase().trim();
+  const results: SearchResult[] = [];
+
+  for (const platform of platforms) {
+    const platformScore = fuzzyMatchScore(lowerQuery, platform.name, 2);
+
+    if (platformScore >= 0) {
+      results.push({
+        platform,
+        matchType: "platform",
+        score: platformScore,
+      });
+      continue;
+    }
+
+    const keyScore = fuzzyMatchScore(lowerQuery, platform.key, 2);
+    if (keyScore >= 0) {
+      results.push({
+        platform,
+        matchType: "platform",
+        score: keyScore,
+      });
+      continue;
+    }
+
+    const accounts = database[platform.key] || [];
+    const matchedAccounts: any[] = [];
+    let bestAccountScore = Infinity;
+
+    for (const account of accounts) {
+      let accountMatched = false;
+      let accountBestScore = Infinity;
+
+      for (const [key, value] of Object.entries(account)) {
+        if (key === "id" || key === "createdAt" || key === "updatedAt") {
+          continue;
+        }
+
+        if (typeof value === "string" && value.trim()) {
+          const score = fuzzyMatchScore(lowerQuery, value, 2);
+          if (score >= 0) {
+            accountMatched = true;
+            accountBestScore = Math.min(accountBestScore, score);
+          }
+        }
+      }
+
+      if (accountMatched) {
+        matchedAccounts.push(account);
+        bestAccountScore = Math.min(bestAccountScore, accountBestScore);
+      }
+    }
+
+    if (matchedAccounts.length > 0) {
+      results.push({
+        platform,
+        matchType: "account",
+        matchedAccounts,
+        score: bestAccountScore + 0.5,
+      });
+    }
+  }
+
+  return results.sort((a, b) => a.score - b.score);
+}
+
+export function searchPlatformsExact(
+  platforms: Platform[],
+  database: Record<string, any[]>,
+  query: string
+): SearchResult[] {
+  if (!query.trim()) {
+    return platforms.map((p) => ({
+      platform: p,
+      matchType: "platform" as const,
+      score: 0,
     }));
   }
 
@@ -35,6 +118,7 @@ export function searchPlatforms(
       results.push({
         platform,
         matchType: "platform",
+        score: 0,
       });
       continue;
     }
@@ -60,7 +144,8 @@ export function searchPlatforms(
       results.push({
         platform,
         matchType: "account",
-        matchedAccounts: matchedAccountIds,
+        matchedAccounts: accounts.filter((a: any) => matchedAccountIds.includes(a.id)),
+        score: 1,
       });
     }
   }
@@ -72,7 +157,7 @@ export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
