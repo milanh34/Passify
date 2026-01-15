@@ -15,8 +15,11 @@ import { useState, useEffect } from "react";
 import { useRouter, useSegments, useRootNavigationState } from "expo-router";
 import { isOnboardingComplete } from "../src/utils/onboardingState";
 import { initializeScreenSecurity } from "../src/utils/screenSecurity";
+import { errorHandler, safeAsync } from "../src/utils/errorHandler";
 
 LogBox.ignoreLogs(["Non-serializable values were found in the navigation state"]);
+
+errorHandler.initialize();
 
 function OnboardingGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,23 +29,21 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!navigationState?.key) return;
-
     checkOnboarding();
   }, [navigationState?.key]);
 
   const checkOnboarding = async () => {
-    try {
-      const completed = await isOnboardingComplete();
-      setIsChecking(false);
+    const completed = await safeAsync(() => isOnboardingComplete(), {
+      context: "checkOnboarding",
+      fallback: false,
+    });
 
-      if (!completed && segments[0] !== "onboarding") {
-        setTimeout(() => {
-          router.replace("/onboarding");
-        }, 100);
-      }
-    } catch (error) {
-      console.error("Failed to check onboarding state:", error);
-      setIsChecking(false);
+    setIsChecking(false);
+
+    if (!completed && segments[0] !== "onboarding") {
+      setTimeout(() => {
+        router.replace("/onboarding");
+      }, 100);
     }
   };
 
@@ -58,7 +59,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
 
   useEffect(() => {
-    initializeScreenSecurity();
+    safeAsync(() => initializeScreenSecurity(), {
+      context: "initializeScreenSecurity",
+    });
   }, []);
 
   if (!isInitialized) {
@@ -157,6 +160,20 @@ function RootStack() {
               />
               <Stack.Screen
                 name="legal"
+                options={{
+                  animation: "slide_from_right",
+                  animationDuration: 200,
+                }}
+              />
+              <Stack.Screen
+                name="accounts"
+                options={{
+                  animation: "slide_from_right",
+                  animationDuration: 200,
+                }}
+              />
+              <Stack.Screen
+                name="connected-accounts"
                 options={{
                   animation: "slide_from_right",
                   animationDuration: 200,

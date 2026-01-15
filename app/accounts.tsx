@@ -1,35 +1,44 @@
-// app/(tabs)/accounts.tsx
+// app/accounts.tsx
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl } from "react-native";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  FlatList as FlatListType,
+} from "react-native";
 import { useLocalSearchParams, useNavigation, useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useTheme } from "../../src/context/ThemeContext";
-import { useDb } from "../../src/context/DbContext";
-import { useAuth } from "../../src/context/AuthContext";
-import { useInactivityTracker } from "../../src/utils/inactivityTracker";
-import FAB from "../../src/components/FAB";
-import FormModal from "../../src/components/FormModal";
-import SchemaModal from "../../src/components/SchemaModal";
-import DeleteModal from "../../src/components/DeleteModal";
-import Toast from "../../src/components/Toast";
-import SearchBar from "../../src/components/SearchBar";
-import AccountSortModal from "../../src/components/AccountSortModal";
-import PlatformIcon from "../../src/components/PlatformIcon";
-import { searchAccounts, debounceSearch } from "../../src/utils/searchAccounts";
-import { sortAccounts, AccountSortOption } from "../../src/utils/sortAccounts";
+import { useTheme } from "../src/context/ThemeContext";
+import { useDb } from "../src/context/DbContext";
+import { useAuth } from "../src/context/AuthContext";
+import { useInactivityTracker } from "../src/utils/inactivityTracker";
+import FAB from "../src/components/FAB";
+import FormModal from "../src/components/FormModal";
+import SchemaModal from "../src/components/SchemaModal";
+import DeleteModal from "../src/components/DeleteModal";
+import Toast from "../src/components/Toast";
+import SearchBar from "../src/components/SearchBar";
+import AccountSortModal from "../src/components/AccountSortModal";
+import PlatformIcon from "../src/components/PlatformIcon";
+import { searchAccounts, debounceSearch } from "../src/utils/searchAccounts";
+import { sortAccounts, AccountSortOption } from "../src/utils/sortAccounts";
 import {
   isPlatformSupportedForConnections,
   getPrimaryEmail,
   countConnectedPlatforms,
-} from "../../src/utils/connectedAccounts";
-import { sortFieldsByOrder, isSensitiveField, isPasswordField } from "../../src/utils/fieldOrder";
-import { formatDate, getDateFormat, DateFormatOption } from "../../src/utils/dateFormat";
-import { getFieldType } from "../../src/utils/formValidation";
+} from "../src/utils/connectedAccounts";
+import { sortFieldsByOrder, isSensitiveField, isPasswordField } from "../src/utils/fieldOrder";
+import { formatDate, getDateFormat, DateFormatOption } from "../src/utils/dateFormat";
+import { formatPhone, getPhoneFormat, PhoneFormatOption } from "../src/utils/phoneFormat";
+import { getFieldType } from "../src/utils/formValidation";
 
 const ACCOUNT_SORT_PREFERENCE_KEY = "@PM:account_sort_preference";
 
@@ -47,11 +56,19 @@ export default function AccountsScreen() {
     key: platformKey,
     matchedAccountIds: matchedIdsParam,
     searchQuery: searchQueryParam,
+    highlightAccountId,
+    expandAccountId,
+    fromConnectedAccounts,
+    navId,
   } = useLocalSearchParams<{
     platform: string;
     key: string;
     matchedAccountIds?: string;
     searchQuery?: string;
+    highlightAccountId?: string;
+    expandAccountId?: string;
+    fromConnectedAccounts?: string;
+    navId?: string;
   }>();
 
   const nav = useNavigation();
@@ -70,7 +87,11 @@ export default function AccountsScreen() {
   const { isAuthEnabled } = useAuth();
   const router = useRouter();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
+  const lastNavIdRef = useRef<string | null>(null);
+  const flatListRef = useRef<FlatList>(null);
+  const scrollPositionRef = useRef<number>(0);
   const [dateFormat, setDateFormatState] = useState<DateFormatOption>("DD/MM/YYYY");
+  const [phoneFormat, setPhoneFormatState] = useState<PhoneFormatOption>("PLAIN");
 
   const accounts: Account[] = useMemo(
     () => (platformKey ? database[String(platformKey)] || [] : []),
@@ -84,6 +105,11 @@ export default function AccountsScreen() {
       ? platformSchema
       : ["name", "password"];
   }, [schemas, platformKey]);
+
+  const displayField = useMemo(() => {
+    if (!platformKey) return "name";
+    return platformsMetadata[String(platformKey)]?.displayField || "name";
+  }, [platformKey, platformsMetadata]);
 
   const isConnectionSupportedPlatform = useMemo(() => {
     return platformKey ? isPlatformSupportedForConnections(String(platformKey)) : false;
@@ -124,8 +150,9 @@ export default function AccountsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      const previousScrollPosition = scrollPositionRef.current;
+
       setAnimationKey((prev) => prev + 1);
-      setExpandedCards(new Set());
       setVisiblePw({});
       setIsSelectionMode(false);
       setSelectedAccounts(new Set());
@@ -142,7 +169,17 @@ export default function AccountsScreen() {
       };
       loadSortPreference();
 
-      if (matchedIdsParam && searchQueryParam) {
+      getDateFormat().then(setDateFormatState);
+      getPhoneFormat().then(setPhoneFormatState);
+
+      if (expandAccountId) {
+        setExpandedCards(new Set([expandAccountId]));
+      }
+
+      if (highlightAccountId) {
+        setHighlightedAccountIds(new Set([highlightAccountId]));
+        setShowHighlightBanner(true);
+      } else if (matchedIdsParam && searchQueryParam) {
         try {
           const ids = JSON.parse(matchedIdsParam);
           setHighlightedAccountIds(new Set(ids));
@@ -150,24 +187,33 @@ export default function AccountsScreen() {
         } catch (error) {
           console.error("Failed to parse matched account IDs:", error);
         }
-      } else {
+      } else if (!fromConnectedAccounts) {
         setHighlightedAccountIds(new Set());
         setShowHighlightBanner(false);
+      }
+
+      if (previousScrollPosition > 0) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToOffset({
+            offset: previousScrollPosition,
+            animated: false,
+          });
+        }, 100);
       }
 
       if (isAuthEnabled) {
         updateActivity();
       }
-    }, [matchedIdsParam, searchQueryParam, isAuthEnabled, updateActivity])
+    }, [
+      matchedIdsParam,
+      searchQueryParam,
+      highlightAccountId,
+      expandAccountId,
+      fromConnectedAccounts,
+      isAuthEnabled,
+      updateActivity,
+    ])
   );
-
-  useEffect(() => {
-  const loadDateFormat = async () => {
-    const format = await getDateFormat();
-    setDateFormatState(format);
-  };
-  loadDateFormat();
-}, []);
 
   const debouncedSetQuery = useMemo(
     () =>
@@ -242,8 +288,8 @@ export default function AccountsScreen() {
   }, [accounts, debouncedQuery]);
 
   const sortedAccounts = useMemo(() => {
-    return sortAccounts(filteredAccounts, sortOption);
-  }, [filteredAccounts, sortOption]);
+    return sortAccounts(filteredAccounts, sortOption, displayField);
+  }, [filteredAccounts, sortOption, displayField]);
 
   const displayToast = (
     message: string,
@@ -569,7 +615,7 @@ export default function AccountsScreen() {
     if (!primaryEmail || !platformKey) return;
 
     router.push({
-      pathname: "/(tabs)/connected-accounts",
+      pathname: "/connected-accounts",
       params: {
         email: primaryEmail.value,
         sourcePlatform: String(platformKey),
@@ -595,14 +641,16 @@ export default function AccountsScreen() {
             },
           ]}
         >
-          <Ionicons name="search" size={18} color={colors.accent} />
+          <Ionicons name={highlightAccountId ? "link" : "search"} size={18} color={colors.accent} />
           <Text
             style={[
               styles.highlightBannerText,
               { color: colors.accent, fontFamily: fontConfig.regular },
             ]}
           >
-            Showing {highlightedAccountIds.size} account(s) matching "{searchQueryParam}"
+            {highlightAccountId
+              ? "Navigated from Connected Platforms"
+              : `Showing ${highlightedAccountIds.size} account(s) matching "${searchQueryParam}"`}
           </Text>
           <Pressable onPress={dismissHighlightBanner} style={styles.highlightBannerClose}>
             <Ionicons name="close-circle" size={20} color={colors.accent} />
@@ -653,6 +701,7 @@ export default function AccountsScreen() {
       )}
 
       <FlatList
+        ref={flatListRef}
         key={animationKey}
         data={sortedAccounts}
         keyExtractor={(item) => item.id}
@@ -661,6 +710,10 @@ export default function AccountsScreen() {
           paddingBottom: insets.bottom + 120,
         }}
         showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          scrollPositionRef.current = event.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -670,329 +723,334 @@ export default function AccountsScreen() {
           />
         }
         renderItem={({ item, index }) => {
-  const isExpanded = expandedCards.has(item.id);
-  const isHighlighted = highlightedAccountIds.has(item.id);
-  
-  // Sort fields in proper order
-  const sortedFields = sortFieldsByOrder(
-    schema.filter((f) => f !== "id" && f !== "name" && f !== "createdAt" && f !== "updatedAt")
-  );
+          const isExpanded = expandedCards.has(item.id);
+          const isHighlighted = highlightedAccountIds.has(item.id);
 
-  return (
-    <MotiView
-      key={item.id}
-      from={{ opacity: 0, translateY: 50 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{
-        type: "timing",
-        duration: 300,
-        delay: index * 50,
-      }}
-    >
-      <Pressable
-        onPress={() => handleCardPress(item.id)}
-        onLongPress={() => handleLongPress(item.id)}
-        delayLongPress={500}
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.card,
-            borderColor: isHighlighted
-              ? colors.accent
-              : selectedAccounts.has(item.id)
-              ? colors.accent
-              : colors.cardBorder,
-            borderWidth: isHighlighted || selectedAccounts.has(item.id) ? 2 : 1,
-          },
-        ]}
-        android_ripple={{ color: colors.accent + "22" }}
-      >
-        {isSelectionMode && (
-          <View style={styles.selectionIndicator}>
-            <Ionicons
-              name={selectedAccounts.has(item.id) ? "checkmark-circle" : "ellipse-outline"}
-              size={24}
-              color={selectedAccounts.has(item.id) ? colors.accent : colors.muted}
-            />
-          </View>
-        )}
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            <Ionicons name="person-circle" size={28} color={colors.accent} />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[
-                  styles.cardTitle,
-                  { color: colors.text, fontFamily: fontConfig.bold },
-                ]}
-                numberOfLines={2}
-              >
-                {item.name || "Unnamed Account"}
-              </Text>
-              {isHighlighted && (
-                <Text
-                  style={[
-                    styles.matchBadge,
-                    {
-                      color: colors.accent,
-                      fontFamily: fontConfig.regular,
-                    },
-                  ]}
-                >
-                  <Ionicons name="search" size={12} /> Matched
-                </Text>
-              )}
-            </View>
-          </View>
-          {!isSelectionMode && (
-            <View style={styles.cardHeaderRight}>
-              <Ionicons
-                name={isExpanded ? "chevron-up" : "chevron-down"}
-                size={24}
-                color={colors.muted}
-              />
-            </View>
-          )}
-        </View>
-        <AnimatePresence>
-          {isExpanded && !isSelectionMode && (
+          const sortedFields = sortFieldsByOrder(
+            schema.filter(
+              (f) => f !== "id" && f !== "name" && f !== "createdAt" && f !== "updatedAt"
+            )
+          );
+
+          return (
             <MotiView
-              from={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ type: "timing", duration: 200 }}
+              key={item.id}
+              from={{ opacity: 0, translateY: 50 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{
+                type: "timing",
+                duration: 300,
+                delay: index * 50,
+              }}
             >
-              <View style={[styles.cardBody, { borderTopColor: colors.cardBorder }]}>
-                {sortedFields.map((fieldName) => {
-                  const value = item[fieldName];
-                  const fieldKey = `${item.id}-${fieldName}`;
-                  const isPassword = isPasswordField(fieldName);
-                  const isPwVisible = visiblePw[fieldKey];
-                  const fieldType = getFieldType(fieldName);
-                  const isSensitive = isSensitiveField(fieldName);
-                  
-                  // Format date fields
-                  let displayValue = value || "—";
-                  if (fieldType === "date" && value) {
-                    displayValue = formatDate(value, dateFormat);
-                  }
-
-                  return (
-                    <View key={fieldName} style={styles.fieldRow}>
-                      <View style={styles.fieldLabelRow}>
-                        <Ionicons
-                          name={
-                            fieldType === "email"
-                              ? "mail-outline"
-                              : fieldType === "phone"
-                              ? "call-outline"
-                              : fieldType === "date"
-                              ? "calendar-outline"
-                              : isPassword
-                              ? "lock-closed-outline"
-                              : "text-outline"
-                          }
-                          size={14}
-                          color={isSensitive ? colors.accent : colors.muted}
-                        />
-                        <Text
-                          style={[
-                            styles.fieldLabel,
-                            {
-                              color: colors.subtext,
-                              fontFamily: fontConfig.regular,
-                            },
-                          ]}
-                        >
-                          {fieldName.charAt(0).toUpperCase() +
-                            fieldName.slice(1).replace(/_/g, " ")}
-                        </Text>
-                      </View>
-                      <View style={styles.fieldValueContainer}>
-                        <Text
-                          style={[
-                            styles.fieldValue,
-                            {
-                              color: colors.text,
-                              fontFamily: fontConfig.regular,
-                            },
-                          ]}
-                          selectable={!isPassword || isPwVisible}
-                        >
-                          {isPassword && !isPwVisible ? "••••••••" : displayValue}
-                        </Text>
-                        <View style={styles.fieldActions}>
-                          {isPassword && (
-                            <Pressable
-                              onPress={() => {
-                                setVisiblePw((prev) => ({
-                                  ...prev,
-                                  [fieldKey]: !prev[fieldKey],
-                                }));
-                                if (isAuthEnabled) {
-                                  updateActivity();
-                                }
-                              }}
-                              style={styles.iconButton}
-                              android_ripple={{
-                                color: colors.accent + "33",
-                              }}
-                            >
-                              <Ionicons
-                                name={isPwVisible ? "eye-off-outline" : "eye-outline"}
-                                size={18}
-                                color={colors.muted}
-                              />
-                            </Pressable>
-                          )}
-                          <Pressable
-                            onPress={() => copyToClipboard(isPassword && !isPwVisible ? value : displayValue, fieldKey)}
-                            style={styles.iconButton}
-                            android_ripple={{
-                              color: colors.accent + "33",
-                            }}
-                          >
-                            <Ionicons
-                              name={
-                                copiedField === fieldKey ? "checkmark" : "copy-outline"
-                              }
-                              size={18}
-                              color={
-                                copiedField === fieldKey ? colors.accent : colors.muted
-                              }
-                            />
-                          </Pressable>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })}
-                <View style={styles.cardActions}>
-                  <Pressable
-                    onPress={() => {
-                      setAccModal({ visible: true, editing: item });
-                      if (isAuthEnabled) {
-                        updateActivity();
-                      }
-                    }}
-                    style={[
-                      styles.actionButton,
-                      {
-                        backgroundColor: colors.accent + "15",
-                        borderColor: colors.accent + "30",
-                      },
-                    ]}
-                    android_ripple={{ color: colors.accent + "33" }}
-                  >
-                    <Ionicons name="create-outline" size={18} color={colors.accent} />
-                    <Text
-                      style={[
-                        styles.actionButtonText,
-                        {
-                          color: colors.accent,
-                          fontFamily: fontConfig.bold,
-                        },
-                      ]}
-                    >
-                      Edit
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      setDeleteModal({ visible: true, item });
-                      if (isAuthEnabled) {
-                        updateActivity();
-                      }
-                    }}
-                    style={[
-                      styles.actionButton,
-                      {
-                        backgroundColor: colors.danger + "15",
-                        borderColor: colors.danger + "30",
-                      },
-                    ]}
-                    android_ripple={{ color: colors.danger + "33" }}
-                  >
-                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                    <Text
-                      style={[
-                        styles.actionButtonText,
-                        {
-                          color: colors.danger,
-                          fontFamily: fontConfig.bold,
-                        },
-                      ]}
-                    >
-                      Delete
-                    </Text>
-                  </Pressable>
-                </View>
-                {isConnectionSupportedPlatform &&
-                  (() => {
-                    const primaryEmail = getPrimaryEmail(item);
-                    if (!primaryEmail) return null;
-                    const connectedCount = countConnectedPlatforms(
-                      database,
-                      primaryEmail.value,
-                      String(platformKey)
-                    );
-                    return (
-                      <Pressable
-                        onPress={() => handleViewConnectedPlatforms(item)}
+              <Pressable
+                onPress={() => handleCardPress(item.id)}
+                onLongPress={() => handleLongPress(item.id)}
+                delayLongPress={500}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: isHighlighted
+                      ? colors.accent
+                      : selectedAccounts.has(item.id)
+                        ? colors.accent
+                        : colors.cardBorder,
+                    borderWidth: isHighlighted || selectedAccounts.has(item.id) ? 2 : 1,
+                  },
+                ]}
+                android_ripple={{ color: colors.accent + "22" }}
+              >
+                {isSelectionMode && (
+                  <View style={styles.selectionIndicator}>
+                    <Ionicons
+                      name={selectedAccounts.has(item.id) ? "checkmark-circle" : "ellipse-outline"}
+                      size={24}
+                      color={selectedAccounts.has(item.id) ? colors.accent : colors.muted}
+                    />
+                  </View>
+                )}
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardHeaderLeft}>
+                    <Ionicons name="person-circle" size={28} color={colors.accent} />
+                    <View style={{ flex: 1 }}>
+                      <Text
                         style={[
-                          styles.connectedPlatformsButton,
-                          {
-                            backgroundColor:
-                              connectedCount > 0 ? colors.accent + "10" : colors.card,
-                            borderColor:
-                              connectedCount > 0 ? colors.accent + "40" : colors.cardBorder,
-                          },
+                          styles.cardTitle,
+                          { color: colors.text, fontFamily: fontConfig.bold },
                         ]}
-                        android_ripple={{ color: colors.accent + "22" }}
+                        numberOfLines={2}
                       >
-                        <View style={styles.connectedPlatformsLeft}>
-                          <Ionicons
-                            name="link"
-                            size={20}
-                            color={connectedCount > 0 ? colors.accent : colors.muted}
-                          />
-                          <View>
+                        {item[displayField] || item.name || "Unnamed Account"}
+                      </Text>
+                      {isHighlighted && (
+                        <Text
+                          style={[
+                            styles.matchBadge,
+                            {
+                              color: colors.accent,
+                              fontFamily: fontConfig.regular,
+                            },
+                          ]}
+                        >
+                          <Ionicons name="search" size={12} /> Matched
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  {!isSelectionMode && (
+                    <View style={styles.cardHeaderRight}>
+                      <Ionicons
+                        name={isExpanded ? "chevron-up" : "chevron-down"}
+                        size={24}
+                        color={colors.muted}
+                      />
+                    </View>
+                  )}
+                </View>
+                <AnimatePresence>
+                  {isExpanded && !isSelectionMode && (
+                    <MotiView
+                      from={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ type: "timing", duration: 200 }}
+                    >
+                      <View style={[styles.cardBody, { borderTopColor: colors.cardBorder }]}>
+                        {sortedFields.map((fieldName) => {
+                          const value = item[fieldName];
+                          const fieldKey = `${item.id}-${fieldName}`;
+                          const isPassword = isPasswordField(fieldName);
+                          const isPwVisible = visiblePw[fieldKey];
+                          const fieldType = getFieldType(fieldName);
+                          const isSensitive = isSensitiveField(fieldName);
+
+                          let displayValue = value || "—";
+                          if (fieldType === "date" && value) {
+                            displayValue = formatDate(value, dateFormat);
+                          } else if (fieldType === "phone" && value) {
+                            displayValue = formatPhone(value, phoneFormat);
+                          }
+
+                          return (
+                            <View key={fieldName} style={styles.fieldRow}>
+                              <View style={styles.fieldLabelRow}>
+                                <Ionicons
+                                  name={
+                                    fieldType === "email"
+                                      ? "mail-outline"
+                                      : fieldType === "phone"
+                                        ? "call-outline"
+                                        : fieldType === "date"
+                                          ? "calendar-outline"
+                                          : isPassword
+                                            ? "lock-closed-outline"
+                                            : "text-outline"
+                                  }
+                                  size={14}
+                                  color={isSensitive ? colors.accent : colors.muted}
+                                />
+                                <Text
+                                  style={[
+                                    styles.fieldLabel,
+                                    {
+                                      color: colors.subtext,
+                                      fontFamily: fontConfig.regular,
+                                    },
+                                  ]}
+                                >
+                                  {fieldName.charAt(0).toUpperCase() +
+                                    fieldName.slice(1).replace(/_/g, " ")}
+                                </Text>
+                              </View>
+                              <View style={styles.fieldValueContainer}>
+                                <Text
+                                  style={[
+                                    styles.fieldValue,
+                                    {
+                                      color: colors.text,
+                                      fontFamily: fontConfig.regular,
+                                    },
+                                  ]}
+                                  selectable={!isPassword || isPwVisible}
+                                >
+                                  {isPassword && !isPwVisible ? "••••••••" : displayValue}
+                                </Text>
+                                <View style={styles.fieldActions}>
+                                  {isPassword && (
+                                    <Pressable
+                                      onPress={() => {
+                                        setVisiblePw((prev) => ({
+                                          ...prev,
+                                          [fieldKey]: !prev[fieldKey],
+                                        }));
+                                        if (isAuthEnabled) {
+                                          updateActivity();
+                                        }
+                                      }}
+                                      style={styles.iconButton}
+                                      android_ripple={{
+                                        color: colors.accent + "33",
+                                      }}
+                                    >
+                                      <Ionicons
+                                        name={isPwVisible ? "eye-off-outline" : "eye-outline"}
+                                        size={18}
+                                        color={colors.muted}
+                                      />
+                                    </Pressable>
+                                  )}
+                                  <Pressable
+                                    onPress={() =>
+                                      copyToClipboard(
+                                        isPassword && !isPwVisible ? value : displayValue,
+                                        fieldKey
+                                      )
+                                    }
+                                    style={styles.iconButton}
+                                    android_ripple={{
+                                      color: colors.accent + "33",
+                                    }}
+                                  >
+                                    <Ionicons
+                                      name={copiedField === fieldKey ? "checkmark" : "copy-outline"}
+                                      size={18}
+                                      color={
+                                        copiedField === fieldKey ? colors.accent : colors.muted
+                                      }
+                                    />
+                                  </Pressable>
+                                </View>
+                              </View>
+                            </View>
+                          );
+                        })}
+                        <View style={styles.cardActions}>
+                          <Pressable
+                            onPress={() => {
+                              setAccModal({ visible: true, editing: item });
+                              if (isAuthEnabled) {
+                                updateActivity();
+                              }
+                            }}
+                            style={[
+                              styles.actionButton,
+                              {
+                                backgroundColor: colors.accent + "15",
+                                borderColor: colors.accent + "30",
+                              },
+                            ]}
+                            android_ripple={{ color: colors.accent + "33" }}
+                          >
+                            <Ionicons name="create-outline" size={18} color={colors.accent} />
                             <Text
                               style={[
-                                styles.connectedPlatformsText,
+                                styles.actionButtonText,
                                 {
-                                  color: connectedCount > 0 ? colors.accent : colors.text,
+                                  color: colors.accent,
                                   fontFamily: fontConfig.bold,
                                 },
                               ]}
                             >
-                              View Connected Platforms
+                              Edit
                             </Text>
-                            {connectedCount > 0 && (
-                              <Text
-                                style={[
-                                  styles.connectedPlatformsCount,
-                                  { color: colors.accent, fontFamily: fontConfig.regular },
-                                ]}
-                              >
-                                Used in {connectedCount} other platform
-                                {connectedCount !== 1 ? "s" : ""}
-                              </Text>
-                            )}
-                          </View>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => {
+                              setDeleteModal({ visible: true, item });
+                              if (isAuthEnabled) {
+                                updateActivity();
+                              }
+                            }}
+                            style={[
+                              styles.actionButton,
+                              {
+                                backgroundColor: colors.danger + "15",
+                                borderColor: colors.danger + "30",
+                              },
+                            ]}
+                            android_ripple={{ color: colors.danger + "33" }}
+                          >
+                            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                            <Text
+                              style={[
+                                styles.actionButtonText,
+                                {
+                                  color: colors.danger,
+                                  fontFamily: fontConfig.bold,
+                                },
+                              ]}
+                            >
+                              Delete
+                            </Text>
+                          </Pressable>
                         </View>
-                        <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-                      </Pressable>
-                    );
-                  })()}
-              </View>
+                        {isConnectionSupportedPlatform &&
+                          (() => {
+                            const primaryEmail = getPrimaryEmail(item);
+                            if (!primaryEmail) return null;
+                            const connectedCount = countConnectedPlatforms(
+                              database,
+                              primaryEmail.value,
+                              String(platformKey)
+                            );
+                            return (
+                              <Pressable
+                                onPress={() => handleViewConnectedPlatforms(item)}
+                                style={[
+                                  styles.connectedPlatformsButton,
+                                  {
+                                    backgroundColor:
+                                      connectedCount > 0 ? colors.accent + "10" : colors.card,
+                                    borderColor:
+                                      connectedCount > 0 ? colors.accent + "40" : colors.cardBorder,
+                                  },
+                                ]}
+                                android_ripple={{ color: colors.accent + "22" }}
+                              >
+                                <View style={styles.connectedPlatformsLeft}>
+                                  <Ionicons
+                                    name="link"
+                                    size={20}
+                                    color={connectedCount > 0 ? colors.accent : colors.muted}
+                                  />
+                                  <View>
+                                    <Text
+                                      style={[
+                                        styles.connectedPlatformsText,
+                                        {
+                                          color: connectedCount > 0 ? colors.accent : colors.text,
+                                          fontFamily: fontConfig.bold,
+                                        },
+                                      ]}
+                                    >
+                                      View Connected Platforms
+                                    </Text>
+                                    {connectedCount > 0 && (
+                                      <Text
+                                        style={[
+                                          styles.connectedPlatformsCount,
+                                          { color: colors.accent, fontFamily: fontConfig.regular },
+                                        ]}
+                                      >
+                                        Used in {connectedCount} other platform
+                                        {connectedCount !== 1 ? "s" : ""}
+                                      </Text>
+                                    )}
+                                  </View>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                              </Pressable>
+                            );
+                          })()}
+                      </View>
+                    </MotiView>
+                  )}
+                </AnimatePresence>
+              </Pressable>
             </MotiView>
-          )}
-        </AnimatePresence>
-      </Pressable>
-    </MotiView>
-  );
-}}
+          );
+        }}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons
@@ -1052,6 +1110,7 @@ export default function AccountsScreen() {
       <SchemaModal
         visible={schemaModal}
         currentSchema={schema}
+        platformKey={String(platformKey)}
         onSave={handleSaveSchema}
         onClose={() => setSchemaModal(false)}
       />
@@ -1245,8 +1304,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   fieldLabelRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 6,
-},
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
 });
