@@ -148,26 +148,31 @@ export function countConnectedPlatforms(
     return 0;
   }
 
-  let count = 0;
+  let platformCount = 0;
 
   for (const [platformKey, accounts] of Object.entries(database)) {
     if (platformKey === excludePlatformKey) continue;
 
-    for (const account of accounts) {
-      const emailFields = getEmailFieldsFromAccount(account);
+    let foundInThisPlatform = false;
 
+    for (const account of accounts) {
+      if (foundInThisPlatform) break;
+      
+      const emailFields = getEmailFieldsFromAccount(account);
       for (const { value } of emailFields) {
         if (value.toLowerCase().trim() === normalizedValue) {
-          count++;
+          foundInThisPlatform = true;
           break;
         }
       }
+    }
 
-      if (count > 0) break;
+    if (foundInThisPlatform) {
+      platformCount++;
     }
   }
 
-  return count;
+  return platformCount;
 }
 
 export function getPrimaryEmail(account: any): { field: string; value: string } | null {
