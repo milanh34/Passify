@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import * as Crypto from "expo-crypto";
 import aesjs from "aes-js";
+import { log } from "./logger";
 
 const DEK_KEY = "Passify_database_encryption_key";
 const DEK_IV_KEY = "Passify_database_encryption_iv";
@@ -55,7 +56,7 @@ async function getDatabaseEncryptionKey(): Promise<Uint8Array> {
       return hexToBytes(existingKeyHex);
     }
 
-    console.log("🔐 Generating new database encryption key...");
+    log.info("🔐 Generating new database encryption key...");
     const newKey = await generateRandomKey();
     const newKeyHex = bytesToHex(newKey);
 
@@ -65,7 +66,7 @@ async function getDatabaseEncryptionKey(): Promise<Uint8Array> {
 
     return newKey;
   } catch (error) {
-    console.error("❌ Failed to get/create encryption key:", error);
+    log.error("❌ Failed to get/create encryption key:", error);
     throw new Error("Failed to initialize database encryption");
   }
 }
@@ -88,7 +89,7 @@ async function getOrCreateIV(forceNew: boolean = false): Promise<Uint8Array> {
 
     return newIV;
   } catch (error) {
-    console.error("❌ Failed to get/create IV:", error);
+    log.error("❌ Failed to get/create IV:", error);
     throw new Error("Failed to initialize encryption IV");
   }
 }
@@ -108,7 +109,7 @@ async function encryptData(data: string): Promise<string> {
 
     return bytesToHex(combined);
   } catch (error) {
-    console.error("❌ Encryption failed:", error);
+    log.error("❌ Encryption failed:", error);
     throw new Error("Failed to encrypt data");
   }
 }
@@ -126,7 +127,7 @@ async function decryptData(encryptedHex: string): Promise<string> {
 
     return aesjs.utils.utf8.fromBytes(decryptedBytes);
   } catch (error) {
-    console.error("❌ Decryption failed:", error);
+    log.error("❌ Decryption failed:", error);
     throw new Error("Failed to decrypt data");
   }
 }
@@ -149,7 +150,7 @@ export async function checkEncryptionStatus(): Promise<EncryptedStorageStatus> {
       isInitialized: hasEncryptedData || hasLegacyData,
     };
   } catch (error) {
-    console.error("❌ Failed to check encryption status:", error);
+    log.error("❌ Failed to check encryption status:", error);
     return {
       isEncrypted: false,
       hasLegacyData: false,
@@ -159,7 +160,7 @@ export async function checkEncryptionStatus(): Promise<EncryptedStorageStatus> {
 }
 
 export async function migrateLegacyToEncrypted(): Promise<boolean> {
-  console.log("🔄 Starting legacy data migration to encrypted storage...");
+  log.info("🔄 Starting legacy data migration to encrypted storage...");
 
   try {
     const [legacyDb, legacySchema, legacyMetadata] = await AsyncStorage.multiGet([
@@ -180,10 +181,10 @@ export async function migrateLegacyToEncrypted(): Promise<boolean> {
 
     await AsyncStorage.multiRemove([LEGACY_DB_KEY, LEGACY_SCHEMA_KEY, LEGACY_METADATA_KEY]);
 
-    console.log("✅ Legacy data migration completed successfully");
+    log.info("✅ Legacy data migration completed successfully");
     return true;
   } catch (error) {
-    console.error("❌ Legacy data migration failed:", error);
+    log.error("❌ Legacy data migration failed:", error);
     return false;
   }
 }
@@ -199,7 +200,7 @@ export async function readEncryptedDatabase(): Promise<Record<string, any[]>> {
     const decrypted = await decryptData(encrypted);
     return JSON.parse(decrypted);
   } catch (error) {
-    console.error("❌ Failed to read encrypted database:", error);
+    log.error("❌ Failed to read encrypted database:", error);
     throw new Error("Failed to read database. Data may be corrupted.");
   }
 }
@@ -210,7 +211,7 @@ export async function writeEncryptedDatabase(data: Record<string, any[]>): Promi
     const encrypted = await encryptData(jsonString);
     await AsyncStorage.setItem(ENCRYPTED_DB_KEY, encrypted);
   } catch (error) {
-    console.error("❌ Failed to write encrypted database:", error);
+    log.error("❌ Failed to write encrypted database:", error);
     throw new Error("Failed to save database");
   }
 }
@@ -226,7 +227,7 @@ export async function readEncryptedSchemas(): Promise<Record<string, string[]>> 
     const decrypted = await decryptData(encrypted);
     return JSON.parse(decrypted);
   } catch (error) {
-    console.error("❌ Failed to read encrypted schemas:", error);
+    log.error("❌ Failed to read encrypted schemas:", error);
     throw new Error("Failed to read schemas. Data may be corrupted.");
   }
 }
@@ -237,7 +238,7 @@ export async function writeEncryptedSchemas(data: Record<string, string[]>): Pro
     const encrypted = await encryptData(jsonString);
     await AsyncStorage.setItem(ENCRYPTED_SCHEMA_KEY, encrypted);
   } catch (error) {
-    console.error("❌ Failed to write encrypted schemas:", error);
+    log.error("❌ Failed to write encrypted schemas:", error);
     throw new Error("Failed to save schemas");
   }
 }
@@ -253,7 +254,7 @@ export async function readEncryptedMetadata(): Promise<Record<string, any>> {
     const decrypted = await decryptData(encrypted);
     return JSON.parse(decrypted);
   } catch (error) {
-    console.error("❌ Failed to read encrypted metadata:", error);
+    log.error("❌ Failed to read encrypted metadata:", error);
     throw new Error("Failed to read metadata. Data may be corrupted.");
   }
 }
@@ -264,7 +265,7 @@ export async function writeEncryptedMetadata(data: Record<string, any>): Promise
     const encrypted = await encryptData(jsonString);
     await AsyncStorage.setItem(ENCRYPTED_METADATA_KEY, encrypted);
   } catch (error) {
-    console.error("❌ Failed to write encrypted metadata:", error);
+    log.error("❌ Failed to write encrypted metadata:", error);
     throw new Error("Failed to save metadata");
   }
 }
@@ -288,7 +289,7 @@ export async function writeAllEncryptedData(
       [DB_ENCRYPTED_FLAG, "true"],
     ]);
   } catch (error) {
-    console.error("❌ Failed to write all encrypted data:", error);
+    log.error("❌ Failed to write all encrypted data:", error);
     throw new Error("Failed to save data");
   }
 }
@@ -312,10 +313,10 @@ export async function createEncryptedBackup(): Promise<string> {
 
     await AsyncStorage.setItem(`@PM:backup:${backupId}`, JSON.stringify(backupData));
 
-    console.log(`✅ Backup created: ${backupId}`);
+    log.info(`✅ Backup created: ${backupId}`);
     return backupId;
   } catch (error) {
-    console.error("❌ Failed to create backup:", error);
+    log.error("❌ Failed to create backup:", error);
     throw new Error("Failed to create backup");
   }
 }
@@ -325,7 +326,7 @@ export async function restoreFromBackup(backupId: string): Promise<boolean> {
     const backupData = await AsyncStorage.getItem(`@PM:backup:${backupId}`);
 
     if (!backupData) {
-      console.error("❌ Backup not found:", backupId);
+      log.error("❌ Backup not found:", backupId);
       return false;
     }
 
@@ -337,10 +338,10 @@ export async function restoreFromBackup(backupId: string): Promise<boolean> {
       [ENCRYPTED_METADATA_KEY, metadata],
     ]);
 
-    console.log(`✅ Restored from backup: ${backupId}`);
+    log.info(`✅ Restored from backup: ${backupId}`);
     return true;
   } catch (error) {
-    console.error("❌ Failed to restore from backup:", error);
+    log.error("❌ Failed to restore from backup:", error);
     return false;
   }
 }
@@ -348,9 +349,9 @@ export async function restoreFromBackup(backupId: string): Promise<boolean> {
 export async function deleteBackup(backupId: string): Promise<void> {
   try {
     await AsyncStorage.removeItem(`@PM:backup:${backupId}`);
-    console.log(`✅ Backup deleted: ${backupId}`);
+    log.info(`✅ Backup deleted: ${backupId}`);
   } catch (error) {
-    console.error("❌ Failed to delete backup:", error);
+    log.error("❌ Failed to delete backup:", error);
   }
 }
 
@@ -366,8 +367,8 @@ export async function clearAllEncryptedData(): Promise<void> {
     await SecureStore.deleteItemAsync(DEK_KEY);
     await SecureStore.deleteItemAsync(DEK_IV_KEY);
 
-    console.log("✅ All encrypted data cleared");
+    log.info("✅ All encrypted data cleared");
   } catch (error) {
-    console.error("❌ Failed to clear encrypted data:", error);
+    log.error("❌ Failed to clear encrypted data:", error);
   }
 }

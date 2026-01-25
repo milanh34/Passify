@@ -39,6 +39,7 @@ import { sortFieldsByOrder, isSensitiveField, isPasswordField } from "../src/uti
 import { formatDate, getDateFormat, DateFormatOption } from "../src/utils/dateFormat";
 import { formatPhone, getPhoneFormat, PhoneFormatOption } from "../src/utils/phoneFormat";
 import { getFieldType } from "../src/utils/formValidation";
+import { log } from "@/src/utils/logger";
 
 const ACCOUNT_SORT_PREFERENCE_KEY = "@PM:account_sort_preference";
 
@@ -184,7 +185,7 @@ export default function AccountsScreen() {
             setSortOption(saved as AccountSortOption);
           }
         } catch (error) {
-          console.error("Failed to load account sort preference:", error);
+          log.error("Failed to load account sort preference:", error);
         }
       };
       loadSortPreference();
@@ -205,7 +206,7 @@ export default function AccountsScreen() {
           setHighlightedAccountIds(new Set(ids));
           setShowHighlightBanner(true);
         } catch (error) {
-          console.error("Failed to parse matched account IDs:", error);
+          log.error("Failed to parse matched account IDs:", error);
         }
       } else if (!fromConnectedAccounts) {
         setHighlightedAccountIds(new Set());
@@ -269,7 +270,7 @@ export default function AccountsScreen() {
     try {
       await AsyncStorage.setItem(ACCOUNT_SORT_PREFERENCE_KEY, option);
     } catch (error) {
-      console.error("Failed to save account sort preference:", error);
+      log.error("Failed to save account sort preference:", error);
     }
     if (isAuthEnabled) {
       updateActivity();

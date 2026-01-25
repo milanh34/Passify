@@ -1,6 +1,7 @@
 // src/utils/pinAttemptTracker.ts
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "./logger";
 
 const PIN_ATTEMPTS_KEY = "@Passify:pin_attempts";
 
@@ -39,7 +40,7 @@ export async function getPINAttemptState(): Promise<PINAttemptState> {
     }
     return DEFAULT_STATE;
   } catch (error) {
-    console.error("❌ Failed to get PIN attempt state:", error);
+    log.error("❌ Failed to get PIN attempt state:", error);
     return DEFAULT_STATE;
   }
 }
@@ -48,7 +49,7 @@ async function savePINAttemptState(state: PINAttemptState): Promise<void> {
   try {
     await AsyncStorage.setItem(PIN_ATTEMPTS_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error("❌ Failed to save PIN attempt state:", error);
+    log.error("❌ Failed to save PIN attempt state:", error);
   }
 }
 
@@ -107,7 +108,7 @@ export async function recordFailedAttempt(): Promise<{
 
   await savePINAttemptState(state);
 
-  console.log(
+  log.info(
     `🔒 Failed PIN attempt #${state.failedAttempts} (lifetime: ${state.totalLifetimeFailures})`
   );
 
@@ -129,12 +130,12 @@ export async function recordSuccessfulAttempt(): Promise<void> {
   state.lastFailedAttempt = 0;
 
   await savePINAttemptState(state);
-  console.log("✅ PIN attempt successful, counter reset");
+  log.info("✅ PIN attempt successful, counter reset");
 }
 
 export async function resetAttemptTracking(): Promise<void> {
   await AsyncStorage.removeItem(PIN_ATTEMPTS_KEY);
-  console.log("✅ PIN attempt tracking reset");
+  log.info("✅ PIN attempt tracking reset");
 }
 
 export function formatRemainingTime(ms: number): string {

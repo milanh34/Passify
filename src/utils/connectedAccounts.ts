@@ -157,7 +157,7 @@ export function countConnectedPlatforms(
 
     for (const account of accounts) {
       if (foundInThisPlatform) break;
-      
+
       const emailFields = getEmailFieldsFromAccount(account);
       for (const { value } of emailFields) {
         if (value.toLowerCase().trim() === normalizedValue) {

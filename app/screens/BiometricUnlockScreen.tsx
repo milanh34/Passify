@@ -18,6 +18,7 @@ import {
 import BiometricPrompt from "../../src/components/BiometricPrompt";
 import PINInputModal from "../../src/components/PINInputModal";
 import Toast from "../../src/components/Toast";
+import { log } from "@/src/utils/logger";
 
 export default function BiometricUnlockScreen() {
   const { colors, fontConfig } = useTheme();
@@ -67,7 +68,7 @@ export default function BiometricUnlockScreen() {
         setLockoutRemaining(status.remainingFormatted);
       }
     } catch (error) {
-      console.error("Failed to check lockout status:", error);
+      log.error("Failed to check lockout status:", error);
     }
   }, []);
 

@@ -23,6 +23,7 @@ import Slide3SecurityTools from "./onboarding/Slide3SecurityTools";
 import Slide4ManageAccounts from "./onboarding/Slide4ManageAccounts";
 import Slide5Tips from "./onboarding/Slide5Tips";
 import Slide6GetStarted from "./onboarding/Slide6GetStarted";
+import { log } from "@/src/utils/logger";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -92,7 +93,7 @@ export default function OnboardingScreen() {
       });
       router.replace("/(tabs)");
     } catch (error) {
-      console.error("Failed to save onboarding state:", error);
+      log.error("Failed to save onboarding state:", error);
       router.replace("/(tabs)");
     }
   };

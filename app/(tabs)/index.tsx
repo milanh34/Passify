@@ -30,6 +30,7 @@ import { toTitleCase } from "@/src/utils/transferParser";
 import { searchPlatforms, debounce } from "../../src/utils/searchFilter";
 import { sortPlatforms, SortOption } from "../../src/utils/sortPlatforms";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "@/src/utils/logger";
 
 const SORT_PREFERENCE_KEY = "@PM:sort_preference";
 
@@ -88,7 +89,7 @@ export default function ManageScreen() {
             setSortOption(saved as SortOption);
           }
         } catch (error) {
-          console.error("Failed to load sort preference:", error);
+          log.error("Failed to load sort preference:", error);
         }
       };
       loadSortPreference();
@@ -131,7 +132,7 @@ export default function ManageScreen() {
     try {
       await AsyncStorage.setItem(SORT_PREFERENCE_KEY, option);
     } catch (error) {
-      console.error("Failed to save sort preference:", error);
+      log.error("Failed to save sort preference:", error);
     }
     if (isAuthEnabled) {
       updateActivity();

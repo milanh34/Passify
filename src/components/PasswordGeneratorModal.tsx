@@ -25,6 +25,7 @@ import {
   DEFAULT_PASSWORD_OPTIONS,
 } from "../utils/passwordGenerator";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
+import { log } from "../utils/logger";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -77,7 +78,7 @@ export default function PasswordGeneratorModal({
         setGenerated(result);
         setPasswordVisible(true);
       } catch (error: any) {
-        console.error("Password generation error:", error);
+        log.error("Password generation error:", error);
       } finally {
         setIsGenerating(false);
         isGeneratingRef.current = false;

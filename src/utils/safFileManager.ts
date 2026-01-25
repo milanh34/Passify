@@ -4,6 +4,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
 import { Platform } from "react-native";
 import * as Sharing from "expo-sharing";
+import { log } from "./logger";
 
 const { StorageAccessFramework } = FileSystem;
 
@@ -48,7 +49,7 @@ export async function saveFileWithSAF(
 
     return { success: true, uri: fileUri };
   } catch (error: any) {
-    console.error("SAF save error:", error);
+    log.error("SAF save error:", error);
     return {
       success: false,
       error: error.message || "Failed to save file",
@@ -74,7 +75,7 @@ export async function readFileWithSAF(): Promise<ReadResult> {
 
     return { success: true, content, uri: fileUri };
   } catch (error: any) {
-    console.error("SAF read error:", error);
+    log.error("SAF read error:", error);
     return {
       success: false,
       error: error.message || "Failed to read file",
@@ -86,7 +87,7 @@ export async function shareFile(fileUri: string, mimeType: string = "image/png")
   try {
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) {
-      console.error("Sharing is not available on this device");
+      log.error("Sharing is not available on this device");
       return false;
     }
 
@@ -97,7 +98,7 @@ export async function shareFile(fileUri: string, mimeType: string = "image/png")
 
     return true;
   } catch (error) {
-    console.error("Share error:", error);
+    log.error("Share error:", error);
     return false;
   }
 }

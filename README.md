@@ -14,7 +14,7 @@
 </p>
 </div>
 
-***
+---
 
 ## 🎯 About The Project
 
@@ -55,28 +55,32 @@
 </tr>
 </table>
 
-***
+---
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="30" /> Features
 
 ### 🗂️ Password Management
+
 - Organize by platform (Gmail, GitHub, Instagram, etc.)
 - Custom field schemas per platform
 - Batch operations & multi-select
 - Visual platform icons with custom colors
 
 ### 🔍 Search & Organization
+
 - Real-time search with suggestions
 - Multiple sorting options (recent, alphabetical, date)
 - Smart filtering & highlighted matches
 
 ### 🔐 Encryption & Security
+
 - AES-based symmetric encryption
 - Password-derived keys using PBKDF2
 - HMAC-based integrity verification
 - Checksum validation for corruption detection
 
 ### 📸 Encoder & 🔓 Decoder
+
 - Convert database to encrypted PNG
 - Visual progress tracking
 - Share/download backups
@@ -84,28 +88,32 @@
 - Preview before importing
 
 ### 🔄 Import & Export
+
 - Import from text files or clipboard
 - Export to formatted text
 - Bulk import with auto-detection
 
 ### 🔑 Authentication
+
 - Biometric (Face ID, Touch ID, Fingerprint)
 - PIN code protection
 - Auto-lock (1, 5, 10, 30 min, or never)
 - App background blur
 
 ### 🎨 Customization
+
 - **11 Themes** (Sunrise, Ocean, Forest, Rose Gold, OLED Dark, etc.)
 - **10+ Fonts** (Inter, Lexend, Poppins, Roboto Mono, JetBrains Mono, etc.)
 - **Screen Transitions** (Slide, Fade, Scale, Flip)
 
 ### 🎓 User Experience
+
 - Interactive 6-slide onboarding
 - Smooth Moti & Reanimated animations
 - Pull-to-refresh everywhere
 - Toast notifications
 
-***
+---
 
 ## 📱 App Screenshots
 
@@ -153,7 +161,7 @@
 
 </details>
 
-***
+---
 
 ## 🛠️ Tech Stack
 
@@ -164,7 +172,7 @@
 <br><br>
 
 **Additional Technologies:**
-Expo -  Moti -  Reanimated -  AES-JS -  AsyncStorage -  Ionicons
+Expo - Moti - Reanimated - AES-JS - AsyncStorage - Ionicons
 
 </div>
 
@@ -172,26 +180,32 @@ Expo -  Moti -  Reanimated -  AES-JS -  AsyncStorage -  Ionicons
 <summary><b>📦 View All Dependencies</b></summary>
 
 **Core Technologies**
+
 - React Native, Expo, TypeScript
 
 **Navigation & Routing**
+
 - Expo Router (file-based routing)
 
 **Animation Libraries**
+
 - Moti, React Native Reanimated, Gesture Handler
 
 **Security & Storage**
+
 - AES-JS, Expo Secure Store, Expo Local Authentication, AsyncStorage
 
 **UI Components**
+
 - Expo Linear Gradient, Ionicons, 10+ Google Fonts
 
 **File & Media**
+
 - Expo Document Picker, File System, Sharing, Clipboard
 
 </details>
 
-***
+---
 
 ## 🧠 High-Level Architecture
 
@@ -211,86 +225,86 @@ graph TB
 
 > Passify operates entirely offline. All data flows remain within the device.
 
-***
+---
 
 ## 📁 Folder Structure
 
 ```mermaid
 graph TB
     A[📦 Passify Root]
-    
+
     A --> B[📱 app/]
     A --> C[🔧 src/]
     A --> D[🎨 assets/]
     A --> E[⚙️ Config Files]
-    
+
     B --> B1[📂 tabs/]
     B --> B2[📂 onboarding/]
     B --> B3[📂 screens/]
     B --> B4[_layout.tsx]
     B --> B5[index.tsx]
     B --> B6[onboarding.tsx]
-    
+
     B1 --> B1A[index.tsx]
     B1 --> B1B[accounts.tsx]
     B1 --> B1C[transfer.tsx]
     B1 --> B1D[encoder.tsx]
     B1 --> B1E[decoder.tsx]
     B1 --> B1F[settings.tsx]
-    
+
     B2 --> B2A[Slide1Welcome]
     B2 --> B2B[Slide2Tabs]
     B2 --> B2C[Slide3Security]
     B2 --> B2D[Slide4Manage]
     B2 --> B2E[Slide5Tips]
     B2 --> B2F[Slide6Start]
-    
+
     B3 --> B3A[BiometricUnlock]
-    
+
     C --> C1[🧩 components/]
     C --> C2[🌐 context/]
     C --> C3[🔧 utils/]
     C --> C4[📝 types/]
-    
+
     C1 --> C1A[FormModal]
     C1 --> C1B[Toast]
     C1 --> C1C[ProgressBar]
     C1 --> C1D[SearchBar]
     C1 --> C1E[+15 more]
-    
+
     C2 --> C2A[ThemeContext]
     C2 --> C2B[DbContext]
     C2 --> C2C[AuthContext]
     C2 --> C2D[AnimationContext]
-    
+
     C3 --> C3A[crypto.ts]
     C3 --> C3B[image.ts]
     C3 --> C3C[biometricAuth.ts]
     C3 --> C3D[+12 more files]
-    
+
     C4 --> C4A[aes-js.d.ts]
     C4 --> C4B[progress.ts]
-    
+
     D --> D1[images/]
     D --> D2[database.json]
-    
+
     D1 --> D1A[icon.png]
     D1 --> D1B[splash-icon.png]
     D1 --> D1C[favicon.png]
     D1 --> D1D[android-icons]
-    
+
     E --> E1[app.json]
     E --> E2[package.json]
     E --> E3[tsconfig.json]
     E --> E4[eas.json]
     E --> E5[.eslintrc.js]
-    
+
     style A fill:#667eea,stroke:#764ba2,stroke-width:4px,color:#fff
     style B fill:#f093fb,stroke:#f5576c,stroke-width:2px
     style C fill:#4facfe,stroke:#00f2fe,stroke-width:2px
     style D fill:#43e97b,stroke:#38f9d7,stroke-width:2px
     style E fill:#fa709a,stroke:#fee140,stroke-width:2px
-    
+
     style B1 fill:#c471f5,stroke:#fa71cd,stroke-width:1px
     style C1 fill:#69c0ff,stroke:#40a9ff,stroke-width:1px
     style C2 fill:#95de64,stroke:#73d13d,stroke-width:1px
@@ -398,42 +412,46 @@ Passify/
 
 </details>
 
-***
+---
 
 ## ⚙️ Installation & Setup
 
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" width="25" /> **Prerequisites**
 
-| Requirement | Version | Check Command |
-|-------------|---------|---------------|
-| **Node.js** | ≥ 20.x | `node --version` |
-| **npm/yarn** | Latest | `npm --version` |
-| **Expo CLI** | Latest | `npx expo --version` |
+| Requirement  | Version | Check Command        |
+| ------------ | ------- | -------------------- |
+| **Node.js**  | ≥ 20.x  | `node --version`     |
+| **npm/yarn** | Latest  | `npm --version`      |
+| **Expo CLI** | Latest  | `npx expo --version` |
 
 ### 🚀 Quick Start
 
 **Step 1: Clone the repository**
+
 ```bash
 git clone https://github.com/milanh34/Passify.git
 cd passify
 ```
 
 **Step 2: Install dependencies**
+
 ```bash
 npm install
 ```
 
 **Step 3: Start development server**
+
 ```bash
 npx expo start
 ```
 
 **Step 4: Run on specific platform**
+
 ```bash
 # iOS
 npx expo start --ios
 
-# Android  
+# Android
 npx expo start --android
 
 # Web
@@ -443,26 +461,30 @@ npx expo start --web
 ### 🏗️ Production Build
 
 **Step 1: Install EAS CLI**
+
 ```bash
 npm install -g eas-cli
 ```
 
 **Step 2: Login to Expo**
+
 ```bash
 eas login
 ```
 
 **Step 3: Build for Android**
+
 ```bash
 eas build --platform android --profile production
 ```
 
 **Step 4: Build for iOS**
+
 ```bash
 eas build --platform ios --profile production
 ```
 
-***
+---
 
 ## 📖 Usage
 
@@ -488,21 +510,21 @@ eas build --platform ios --profile production
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#f093fb','secondaryColor':'#43e97b','tertiaryColor':'#4facfe'}}}%%
 graph TB
-    A[📊 Your Database<br/>accounts, passwords, platforms] 
+    A[📊 Your Database<br/>accounts, passwords, platforms]
     B[📝 Serialize to JSON<br/>Convert to text format]
     C[🔒 AES-256 Encryption<br/>Military-grade security]
     D[🛡️ Add HMAC Signature<br/>Prevent tampering]
     E[📦 Pack Header<br/>Add metadata & checksum]
     F[🎨 Encode to RGB Pixels<br/>Convert to image data]
     G[💾 Save as PNG<br/>Your encrypted backup!]
-    
+
     A --> B
     B --> C
     C --> D
     D --> E
     E --> F
     F --> G
-    
+
     style A fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
     style C fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
     style D fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
@@ -531,7 +553,7 @@ graph TB
     F[🔓 Decrypt with AES-256<br/>Use your password]
     G[📝 Parse JSON<br/>Convert back to data]
     H[✨ Import Accounts<br/>Restore complete!]
-    
+
     A --> B
     B --> C
     C --> D
@@ -539,7 +561,7 @@ graph TB
     E --> F
     F --> G
     G --> H
-    
+
     style A fill:#fa709a,stroke:#fee140,stroke-width:3px,color:#fff
     style E fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
     style F fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
@@ -549,6 +571,7 @@ graph TB
 ### 🔄 Import/Export
 
 **Import Format:**
+
 ```
 === Gmail ===
 Account: john_doe
@@ -565,12 +588,13 @@ Password: GitHubPass456
 ### 🎨 Customization
 
 Navigate to **Settings** tab:
+
 - **Themes:** Nord, Sky, Tokyo Night, Lavender, Vaporwave, Peach, etc.
 - **Fonts:** Inter, Lexend, Poppins, Roboto Mono, JetBrains Mono, etc.
 - **Transitions:** Slide, Fade, Scale, Flip, etc.
 - **Security:** Biometric, PIN, Auto-lock timeout
 
-***
+---
 
 ## 🧭 Design Philosophy
 
@@ -579,7 +603,8 @@ Navigate to **Settings** tab:
 - No cloud, no servers, no tracking
 - Security boundaries aligned with personal devices
 - Explicit user responsibility over forced restrictions
-***
+
+---
 
 ## 🔒 Security & Encryption
 
@@ -591,7 +616,7 @@ Navigate to **Settings** tab:
 
 **Key Derivation:** PBKDF2 with 100,000 iterations  
 **Authentication:** HMAC-SHA256  
-**Checksum:** CRC32 validation  
+**Checksum:** CRC32 validation
 
 ### Complete Security Architecture
 
@@ -602,26 +627,26 @@ graph TB
     B[⚡ PBKDF2 Derivation<br/>100,000 iterations]
     C[🔐 256-bit AES Key<br/>For encryption]
     D[🛡️ 256-bit HMAC Key<br/>For authentication]
-    
+
     E[📊 Database JSON<br/>Your accounts data]
     F[📝 Plain Text<br/>Serialized]
     G[🔒 Encrypted Bytes<br/>AES-256-CTR mode]
-    
+
     H[🔏 HMAC Tag<br/>SHA-256 signature]
     I[📦 Signed Data<br/>With authentication]
     J[📋 Image Header<br/>Magic number + metadata]
     K[✅ CRC32 Checksum<br/>Integrity verification]
     L[🎨 RGB Pixel Array<br/>Image encoding]
     M[💾 backup.png<br/>Final encrypted file]
-    
+
     A --> B
     B --> C
     B --> D
-    
+
     E --> F
     F --> G
     C -.encrypts.-> G
-    
+
     G --> H
     D -.signs.-> H
     H --> I
@@ -629,7 +654,7 @@ graph TB
     J --> K
     K --> L
     L --> M
-    
+
     style A fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
     style G fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
     style H fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
@@ -638,26 +663,26 @@ graph TB
 
 ### Security Features
 
-| Feature | Implementation |
-|---------|----------------|
-| 🔐 **Local Storage** | AsyncStorage + Expo Secure Store |
-| 🚫 **No Cloud Sync** | 100% offline, zero network requests |
-| 🕵️ **No Analytics** | No tracking or telemetry |
-| 👁️ **Background Blur** | Sensitive data hidden in app switcher |
-| ⏱️ **Auto-Lock** | Configurable timeout (1-30 min) |
-| 🔒 **Biometric Auth** | Face ID, Touch ID, Fingerprint |
-| 🛡️ **Data Integrity** | HMAC authentication prevents tampering |
+| Feature                | Implementation                         |
+| ---------------------- | -------------------------------------- |
+| 🔐 **Local Storage**   | AsyncStorage + Expo Secure Store       |
+| 🚫 **No Cloud Sync**   | 100% offline, zero network requests    |
+| 🕵️ **No Analytics**    | No tracking or telemetry               |
+| 👁️ **Background Blur** | Sensitive data hidden in app switcher  |
+| ⏱️ **Auto-Lock**       | Configurable timeout (1-30 min)        |
+| 🔒 **Biometric Auth**  | Face ID, Touch ID, Fingerprint         |
+| 🛡️ **Data Integrity**  | HMAC authentication prevents tampering |
 
 ### 🔑 Password Best Practices
 
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" width="20" /> Use 12+ characters  
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" width="20" /> Mix uppercase, lowercase, numbers, symbols  
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" width="20" /> Use memorable passphrase (e.g., "Blue!Elephant#Runs@7am")  
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Cross%20Mark.png" width="20" /> Don't use birthdays, names, or dictionary words  
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Cross%20Mark.png" width="20" /> Don't use birthdays, names, or dictionary words
 
 > **⚠️ Critical:** Never forget your master password! There's no recovery mechanism.
 
-***
+---
 
 ## 🤝 Contributing
 
@@ -670,23 +695,25 @@ graph TB
 5. **Open Pull Request**
 
 **Commit Format:**
+
 - `feat:` New feature
 - `fix:` Bug fix
 - `docs:` Documentation
 - `style:` Formatting
 - `refactor:` Code refactoring
 
-***
+---
 
 ## 📜 License & Contact
 
 **License:** MIT License
 
 **Author:** Milan Haria
+
 - 💼 GitHub: [milanh34](https://github.com/milanh34)
 - 💌 LinkedIn: [milan-haria04](https://www.linkedin.com/in/milan-haria04)
 
-***
+---
 
 ## ❓ FAQ
 
@@ -720,10 +747,9 @@ Military-grade AES-256 with 100k PBKDF2 iterations - industry-standard cryptogra
 Yes! 100% offline, no internet connection required.
 </details>
 
-***
+---
 
 ## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Folded%20Hands.png" width="24" /> Acknowledgments
-
 
 - **[Expo](https://expo.dev/)** - App foundation
 - **[React Native](https://reactnative.dev/)** - Cross-platform framework
@@ -731,18 +757,15 @@ Yes! 100% offline, no internet connection required.
 - **[AES-JS](https://github.com/ricmoo/aes-js)** - Encryption implementation
 - **[Ionicons](https://ionic.io/ionicons)** - Beautiful icons
 
-***
+---
 
 <div align="center">
 
 **Made with ❤️ and 🔐 by [Milan Haria](https://github.com/milanh34)**
 
-*Your data. Your device. Your control.*
+_Your data. Your device. Your control._
 
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Star.png" width="25" />
-
-
-
 
 [⬆ Back to Top](#-passify)
 

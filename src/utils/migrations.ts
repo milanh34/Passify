@@ -10,6 +10,7 @@ import {
   readEncryptedMetadata,
   writeAllEncryptedData,
 } from "./encryptedStorage";
+import { log } from "./logger";
 
 export const CURRENT_DB_VERSION = 1;
 
@@ -33,7 +34,7 @@ export type MigrationFunction = (state: DatabaseState) => Promise<DatabaseState>
 
 const MIGRATIONS: Record<number, MigrationFunction> = {
   1: async (state: DatabaseState): Promise<DatabaseState> => {
-    console.log("📦 Running migration to v1: Adding timestamps and normalizing data...");
+    log.info("📦 Running migration to v1: Adding timestamps and normalizing data...");
 
     const now = Date.now();
     const { database, schemas, metadata } = state;
@@ -65,7 +66,6 @@ const MIGRATIONS: Record<number, MigrationFunction> = {
 
     for (const platformKey of Object.keys(migratedDatabase)) {
       if (!migratedSchemas[platformKey] || migratedSchemas[platformKey].length === 0) {
-        // Infer schema from first account
         const firstAccount = migratedDatabase[platformKey][0];
         if (firstAccount) {
           const inferredSchema = Object.keys(firstAccount).filter(
@@ -79,7 +79,7 @@ const MIGRATIONS: Record<number, MigrationFunction> = {
       }
     }
 
-    console.log("✅ Migration to v1 complete");
+    log.info("✅ Migration to v1 complete");
 
     return {
       database: migratedDatabase,
@@ -90,7 +90,7 @@ const MIGRATIONS: Record<number, MigrationFunction> = {
 
   // Example: Migration to version 2 (future)
   // 2: async (state: DatabaseState): Promise<DatabaseState> => {
-  //   console.log("📦 Running migration to v2: Adding new feature...");
+  //   log.info("📦 Running migration to v2: Adding new feature...");
   //   // Add migration logic here
   //   return state;
   // },
@@ -101,7 +101,7 @@ export async function getDatabaseVersion(): Promise<number> {
     const version = await AsyncStorage.getItem(DB_VERSION_KEY);
     return version ? parseInt(version, 10) : 0;
   } catch (error) {
-    console.error("❌ Failed to get database version:", error);
+    log.error("❌ Failed to get database version:", error);
     return 0;
   }
 }
@@ -110,21 +110,21 @@ async function setDatabaseVersion(version: number): Promise<void> {
   try {
     await AsyncStorage.setItem(DB_VERSION_KEY, version.toString());
   } catch (error) {
-    console.error("❌ Failed to set database version:", error);
+    log.error("❌ Failed to set database version:", error);
     throw error;
   }
 }
 
-async function logMigration(log: MigrationLog): Promise<void> {
+async function logMigration(log_: MigrationLog): Promise<void> {
   try {
     const existingLogs = await AsyncStorage.getItem(MIGRATION_LOG_KEY);
     const logs: MigrationLog[] = existingLogs ? JSON.parse(existingLogs) : [];
-    logs.push(log);
+    logs.push(log_);
 
     const trimmedLogs = logs.slice(-20);
     await AsyncStorage.setItem(MIGRATION_LOG_KEY, JSON.stringify(trimmedLogs));
   } catch (error) {
-    console.error("❌ Failed to log migration:", error);
+    log.error("❌ Failed to log migration:", error);
   }
 }
 
@@ -133,7 +133,7 @@ export async function getMigrationLogs(): Promise<MigrationLog[]> {
     const logs = await AsyncStorage.getItem(MIGRATION_LOG_KEY);
     return logs ? JSON.parse(logs) : [];
   } catch (error) {
-    console.error("❌ Failed to get migration logs:", error);
+    log.error("❌ Failed to get migration logs:", error);
     return [];
   }
 }
@@ -146,10 +146,10 @@ export async function runMigrations(): Promise<{
 }> {
   const currentVersion = await getDatabaseVersion();
 
-  console.log(`📊 Current DB version: ${currentVersion}, Target version: ${CURRENT_DB_VERSION}`);
+  log.info(`📊 Current DB version: ${currentVersion}, Target version: ${CURRENT_DB_VERSION}`);
 
   if (currentVersion >= CURRENT_DB_VERSION) {
-    console.log("✅ Database is up to date, no migrations needed");
+    log.info("✅ Database is up to date, no migrations needed");
     return {
       success: true,
       fromVersion: currentVersion,
@@ -160,7 +160,7 @@ export async function runMigrations(): Promise<{
   let backupId: string | null = null;
   try {
     backupId = await createEncryptedBackup();
-    console.log(`📦 Pre-migration backup created: ${backupId}`);
+    log.info(`📦 Pre-migration backup created: ${backupId}`);
   } catch (error) {
     console.warn("⚠️ Could not create pre-migration backup, proceeding anyway...");
   }
@@ -174,7 +174,7 @@ export async function runMigrations(): Promise<{
     ]);
     state = { database, schemas, metadata };
   } catch (error) {
-    console.log("📝 Starting with empty state (first run or corrupted data)");
+    log.info("📝 Starting with empty state (first run or corrupted data)");
     state = {
       database: {},
       schemas: {},
@@ -193,7 +193,7 @@ export async function runMigrations(): Promise<{
       continue;
     }
 
-    console.log(`🔄 Running migration to version ${version}...`);
+    log.info(`🔄 Running migration to version ${version}...`);
 
     try {
       migratedState = await migrationFn(migratedState);
@@ -205,9 +205,9 @@ export async function runMigrations(): Promise<{
         success: true,
       });
 
-      console.log(`✅ Migration to version ${version} successful`);
+      log.info(`✅ Migration to version ${version} successful`);
     } catch (error: any) {
-      console.error(`❌ Migration to version ${version} failed:`, error);
+      log.error(`❌ Migration to version ${version} failed:`, error);
 
       await logMigration({
         version,
@@ -217,12 +217,12 @@ export async function runMigrations(): Promise<{
       });
 
       if (backupId) {
-        console.log("🔄 Attempting rollback from backup...");
+        log.info("🔄 Attempting rollback from backup...");
         const restored = await restoreFromBackup(backupId);
         if (restored) {
-          console.log("✅ Rollback successful");
+          log.info("✅ Rollback successful");
         } else {
-          console.error("❌ Rollback failed!");
+          log.error("❌ Rollback failed!");
         }
       }
 
@@ -245,10 +245,10 @@ export async function runMigrations(): Promise<{
 
     if (backupId) {
       await deleteBackup(backupId);
-      console.log("🗑️ Pre-migration backup cleaned up");
+      log.info("🗑️ Pre-migration backup cleaned up");
     }
 
-    console.log(`✅ All migrations complete. DB now at version ${CURRENT_DB_VERSION}`);
+    log.info(`✅ All migrations complete. DB now at version ${CURRENT_DB_VERSION}`);
 
     return {
       success: true,
@@ -256,10 +256,10 @@ export async function runMigrations(): Promise<{
       toVersion: CURRENT_DB_VERSION,
     };
   } catch (error: any) {
-    console.error("❌ Failed to save migrated data:", error);
+    log.error("❌ Failed to save migrated data:", error);
 
     if (backupId) {
-      console.log("🔄 Attempting rollback from backup...");
+      log.info("🔄 Attempting rollback from backup...");
       await restoreFromBackup(backupId);
     }
 
@@ -280,5 +280,5 @@ export async function needsMigration(): Promise<boolean> {
 export async function resetDatabaseVersion(): Promise<void> {
   await AsyncStorage.removeItem(DB_VERSION_KEY);
   await AsyncStorage.removeItem(MIGRATION_LOG_KEY);
-  console.log("✅ Database version reset");
+  log.info("✅ Database version reset");
 }

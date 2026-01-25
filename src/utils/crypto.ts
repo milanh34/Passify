@@ -3,6 +3,7 @@
 import * as Crypto from "expo-crypto";
 import aesjs from "aes-js";
 import { ThrottledProgress, ProgressCallback, ProgressPhase } from "../types/progress";
+import { log } from "./logger";
 
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 32;
@@ -167,7 +168,7 @@ export async function encryptData(
 
     return result;
   } catch (error: any) {
-    console.error("🔴 Encryption error:", error);
+    log.error("🔴 Encryption error:", error);
     throw new Error(`Encryption failed: ${error.message}`);
   }
 }
@@ -218,7 +219,7 @@ export async function decryptData(
 
     return aesjs.utils.utf8.fromBytes(decryptedBytes);
   } catch (error: any) {
-    console.error("🔴 Decryption error:", error);
+    log.error("🔴 Decryption error:", error);
 
     if (error.message.includes("Authentication failed")) {
       throw error;

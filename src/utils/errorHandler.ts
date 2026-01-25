@@ -1,6 +1,7 @@
 // src/utils/errorHandler.ts
 
 import { Platform } from "react-native";
+import { log } from "./logger";
 
 export type ErrorSeverity = "info" | "warning" | "error" | "fatal";
 
@@ -37,7 +38,7 @@ class ErrorHandler {
 
     this.setupGlobalHandlers();
     this.isInitialized = true;
-    console.log("🛡️ Global error handler initialized");
+    log.info("🛡️ Global error handler initialized");
   }
 
   private setupGlobalHandlers(): void {
@@ -116,14 +117,14 @@ class ErrorHandler {
 
     switch (error.severity) {
       case "info":
-        console.info(logMessage, error.context);
+        log.info(logMessage, error.context);
         break;
       case "warning":
-        console.warn(logMessage, error.context);
+        log.warn(logMessage, error.context);
         break;
       case "error":
       case "fatal":
-        console.error(logMessage, error.stack || error.context);
+        log.error(logMessage, error.stack || error.context);
         break;
     }
   }
@@ -133,7 +134,7 @@ class ErrorHandler {
       try {
         callback(error);
       } catch (e) {
-        console.error("Error in error listener:", e);
+        log.error("Error in error listener:", e);
       }
     });
   }

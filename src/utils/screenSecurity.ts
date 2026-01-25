@@ -3,6 +3,8 @@
 import * as ScreenCapture from "expo-screen-capture";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useRef } from "react";
+import { log } from "./logger";
 
 const SCREENSHOT_ALLOWED_KEY = "@PM:screenshot_allowed";
 
@@ -13,7 +15,9 @@ export async function getScreenshotAllowed(): Promise<boolean> {
     const stored = await AsyncStorage.getItem(SCREENSHOT_ALLOWED_KEY);
     return stored === "true";
   } catch (error) {
-    console.error("Failed to get screenshot setting:", error);
+    if (__DEV__) {
+      log.error("Failed to get screenshot setting:", error);
+    }
     return false;
   }
 }
@@ -27,7 +31,9 @@ export async function setScreenshotAllowed(allowed: boolean): Promise<void> {
       await preventScreenCapture();
     }
   } catch (error) {
-    console.error("Failed to set screenshot setting:", error);
+    if (__DEV__) {
+      log.error("Failed to set screenshot setting:", error);
+    }
   }
 }
 
@@ -37,9 +43,13 @@ export async function preventScreenCapture(): Promise<void> {
   try {
     await ScreenCapture.preventScreenCaptureAsync();
     isPreventingCapture = true;
-    console.log("🔒 Screen capture prevention enabled");
+    if (__DEV__) {
+      log.info("🔒 Screen capture prevention enabled");
+    }
   } catch (error) {
-    console.error("Failed to prevent screen capture:", error);
+    if (__DEV__) {
+      log.error("Failed to prevent screen capture:", error);
+    }
   }
 }
 
@@ -49,9 +59,13 @@ export async function allowScreenCapture(): Promise<void> {
   try {
     await ScreenCapture.allowScreenCaptureAsync();
     isPreventingCapture = false;
-    console.log("📷 Screen capture allowed");
+    if (__DEV__) {
+      log.info("📷 Screen capture allowed");
+    }
   } catch (error) {
-    console.error("Failed to allow screen capture:", error);
+    if (__DEV__) {
+      log.error("Failed to allow screen capture:", error);
+    }
   }
 }
 
@@ -62,4 +76,41 @@ export async function initializeScreenSecurity(): Promise<void> {
   }
 }
 
-export function usePreventScreenCapture(shouldPrevent: boolean = true): void {}
+export function usePreventScreenCapture(shouldPrevent: boolean = true): void {
+  const wasPreventingRef = useRef(false);
+
+  useEffect(() => {
+    if (!shouldPrevent) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const enablePrevention = async () => {
+      try {
+        await ScreenCapture.preventScreenCaptureAsync();
+        if (isMounted) {
+          wasPreventingRef.current = true;
+        }
+      } catch (error) {
+        if (__DEV__) {
+          log.error("usePreventScreenCapture: Failed to prevent:", error);
+        }
+      }
+    };
+
+    enablePrevention();
+
+    return () => {
+      isMounted = false;
+
+      if (wasPreventingRef.current) {
+        getScreenshotAllowed().then((allowed) => {
+          if (allowed) {
+            ScreenCapture.allowScreenCaptureAsync().catch(() => {});
+          }
+        });
+      }
+    };
+  }, [shouldPrevent]);
+}

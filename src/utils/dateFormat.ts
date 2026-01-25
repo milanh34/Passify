@@ -1,6 +1,7 @@
 // src/utils/dateFormat.ts
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "./logger";
 
 const DATE_FORMAT_KEY = "@PM:date_format";
 
@@ -76,7 +77,7 @@ export async function getDateFormat(): Promise<DateFormatOption> {
     }
     return "DD/MM/YYYY";
   } catch (error) {
-    console.error("Failed to get date format:", error);
+    log.error("Failed to get date format:", error);
     return "DD/MM/YYYY";
   }
 }
@@ -85,7 +86,7 @@ export async function setDateFormat(format: DateFormatOption): Promise<void> {
   try {
     await AsyncStorage.setItem(DATE_FORMAT_KEY, format);
   } catch (error) {
-    console.error("Failed to set date format:", error);
+    log.error("Failed to set date format:", error);
   }
 }
 

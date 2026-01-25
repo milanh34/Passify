@@ -1,6 +1,7 @@
 // src/utils/phoneFormat.ts
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "./logger";
 
 const PHONE_FORMAT_KEY = "@PM:phone_format";
 
@@ -41,7 +42,7 @@ export async function getPhoneFormat(): Promise<PhoneFormatOption> {
     }
     return "PLAIN";
   } catch (error) {
-    console.error("Failed to get phone format:", error);
+    log.error("Failed to get phone format:", error);
     return "PLAIN";
   }
 }
@@ -50,7 +51,7 @@ export async function setPhoneFormat(format: PhoneFormatOption): Promise<void> {
   try {
     await AsyncStorage.setItem(PHONE_FORMAT_KEY, format);
   } catch (error) {
-    console.error("Failed to set phone format:", error);
+    log.error("Failed to set phone format:", error);
   }
 }
 
