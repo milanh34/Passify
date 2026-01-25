@@ -50,3 +50,38 @@ app-example
 
 # Text
 *.txt
+
+# Expo
+expo-env.d.ts
+.expo/
+
+# Development files
+assets/database.json
+
+# Build outputs
+dist/
+android/
+ios/
+
+# IDE
+.idea/
+.vscode/
+
+# Test
+coverage/
+__tests__/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Misc
+.DS_Store
+*.pem

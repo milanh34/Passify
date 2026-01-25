@@ -7,9 +7,12 @@ import {
   recordSuccessfulAttempt,
   checkLockoutStatus,
 } from "./pinAttemptTracker";
+import { log } from "./logger";
 
 const PIN_HASH_KEY = "Passify_pin_hash";
 const PIN_SALT_KEY = "Passify_pin_salt";
+
+const PIN_HASH_ITERATIONS = 50000;
 
 export interface PINValidation {
   isValid: boolean;
@@ -54,7 +57,9 @@ async function getUserSalt(): Promise<string> {
 
   if (!salt) {
     salt = await generateSalt();
-    await SecureStore.setItemAsync(PIN_SALT_KEY, salt);
+    await SecureStore.setItemAsync(PIN_SALT_KEY, salt, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
   }
 
   return salt;
@@ -66,15 +71,16 @@ async function hashPIN(pin: string): Promise<string> {
     const combined = pin + salt;
 
     let hash = combined;
-    const iterations = 10000;
 
-    for (let i = 0; i < iterations; i++) {
+    for (let i = 0; i < PIN_HASH_ITERATIONS; i++) {
       hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, hash);
     }
 
     return hash;
   } catch (error) {
-    console.error("Hash PIN error:", error);
+    if (__DEV__) {
+      log.error("Hash PIN error:", error);
+    }
     throw new Error("Failed to hash PIN");
   }
 }
@@ -100,10 +106,14 @@ export async function storePIN(pin: string): Promise<boolean> {
     }
 
     const hashedPIN = await hashPIN(pin);
-    await SecureStore.setItemAsync(PIN_HASH_KEY, hashedPIN);
+    await SecureStore.setItemAsync(PIN_HASH_KEY, hashedPIN, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
     return true;
   } catch (error) {
-    console.error("Store PIN error:", error);
+    if (__DEV__) {
+      log.error("Store PIN error:", error);
+    }
     return false;
   }
 }
@@ -164,10 +174,12 @@ export async function verifyPINWithDetails(pin: string): Promise<PINVerifyResult
       };
     }
   } catch (error: any) {
-    console.error("Verify PIN error:", error);
+    if (__DEV__) {
+      log.error("Verify PIN error:", error);
+    }
     return {
       success: false,
-      error: error.message || "Verification failed",
+      error: "Verification failed",
     };
   }
 }
@@ -192,7 +204,9 @@ export async function isPINSet(): Promise<boolean> {
     const storedHash = await SecureStore.getItemAsync(PIN_HASH_KEY);
     return storedHash !== null;
   } catch (error) {
-    console.error("Check PIN error:", error);
+    if (__DEV__) {
+      log.error("Check PIN error:", error);
+    }
     return false;
   }
 }
@@ -203,7 +217,9 @@ export async function removePIN(): Promise<boolean> {
     await SecureStore.deleteItemAsync(PIN_SALT_KEY);
     return true;
   } catch (error) {
-    console.error("Remove PIN error:", error);
+    if (__DEV__) {
+      log.error("Remove PIN error:", error);
+    }
     return false;
   }
 }
@@ -238,7 +254,9 @@ export async function changePIN(
     }
 
     const newSalt = await generateSalt();
-    await SecureStore.setItemAsync(PIN_SALT_KEY, newSalt);
+    await SecureStore.setItemAsync(PIN_SALT_KEY, newSalt, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
 
     const stored = await storePIN(newPIN);
     if (!stored) {
@@ -250,10 +268,12 @@ export async function changePIN(
 
     return { success: true };
   } catch (error: any) {
-    console.error("Change PIN error:", error);
+    if (__DEV__) {
+      log.error("Change PIN error:", error);
+    }
     return {
       success: false,
-      error: error.message || "Failed to change PIN",
+      error: "Failed to change PIN",
     };
   }
 }

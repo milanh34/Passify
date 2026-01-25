@@ -1,6 +1,6 @@
 // src/components/Toast.tsx
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MotiView, AnimatePresence } from "moti";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,10 +11,31 @@ interface ToastProps {
   visible: boolean;
   type?: "success" | "error" | "info" | "warning";
   duration?: number;
+  onHide?: () => void;
 }
 
-export default function Toast({ message, visible, type = "success", duration = 3000 }: ToastProps) {
+export default function Toast({
+  message,
+  visible,
+  type = "success",
+  duration = 3000,
+  onHide,
+}: ToastProps) {
   const { colors, fontConfig } = useTheme();
+  const [internalVisible, setInternalVisible] = useState(visible);
+
+  useEffect(() => {
+    setInternalVisible(visible);
+
+    if (visible && duration > 0) {
+      const timer = setTimeout(() => {
+        setInternalVisible(false);
+        onHide?.();
+      }, duration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [visible, duration, onHide]);
 
   const getToastStyle = () => {
     switch (type) {
@@ -50,7 +71,7 @@ export default function Toast({ message, visible, type = "success", duration = 3
 
   return (
     <AnimatePresence>
-      {visible && (
+      {internalVisible && (
         <MotiView
           from={{
             opacity: 0,

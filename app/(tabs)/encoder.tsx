@@ -36,6 +36,7 @@ import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { useAnimation } from "../../src/context/AnimationContext";
 import { MotiView } from "moti";
 import { Platform } from "react-native";
+import { log } from "@/src/utils/logger";
 
 export default function EncoderScreen() {
   const { colors, fontConfig } = useTheme();
@@ -117,7 +118,7 @@ export default function EncoderScreen() {
 
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
-      console.log("Cancelling ongoing encode...");
+      log.info("Cancelling ongoing encode...");
       cleanup();
     }
 
@@ -147,7 +148,7 @@ export default function EncoderScreen() {
 
   const onProgress = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
-      console.log(`Progress: ${update.phase} - ${Math.round(update.percent)}%`);
+      log.info(`Progress: ${update.phase} - ${Math.round(update.percent)}%`);
       setProgressUpdate(update);
     }
   };
@@ -277,7 +278,7 @@ export default function EncoderScreen() {
         showToastMessage("Image generated successfully! Use Download or Share to save.", "success");
       }
     } catch (error: any) {
-      console.error("Encoding error:", error);
+      log.error("Encoding error:", error);
       if (isMountedRef.current && isProcessingRef.current) {
         const errorMessage = error.message || "An unexpected error occurred during encoding";
         showToastMessage(errorMessage, "error");
@@ -327,7 +328,7 @@ export default function EncoderScreen() {
       const result = await saveFileWithSAF(filename, base64Content, "image/png");
 
       if (result.success) {
-        showToastMessage("✅ File saved successfully!", "success");
+        showToastMessage("File saved successfully!", "success");
       } else {
         showToastMessage(result.error || "Failed to save file", "error");
       }

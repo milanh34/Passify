@@ -18,6 +18,7 @@ import {
   CURRENT_DB_VERSION,
   needsMigration,
 } from "../utils/migrations";
+import { log } from "../utils/logger";
 
 const initialData = require("../../assets/database.json");
 
@@ -88,10 +89,10 @@ function useDebouncedSave() {
         timeoutRef.current = setTimeout(async () => {
           try {
             await writeAllEncryptedData(database, schemas, metadata);
-            console.log("💾 Database saved (encrypted)");
+            log.info("💾 Database saved (encrypted)");
             resolve();
           } catch (error) {
-            console.error("❌ Failed to save database:", error);
+            log.error("❌ Failed to save database:", error);
             resolve();
           }
         }, delay);
@@ -125,16 +126,16 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
   }, [database, schemas, platformsMetadata, isInitialized, isDbLoading, debouncedSave]);
 
   const initializeDatabase = async () => {
-    console.log("🔐 Initializing encrypted database...");
+    log.info("🔐 Initializing encrypted database...");
     setIsDbLoading(true);
     setDbError(null);
 
     try {
       const status = await checkEncryptionStatus();
-      console.log("📊 Encryption status:", status);
+      log.info("📊 Encryption status:", status);
 
       if (status.hasLegacyData && !status.isEncrypted) {
-        console.log("🔄 Migrating legacy unencrypted data...");
+        log.info("🔄 Migrating legacy unencrypted data...");
         const migrated = await migrateLegacyToEncrypted();
         if (!migrated) {
           throw new Error("Failed to migrate legacy data to encrypted storage");
@@ -142,10 +143,10 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (await needsMigration()) {
-        console.log("🔄 Running database migrations...");
+        log.info("🔄 Running database migrations...");
         const migrationResult = await runMigrations();
         if (!migrationResult.success) {
-          console.error("⚠️ Migration warning:", migrationResult.error);
+          log.error("⚠️ Migration warning:", migrationResult.error);
         }
       }
 
@@ -160,14 +161,14 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
           readEncryptedMetadata(),
         ]);
       } catch (readError) {
-        console.warn("⚠️ Could not read encrypted data, using defaults:", readError);
+        log.warn("⚠️ Could not read encrypted data, using defaults:", readError);
         dbVal = {};
         scVal = {};
         metaVal = {};
       }
 
       if (Object.keys(dbVal).length === 0) {
-        console.log("📝 Empty database, loading initial data...");
+        log.info("📝 Empty database, loading initial data...");
         dbVal = initialData;
         scVal = defaultSchemas;
       }
@@ -242,12 +243,12 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
 
       if (needsMetaUpdate || needsDbUpdate) {
         await writeAllEncryptedData(dbVal, scVal, updatedMeta);
-        console.log("💾 Updated database saved");
+        log.info("💾 Updated database saved");
       }
 
-      console.log("✅ Database initialized successfully");
+      log.info("✅ Database initialized successfully");
     } catch (error: any) {
-      console.error("❌ Database initialization failed:", error);
+      log.error("❌ Database initialization failed:", error);
       setDbError(error.message || "Failed to initialize database");
 
       setDatabase({});

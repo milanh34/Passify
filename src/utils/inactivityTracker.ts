@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "./logger";
 
 const LAST_ACTIVITY_KEY = "@Passify:last_activity";
 
@@ -13,7 +14,7 @@ export async function getLastActivity(): Promise<number> {
     const timestamp = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
     return timestamp ? parseInt(timestamp, 10) : Date.now();
   } catch (error) {
-    console.error("Get last activity error:", error);
+    log.error("Get last activity error:", error);
     return Date.now();
   }
 }
@@ -22,7 +23,7 @@ export async function updateLastActivity(): Promise<void> {
   try {
     await AsyncStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
   } catch (error) {
-    console.error("Update last activity error:", error);
+    log.error("Update last activity error:", error);
   }
 }
 
@@ -38,7 +39,7 @@ export async function checkInactivityTimeout(timeoutMinutes: InactivityTimeout):
 
     return now - lastActivity > timeoutMs;
   } catch (error) {
-    console.error("Check inactivity error:", error);
+    log.error("Check inactivity error:", error);
     return false;
   }
 }
@@ -53,10 +54,10 @@ export function useInactivityTracker(isEnabled: boolean = true) {
 
     const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-        console.log("🔍 App returned to foreground");
+        log.info("🔍 App returned to foreground");
       } else if (nextAppState.match(/inactive|background/)) {
         updateLastActivity();
-        console.log("⏸️  App going to background");
+        log.info("⏸️  App going to background");
       }
 
       appState.current = nextAppState;

@@ -14,6 +14,7 @@ import {
   checkInactivityTimeout,
   updateLastActivity,
 } from "../utils/inactivityTracker";
+import { log } from "../utils/logger";
 
 const AUTH_PREFERENCES_KEY = "@Passify:auth_preferences";
 
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
       }
     } catch (error) {
-      console.error("Load auth preferences error:", error);
+      log.error("Load auth preferences error:", error);
     }
   }, []);
 
@@ -75,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem(AUTH_PREFERENCES_KEY, JSON.stringify(newPrefs));
       setPreferences(newPrefs);
     } catch (error) {
-      console.error("Save auth preferences error:", error);
+      log.error("Save auth preferences error:", error);
     }
   }, []);
 
@@ -84,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initialize = async () => {
-      console.log("🔐 Initializing AuthContext...");
+      log.info("🔐 Initializing AuthContext...");
 
       await loadPreferences();
 
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setIsInitialized(true);
-      console.log("✅ AuthContext initialized:", {
+      log.info("✅ AuthContext initialized:", {
         biometric: capability.isAvailable,
         pin: hasPIN,
         locked: isLocked,
@@ -119,12 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       "change",
       async (nextAppState: AppStateStatus) => {
         if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-          console.log("🔍 App returned to foreground, checking inactivity...");
+          log.info("🔍 App returned to foreground, checking inactivity...");
 
           if (isAuthEnabled && !isLocked) {
             const shouldLock = await checkInactivityTimeout(preferences.inactivityTimeout);
             if (shouldLock) {
-              console.log("🔒 Locking due to inactivity");
+              log.info("🔒 Locking due to inactivity");
               setIsLocked(true);
             }
           }
@@ -149,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await savePreferences(newPrefs);
       await updateLastActivity();
       setIsLocked(false);
-      console.log(`✅ Unlocked via ${method}`);
+      log.info(`✅ Unlocked via ${method}`);
     },
     [preferences, savePreferences]
   );
@@ -157,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const lock = useCallback(() => {
     if (isAuthEnabled) {
       setIsLocked(true);
-      console.log("🔒 App locked");
+      log.info("🔒 App locked");
     }
   }, [isAuthEnabled]);
 

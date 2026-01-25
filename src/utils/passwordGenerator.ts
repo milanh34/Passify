@@ -14,7 +14,7 @@ export interface PasswordOptions {
 }
 
 export interface PasswordStrength {
-  score: number; // 0-4
+  score: number;
   label: "Very Weak" | "Weak" | "Fair" | "Strong" | "Very Strong";
   color: string;
   suggestions: string[];

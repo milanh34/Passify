@@ -2,6 +2,7 @@
 
 import * as FileSystem from "expo-file-system/legacy";
 import { encodePNG, decodePNG, PNGProgressCallback } from "./pngEncoder";
+import { log } from "./logger";
 
 function arrayBufferToBase64(buffer: Uint8Array): string {
   let binary = "";
@@ -109,7 +110,7 @@ export async function getBase64FromUri(uri: string): Promise<string> {
     });
     return base64;
   } catch (error: any) {
-    console.error("Error reading file as base64:", error);
+    log.error("Error reading file as base64:", error);
     throw new Error(`Failed to read file: ${error.message}`);
   }
 }

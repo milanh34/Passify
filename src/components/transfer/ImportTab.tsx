@@ -10,6 +10,7 @@ import { MotiView, AnimatePresence } from "moti";
 import { parseTransferText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 import ConflictModal from "./ConflictModal";
+import { log } from "@/src/utils/logger";
 
 type ConflictResolution = "update" | "skip";
 
@@ -270,7 +271,7 @@ export default function ImportTab() {
 
       setInputText("");
     } catch (error) {
-      console.error("Import error:", error);
+      log.error("Import error:", error);
       showToastMessage("Import failed. Please try again", "error");
     } finally {
       setIsProcessing(false);

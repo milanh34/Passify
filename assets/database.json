@@ -3,13 +3,13 @@
     {
       "id": "g1",
       "name": "Personal Account",
-      "email": "personal.email@example.com",
+      "gmail": "personal.email@example.com",
       "password": "securepassword123"
     },
     {
       "id": "g2",
       "name": "Work Account",
-      "email": "work.email@example.com",
+      "gmail": "work.email@example.com",
       "password": "anotherpassword456"
     }
   ],
@@ -18,6 +18,7 @@
       "id": "i1",
       "name": "Main Profile",
       "username": "my_insta",
+      "email": "personal.email@example.com",
       "password": "instapassword789"
     }
   ],
@@ -26,7 +27,7 @@
       "id": "gh1",
       "name": "Primary GitHub",
       "username": "my_github_user",
-      "email": "personal.email@example.com",
+      "email": "work.email@example.com",
       "password": "githubpassword!@#"
     }
   ]

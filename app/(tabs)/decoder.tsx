@@ -35,6 +35,7 @@ import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { generateExportText, toTitleCase } from "../../src/utils/transferParser";
 import { useAnimation } from "../../src/context/AnimationContext";
 import { MotiView } from "moti";
+import { log } from "@/src/utils/logger";
 
 interface DecodedData {
   database: Record<string, any[]>;
@@ -130,7 +131,7 @@ export default function DecoderScreen() {
 
   const handleRefresh = async () => {
     if (isProcessingRef.current) {
-      console.log("🛑 Cancelling ongoing decode...");
+      log.info("🛑 Cancelling ongoing decode...");
       cleanup();
     }
 
@@ -182,7 +183,7 @@ export default function DecoderScreen() {
 
   const safeProgressUpdate = (update: ProgressUpdate) => {
     if (isMountedRef.current && isProcessingRef.current) {
-      console.log(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
+      log.info(`📊 Progress: ${update.phase} - ${Math.round(update.percent)}%`);
       setProgressUpdate(update);
     }
   };
@@ -372,7 +373,7 @@ export default function DecoderScreen() {
       }
     } catch (error: any) {
       if (isMountedRef.current && isProcessingRef.current) {
-        console.error("🔴 Decoding error:", error);
+        log.error("🔴 Decoding error:", error);
         const errorMessage = error.message || "An unexpected error occurred during decoding";
         showToastMessage(errorMessage, "error");
         setDecodedData(null);
@@ -446,7 +447,7 @@ export default function DecoderScreen() {
         }
       }, 1000);
     } catch (error: any) {
-      console.error("Import error:", error);
+      log.error("Import error:", error);
       showToastMessage(`Import failed: ${error.message}`, "error");
     } finally {
       if (isMountedRef.current) {

@@ -2,6 +2,7 @@
 
 import * as LocalAuthentication from "expo-local-authentication";
 import { Platform } from "react-native";
+import { log } from "./logger";
 
 export type BiometricType = "fingerprint" | "facial" | "iris" | "none";
 
@@ -44,7 +45,7 @@ export async function checkBiometricCapability(): Promise<BiometricCapability> {
       isEnrolled,
     };
   } catch (error) {
-    console.error("Biometric capability check error:", error);
+    log.error("Biometric capability check error:", error);
     return {
       isAvailable: false,
       biometricType: "none",
@@ -87,7 +88,7 @@ export async function authenticateWithBiometric(): Promise<{
       };
     }
   } catch (error: any) {
-    console.error("Biometric authentication error:", error);
+    log.error("Biometric authentication error:", error);
     return {
       success: false,
       error: error.message || "Authentication failed",

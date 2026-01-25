@@ -32,6 +32,7 @@ import {
   PhoneFormatOption,
   PHONE_FORMAT_OPTIONS,
 } from "../src/utils/phoneFormat";
+import Constants from "expo-constants";
 
 export default function Settings() {
   const { mode, font, changeTheme, changeFont, colors, THEMES, FONTS, fontConfig, fontsLoaded } =
@@ -1258,8 +1259,18 @@ export default function Settings() {
                       { color: colors.text, fontFamily: fontConfig.bold },
                     ]}
                   >
-                    1.0.0
+                    {Constants.expoConfig?.version || "1.0.0"}
                   </Text>
+                  {__DEV__ && (
+                    <Text
+                      style={[
+                        styles.versionLabel,
+                        { color: colors.danger, fontFamily: fontConfig.regular, marginTop: 4 },
+                      ]}
+                    >
+                      Development Build
+                    </Text>
+                  )}
                 </View>
               </MotiView>
             )}

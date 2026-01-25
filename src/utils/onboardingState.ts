@@ -1,6 +1,7 @@
 // src/utils/onboardingState.ts
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "./logger";
 
 const ONBOARDING_KEY = "@PM:onboarding_state";
 const ONBOARDING_VERSION = 1;
@@ -25,7 +26,7 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
       const parsed: OnboardingState = JSON.parse(stored);
 
       if (parsed.onboardingVersion !== ONBOARDING_VERSION) {
-        console.log("Onboarding version changed, resetting state");
+        log.info("Onboarding version changed, resetting state");
         return DEFAULT_STATE;
       }
 
@@ -33,7 +34,7 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
     }
     return DEFAULT_STATE;
   } catch (error) {
-    console.error("Failed to load onboarding state:", error);
+    log.error("Failed to load onboarding state:", error);
     return DEFAULT_STATE;
   }
 }
@@ -42,7 +43,7 @@ export async function saveOnboardingState(state: OnboardingState): Promise<void>
   try {
     await AsyncStorage.setItem(ONBOARDING_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error("Failed to save onboarding state:", error);
+    log.error("Failed to save onboarding state:", error);
   }
 }
 

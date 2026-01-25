@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "../utils/logger";
 
 type AnimationType = {
   from: any;
@@ -170,7 +171,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
       const saved = await AsyncStorage.getItem("@animation_preset");
       if (saved) setCurrentAnimation(saved);
     } catch (error) {
-      console.error("Failed to load animation:", error);
+      log.error("Failed to load animation:", error);
     }
   };
 
@@ -179,7 +180,7 @@ export function AnimationProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem("@animation_preset", id);
       setCurrentAnimation(id);
     } catch (error) {
-      console.error("Failed to save animation:", error);
+      log.error("Failed to save animation:", error);
     }
   };
 

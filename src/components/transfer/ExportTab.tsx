@@ -9,6 +9,7 @@ import { MotiView, AnimatePresence } from "moti";
 import { generateExportText, toTitleCase } from "../../utils/transferParser";
 import Toast from "../Toast";
 import * as Clipboard from "expo-clipboard";
+import { log } from "@/src/utils/logger";
 
 type Selection = {
   [platformId: string]: {
@@ -174,7 +175,7 @@ export default function ExportTab() {
 
       setSelection({});
     } catch (error) {
-      console.error("Export error:", error);
+      log.error("Export error:", error);
       showToastMessage("Export failed. Please try again", "error");
     }
   };

@@ -1,6 +1,7 @@
 // src/utils/displayFieldPreference.ts
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { log } from "./logger";
 
 const DISPLAY_FIELD_KEY = "@PM:display_field_preferences";
 
@@ -16,7 +17,7 @@ export async function getDisplayFieldPreferences(): Promise<DisplayFieldPreferen
     }
     return {};
   } catch (error) {
-    console.error("Failed to get display field preferences:", error);
+    log.error("Failed to get display field preferences:", error);
     return {};
   }
 }
@@ -30,7 +31,7 @@ export async function setDisplayFieldPreference(
     preferences[platformKey] = fieldName;
     await AsyncStorage.setItem(DISPLAY_FIELD_KEY, JSON.stringify(preferences));
   } catch (error) {
-    console.error("Failed to set display field preference:", error);
+    log.error("Failed to set display field preference:", error);
   }
 }
 
@@ -39,7 +40,7 @@ export async function getDisplayFieldForPlatform(platformKey: string): Promise<s
     const preferences = await getDisplayFieldPreferences();
     return preferences[platformKey] || "name";
   } catch (error) {
-    console.error("Failed to get display field for platform:", error);
+    log.error("Failed to get display field for platform:", error);
     return "name";
   }
 }
@@ -50,7 +51,7 @@ export async function removeDisplayFieldPreference(platformKey: string): Promise
     delete preferences[platformKey];
     await AsyncStorage.setItem(DISPLAY_FIELD_KEY, JSON.stringify(preferences));
   } catch (error) {
-    console.error("Failed to remove display field preference:", error);
+    log.error("Failed to remove display field preference:", error);
   }
 }
 

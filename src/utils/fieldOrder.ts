@@ -1,39 +1,31 @@
 // src/utils/fieldOrder.ts
 
-// Canonical field order: sensitive fields always last
 const FIELD_ORDER: Record<string, number> = {
-  // Identity fields first
   name: 1,
   fullname: 1,
   full_name: 1,
-  
-  // Account identifiers
+
   username: 2,
   user: 2,
   user_name: 2,
-  
-  // Contact info
+
   email: 3,
   gmail: 3,
   mail: 3,
-  
+
   phone: 4,
   mobile: 4,
   cell: 4,
   telephone: 4,
   phone_number: 4,
-  
-  // Personal info
+
   dob: 5,
   date_of_birth: 5,
   birthday: 5,
   birthdate: 5,
-  
+
   address: 6,
-  
-  // Other non-sensitive fields get 50
-  
-  // Sensitive fields last
+
   password: 100,
   secret: 101,
   pin: 102,
@@ -50,20 +42,17 @@ const FIELD_ORDER: Record<string, number> = {
 
 export function getFieldOrder(fieldName: string): number {
   const normalized = fieldName.toLowerCase().replace(/\s+/g, "_");
-  
-  // Check for exact match
+
   if (FIELD_ORDER[normalized] !== undefined) {
     return FIELD_ORDER[normalized];
   }
-  
-  // Check for partial matches
+
   for (const [key, order] of Object.entries(FIELD_ORDER)) {
     if (normalized.includes(key) || key.includes(normalized)) {
       return order;
     }
   }
-  
-  // Default order for unknown fields (between personal info and sensitive)
+
   return 50;
 }
 
@@ -71,12 +60,11 @@ export function sortFieldsByOrder(fields: string[]): string[] {
   return [...fields].sort((a, b) => {
     const orderA = getFieldOrder(a);
     const orderB = getFieldOrder(b);
-    
+
     if (orderA !== orderB) {
       return orderA - orderB;
     }
-    
-    // Same order, sort alphabetically
+
     return a.localeCompare(b);
   });
 }

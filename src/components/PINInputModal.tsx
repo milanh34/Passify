@@ -15,6 +15,7 @@ import { MotiView, AnimatePresence } from "moti";
 import { useTheme } from "../context/ThemeContext";
 import { validatePINFormat, getPINLockoutStatus } from "../utils/pinCode";
 import { formatRemainingTime, getAttemptsUntilNextLockout } from "../utils/pinAttemptTracker";
+import { log } from "../utils/logger";
 
 interface PINInputModalProps {
   visible: boolean;
@@ -98,7 +99,7 @@ export default function PINInputModal({
         setAttemptsRemaining(nextLockout.attemptsRemaining);
       }
     } catch (error) {
-      console.error("Failed to check lockout status:", error);
+      log.error("Failed to check lockout status:", error);
     }
   }, []);
 
@@ -179,7 +180,7 @@ export default function PINInputModal({
         setIsVerifying(false);
       }
     } catch (error) {
-      console.error("PIN submit error:", error);
+      log.error("PIN submit error:", error);
       setError("An error occurred. Please try again.");
       setPin("");
       setIsLoading(false);
