@@ -528,10 +528,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       font,
       changeTheme,
       changeFont,
-      colors,
+      colors: { ...colors },
       THEMES,
       FONTS,
-      fontConfig,
+      fontConfig: { ...fontConfig },
       fontsLoaded,
     }),
     [mode, font, colors, fontConfig, fontsLoaded]
