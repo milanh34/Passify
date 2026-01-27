@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { MotiView } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import { evaluatePasswordStrength, PasswordStrength } from "../utils/passwordGenerator";
 
 interface PasswordStrengthIndicatorProps {
@@ -15,7 +15,7 @@ export default function PasswordStrengthIndicator({
   password,
   showSuggestions = false,
 }: PasswordStrengthIndicatorProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const [strength, setStrength] = useState<PasswordStrength | null>(null);
 
   useEffect(() => {
@@ -31,23 +31,27 @@ export default function PasswordStrengthIndicator({
     return null;
   }
 
-  const getBarWidth = (index: number): string => {
-    const filledBars = strength.score + 1;
-    return index < filledBars ? "100%" : "0%";
-  };
+  const filledBars = strength.score + 1;
 
   return (
     <View style={styles.container}>
       <View style={styles.barsContainer}>
         {[0, 1, 2, 3, 4].map((index) => (
-          <View key={index} style={[styles.barBackground, { backgroundColor: colors.cardBorder }]}>
-            <MotiView
-              animate={{
-                width: getBarWidth(index),
-                backgroundColor: index <= strength.score ? strength.color : colors.cardBorder,
-              }}
-              transition={{ type: "timing", duration: 200 }}
-              style={styles.barFill}
+          <View
+            key={index}
+            style={[
+              styles.barBackground,
+              {
+                backgroundColor: theme.colors.surfaceBorder,
+                borderRadius: theme.shapes.radiusSm,
+              },
+            ]}
+          >
+            <AnimatedBar
+              filled={index < filledBars}
+              color={strength.color}
+              borderRadius={theme.shapes.radiusSm}
+              duration={theme.animations.durationNormal}
             />
           </View>
         ))}
@@ -59,7 +63,8 @@ export default function PasswordStrengthIndicator({
             styles.strengthLabel,
             {
               color: strength.color,
-              fontFamily: fontConfig.bold,
+              fontFamily: theme.typography.fontBold,
+              fontSize: theme.typography.sizeSm,
             },
           ]}
         >
@@ -75,8 +80,9 @@ export default function PasswordStrengthIndicator({
               style={[
                 styles.suggestion,
                 {
-                  color: colors.muted,
-                  fontFamily: fontConfig.regular,
+                  color: theme.colors.textMuted,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeXs,
                 },
               ]}
             >
@@ -87,6 +93,33 @@ export default function PasswordStrengthIndicator({
       )}
     </View>
   );
+}
+
+function AnimatedBar({
+  filled,
+  color,
+  borderRadius,
+  duration,
+}: {
+  filled: boolean;
+  color: string;
+  borderRadius: number;
+  duration: number;
+}) {
+  const widthValue = useSharedValue(0);
+
+  useEffect(() => {
+    widthValue.value = withTiming(filled ? 100 : 0, { duration });
+  }, [filled, duration]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${widthValue.value}%` as any,
+    backgroundColor: filled ? color : "transparent",
+    height: "100%",
+    borderRadius,
+  }));
+
+  return <Animated.View style={animatedStyle} />;
 }
 
 const styles = StyleSheet.create({
@@ -101,25 +134,17 @@ const styles = StyleSheet.create({
   barBackground: {
     flex: 1,
     height: 4,
-    borderRadius: 2,
     overflow: "hidden",
-  },
-  barFill: {
-    height: "100%",
-    borderRadius: 2,
   },
   labelContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
   },
-  strengthLabel: {
-    fontSize: 12,
-  },
+  strengthLabel: {},
   suggestionsContainer: {
     marginTop: 4,
   },
   suggestion: {
-    fontSize: 11,
     lineHeight: 16,
   },
 });

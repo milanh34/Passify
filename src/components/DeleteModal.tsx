@@ -1,10 +1,9 @@
 // src/components/DeleteModal.tsx
 
 import React from "react";
-import { Modal, Pressable, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Modal, Pressable, View, Text, StyleSheet } from "react-native";
 import { MotiView } from "moti";
-import { MotiPressable } from "moti/interactions";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 interface DeleteModalProps {
   visible: boolean;
@@ -21,7 +20,7 @@ export default function DeleteModal({
   title,
   description,
 }: DeleteModalProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -29,63 +28,78 @@ export default function DeleteModal({
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        style={[styles.backdrop, { backgroundColor: colors.modalBackdrop }]}
+        style={[styles.backdrop, { backgroundColor: theme.colors.overlay }]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <MotiView
           from={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: "timing", duration: 220 }}
+          transition={{ type: "timing", duration: theme.animations.durationNormal }}
         >
           <View
             style={[
               styles.card,
               {
-                backgroundColor: colors.modalCard,
-                borderColor: colors.modalBorder,
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.surfaceBorder,
+                borderRadius: theme.components.modal.radius,
+                padding: theme.components.modal.padding,
               },
             ]}
           >
-            <Text style={[styles.title, { color: colors.danger, fontFamily: fontConfig.bold }]}>
+            <Text
+              style={[
+                styles.title,
+                { color: theme.colors.error, fontFamily: theme.typography.fontBold },
+              ]}
+            >
               {title}
             </Text>
             <Text
               style={[
                 styles.description,
-                { color: colors.modalSubtext, fontFamily: fontConfig.regular },
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
               ]}
             >
               {description}
             </Text>
             <View style={styles.buttonRow}>
-              <MotiPressable
-                animate={{ scale: 1 }}
-                transition={{ type: "spring" }}
-                whileTap={{ scale: 0.95 }}
+              <Pressable
+                onPress={onClose}
+                style={({ pressed }) => [
+                  styles.btn,
+                  {
+                    backgroundColor: theme.colors.textMuted,
+                    borderRadius: theme.components.button.radius,
+                    opacity: pressed ? 0.8 : 1,
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                  },
+                ]}
               >
-                <TouchableOpacity
-                  onPress={onClose}
-                  style={[styles.btn, { backgroundColor: colors.muted }]}
-                >
-                  <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Cancel</Text>
-                </TouchableOpacity>
-              </MotiPressable>
-              <MotiPressable
-                animate={{ scale: 1 }}
-                transition={{ type: "spring" }}
-                whileTap={{ scale: 0.95 }}
+                <Text style={[styles.btnTxt, { fontFamily: theme.typography.fontBold }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  onConfirm();
+                  onClose();
+                }}
+                style={({ pressed }) => [
+                  styles.btn,
+                  {
+                    backgroundColor: theme.colors.error,
+                    borderRadius: theme.components.button.radius,
+                    opacity: pressed ? 0.8 : 1,
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                  },
+                ]}
               >
-                <TouchableOpacity
-                  onPress={() => {
-                    onConfirm();
-                    onClose();
-                  }}
-                  style={[styles.btn, { backgroundColor: colors.danger }]}
-                >
-                  <Text style={[styles.btnTxt, { fontFamily: fontConfig.bold }]}>Delete</Text>
-                </TouchableOpacity>
-              </MotiPressable>
+                <Text style={[styles.btnTxt, { fontFamily: theme.typography.fontBold }]}>
+                  Delete
+                </Text>
+              </Pressable>
             </View>
           </View>
         </MotiView>
@@ -103,8 +117,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "90%",
-    borderRadius: 20,
-    padding: 24,
     gap: 12,
     overflow: "hidden",
     borderWidth: 1,
@@ -117,6 +129,6 @@ const styles = StyleSheet.create({
     gap: 16,
     marginTop: 12,
   },
-  btn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
+  btn: { paddingHorizontal: 24, paddingVertical: 12 },
   btnTxt: { color: "#fff", fontSize: 16 },
 });

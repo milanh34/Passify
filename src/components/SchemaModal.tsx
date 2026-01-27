@@ -15,7 +15,7 @@ import {
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import { useDb } from "../context/DbContext";
 
 type SchemaField = {
@@ -50,7 +50,7 @@ export default function SchemaModal({
   onClose,
   onSave,
 }: SchemaModalProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const { platformsMetadata, updatePlatformDisplayField } = useDb();
   const insets = useSafeAreaInsets();
   const [fields, setFields] = useState<SchemaField[]>([]);
@@ -119,7 +119,6 @@ export default function SchemaModal({
       .filter(Boolean);
 
     const finalFields = validFields.length > 0 ? validFields : ["name", "password"];
-
     const uniqueFields = Array.from(new Set(finalFields));
 
     if (platformKey && selectedDisplayField) {
@@ -151,7 +150,7 @@ export default function SchemaModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.modalContainer, { backgroundColor: colors.bg[0] }]}>
+      <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -161,8 +160,9 @@ export default function SchemaModal({
               styles.header,
               {
                 paddingTop: insets.top + 12,
-                borderBottomColor: colors.cardBorder,
-                backgroundColor: colors.bg[0],
+                borderBottomColor: theme.colors.surfaceBorder,
+                backgroundColor: theme.colors.background,
+                height: insets.top + theme.components.header.height,
               },
             ]}
           >
@@ -170,21 +170,30 @@ export default function SchemaModal({
               onPress={onClose}
               style={[
                 styles.headerButton,
-                { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.components.header.backButtonRadius,
+                  width: theme.components.header.backButtonSize,
+                  height: theme.components.header.backButtonSize,
+                },
               ]}
             >
-              <Ionicons name="close" size={22} color={colors.text} />
+              <Ionicons name="close" size={22} color={theme.colors.textPrimary} />
             </Pressable>
             <View style={styles.headerCenter}>
               <Text
-                style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+                style={[
+                  styles.headerTitle,
+                  { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                ]}
               >
                 Edit Schema
               </Text>
               <Text
                 style={[
                   styles.headerSubtitle,
-                  { color: colors.muted, fontFamily: fontConfig.regular },
+                  { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                 ]}
               >
                 {fields.length} field{fields.length !== 1 ? "s" : ""}
@@ -192,38 +201,61 @@ export default function SchemaModal({
             </View>
             <Pressable
               onPress={handleSave}
-              style={[styles.headerButton, styles.saveButton, { backgroundColor: colors.accent }]}
+              style={[
+                styles.headerButton,
+                styles.saveButton,
+                {
+                  backgroundColor: theme.colors.accent,
+                  borderRadius: theme.components.header.backButtonRadius,
+                  width: theme.components.header.backButtonSize,
+                  height: theme.components.header.backButtonSize,
+                },
+              ]}
             >
-              <Ionicons name="checkmark" size={22} color="#fff" />
+              <Ionicons name="checkmark" size={22} color={theme.colors.textInverse} />
             </Pressable>
           </View>
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + 100, gap: theme.spacing.xl },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
             <View
               style={[
                 styles.infoBox,
-                { backgroundColor: colors.accent + "10", borderColor: colors.accent + "30" },
+                {
+                  backgroundColor: theme.colors.accentMuted,
+                  borderColor: theme.colors.accent + "30",
+                  borderRadius: theme.shapes.radiusMd,
+                  padding: theme.spacing.lg,
+                },
               ]}
             >
-              <Ionicons name="information-circle-outline" size={20} color={colors.accent} />
+              <Ionicons name="information-circle-outline" size={20} color={theme.colors.accent} />
               <Text
-                style={[styles.infoText, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+                style={[
+                  styles.infoText,
+                  { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+                ]}
               >
                 Define the fields for this platform. Drag to reorder, or tap the arrows to move
                 fields up/down.
               </Text>
             </View>
 
-            <View style={styles.section}>
+            <View style={[styles.section, { gap: theme.spacing.md }]}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="list-outline" size={18} color={colors.accent} />
+                <Ionicons name="list-outline" size={18} color={theme.colors.accent} />
                 <Text
-                  style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.sectionTitle,
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   Schema Fields
                 </Text>
@@ -232,16 +264,20 @@ export default function SchemaModal({
               <View
                 style={[
                   styles.fieldsCard,
-                  { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.components.card.radius,
+                  },
                 ]}
               >
                 {fields.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="document-outline" size={40} color={colors.muted} />
+                  <View style={[styles.emptyState, { padding: theme.spacing.xxl }]}>
+                    <Ionicons name="document-outline" size={40} color={theme.colors.textMuted} />
                     <Text
                       style={[
                         styles.emptyText,
-                        { color: colors.muted, fontFamily: fontConfig.regular },
+                        { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                       ]}
                     >
                       No fields yet. Add some fields to define your schema.
@@ -253,20 +289,33 @@ export default function SchemaModal({
                       key={field.id}
                       from={{ opacity: 0, translateX: -20 }}
                       animate={{ opacity: 1, translateX: 0 }}
-                      transition={{ type: "timing", duration: 200, delay: index * 30 }}
+                      transition={{
+                        type: "timing",
+                        duration: theme.animations.durationNormal,
+                        delay: index * 30,
+                      }}
                       style={[
                         styles.fieldRow,
                         index < fields.length - 1 && {
-                          borderBottomWidth: 1,
-                          borderBottomColor: colors.cardBorder,
+                          borderBottomWidth: theme.shapes.borderThin,
+                          borderBottomColor: theme.colors.surfaceBorder,
                         },
+                        { padding: theme.spacing.md },
                       ]}
                     >
-                      <View style={[styles.fieldNumber, { backgroundColor: colors.accent + "20" }]}>
+                      <View
+                        style={[
+                          styles.fieldNumber,
+                          {
+                            backgroundColor: theme.colors.accentMuted,
+                            borderRadius: theme.shapes.radiusSm,
+                          },
+                        ]}
+                      >
                         <Text
                           style={[
                             styles.fieldNumberText,
-                            { color: colors.accent, fontFamily: fontConfig.bold },
+                            { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                           ]}
                         >
                           {index + 1}
@@ -276,7 +325,7 @@ export default function SchemaModal({
                       <Ionicons
                         name={getFieldIcon(field.value) as any}
                         size={20}
-                        color={colors.accent}
+                        color={theme.colors.accent}
                         style={styles.fieldIcon}
                       />
 
@@ -284,13 +333,14 @@ export default function SchemaModal({
                         value={field.value}
                         onChangeText={(v) => updateField(field.id, v)}
                         placeholder="Field name"
-                        placeholderTextColor={colors.muted}
+                        placeholderTextColor={theme.colors.textMuted}
                         autoCapitalize="none"
                         style={[
                           styles.fieldInput,
                           {
-                            color: colors.text,
-                            fontFamily: fontConfig.regular,
+                            color: theme.colors.textPrimary,
+                            fontFamily: theme.typography.fontRegular,
+                            fontSize: theme.typography.sizeMd,
                           },
                         ]}
                       />
@@ -299,22 +349,34 @@ export default function SchemaModal({
                         <Pressable
                           onPress={() => moveFieldUp(index)}
                           disabled={index === 0}
-                          style={[styles.actionBtn, { opacity: index === 0 ? 0.3 : 1 }]}
+                          style={[
+                            styles.actionBtn,
+                            {
+                              opacity: index === 0 ? 0.3 : 1,
+                              borderRadius: theme.shapes.radiusSm,
+                            },
+                          ]}
                         >
-                          <Ionicons name="chevron-up" size={18} color={colors.muted} />
+                          <Ionicons name="chevron-up" size={18} color={theme.colors.textMuted} />
                         </Pressable>
                         <Pressable
                           onPress={() => moveFieldDown(index)}
                           disabled={index === fields.length - 1}
                           style={[
                             styles.actionBtn,
-                            { opacity: index === fields.length - 1 ? 0.3 : 1 },
+                            {
+                              opacity: index === fields.length - 1 ? 0.3 : 1,
+                              borderRadius: theme.shapes.radiusSm,
+                            },
                           ]}
                         >
-                          <Ionicons name="chevron-down" size={18} color={colors.muted} />
+                          <Ionicons name="chevron-down" size={18} color={theme.colors.textMuted} />
                         </Pressable>
-                        <Pressable onPress={() => removeField(field.id)} style={styles.actionBtn}>
-                          <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                        <Pressable
+                          onPress={() => removeField(field.id)}
+                          style={[styles.actionBtn, { borderRadius: theme.shapes.radiusSm }]}
+                        >
+                          <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
                         </Pressable>
                       </View>
                     </MotiView>
@@ -323,11 +385,14 @@ export default function SchemaModal({
               </View>
             </View>
 
-            <View style={styles.section}>
+            <View style={[styles.section, { gap: theme.spacing.md }]}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="eye-outline" size={18} color={colors.accent} />
+                <Ionicons name="eye-outline" size={18} color={theme.colors.accent} />
                 <Text
-                  style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.sectionTitle,
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   Card Display Field
                 </Text>
@@ -335,7 +400,7 @@ export default function SchemaModal({
               <Text
                 style={[
                   styles.displayFieldHint,
-                  { color: colors.muted, fontFamily: fontConfig.regular },
+                  { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                 ]}
               >
                 Choose which field to show on collapsed account cards
@@ -343,7 +408,12 @@ export default function SchemaModal({
               <View
                 style={[
                   styles.displayFieldContainer,
-                  { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.shapes.radiusMd,
+                    padding: theme.spacing.sm,
+                  },
                 ]}
               >
                 {fields
@@ -358,22 +428,29 @@ export default function SchemaModal({
                         style={[
                           styles.displayFieldOption,
                           {
-                            backgroundColor: isSelected ? colors.accent + "20" : colors.bg[0],
-                            borderColor: isSelected ? colors.accent : colors.cardBorder,
+                            backgroundColor: isSelected
+                              ? theme.colors.accentMuted
+                              : theme.colors.background,
+                            borderColor: isSelected
+                              ? theme.colors.accent
+                              : theme.colors.surfaceBorder,
+                            borderRadius: theme.shapes.radiusSm,
                           },
                         ]}
                       >
                         <Ionicons
                           name={getFieldIcon(field.value) as any}
                           size={16}
-                          color={isSelected ? colors.accent : colors.muted}
+                          color={isSelected ? theme.colors.accent : theme.colors.textMuted}
                         />
                         <Text
                           style={[
                             styles.displayFieldOptionText,
                             {
-                              color: isSelected ? colors.accent : colors.text,
-                              fontFamily: isSelected ? fontConfig.bold : fontConfig.regular,
+                              color: isSelected ? theme.colors.accent : theme.colors.textPrimary,
+                              fontFamily: isSelected
+                                ? theme.typography.fontBold
+                                : theme.typography.fontRegular,
                             },
                           ]}
                         >
@@ -381,7 +458,7 @@ export default function SchemaModal({
                             field.value.slice(1).replace(/_/g, " ")}
                         </Text>
                         {isSelected && (
-                          <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
+                          <Ionicons name="checkmark-circle" size={16} color={theme.colors.accent} />
                         )}
                       </Pressable>
                     );
@@ -389,16 +466,26 @@ export default function SchemaModal({
               </View>
             </View>
 
-            <View style={styles.section}>
+            <View style={[styles.section, { gap: theme.spacing.md }]}>
               <Pressable
                 onPress={() => addField()}
                 style={[
                   styles.addButton,
-                  { backgroundColor: colors.accent, borderColor: colors.accent },
+                  {
+                    backgroundColor: theme.colors.accent,
+                    borderColor: theme.colors.accent,
+                    borderRadius: theme.components.button.radius,
+                    height: theme.components.button.height,
+                  },
                 ]}
               >
-                <Ionicons name="add-circle-outline" size={20} color="#fff" />
-                <Text style={[styles.addButtonText, { fontFamily: fontConfig.bold }]}>
+                <Ionicons name="add-circle-outline" size={20} color={theme.colors.textInverse} />
+                <Text
+                  style={[
+                    styles.addButtonText,
+                    { fontFamily: theme.typography.fontBold, color: theme.colors.textInverse },
+                  ]}
+                >
                   Add Custom Field
                 </Text>
               </Pressable>
@@ -409,14 +496,22 @@ export default function SchemaModal({
                     onPress={() => setShowSuggestions(!showSuggestions)}
                     style={[
                       styles.suggestionsToggle,
-                      { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                      {
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.surfaceBorder,
+                        borderRadius: theme.shapes.radiusMd,
+                        padding: theme.spacing.md,
+                      },
                     ]}
                   >
-                    <Ionicons name="bulb-outline" size={18} color={colors.accent} />
+                    <Ionicons name="bulb-outline" size={18} color={theme.colors.accent} />
                     <Text
                       style={[
                         styles.suggestionsToggleText,
-                        { color: colors.text, fontFamily: fontConfig.regular },
+                        {
+                          color: theme.colors.textPrimary,
+                          fontFamily: theme.typography.fontRegular,
+                        },
                       ]}
                     >
                       Suggested Fields ({availableSuggestions.length})
@@ -424,7 +519,7 @@ export default function SchemaModal({
                     <Ionicons
                       name={showSuggestions ? "chevron-up" : "chevron-down"}
                       size={18}
-                      color={colors.muted}
+                      color={theme.colors.textMuted}
                     />
                   </Pressable>
 
@@ -432,29 +527,46 @@ export default function SchemaModal({
                     <MotiView
                       from={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      transition={{ type: "timing", duration: 200 }}
+                      transition={{ type: "timing", duration: theme.animations.durationNormal }}
                       style={[
                         styles.suggestionsContainer,
-                        { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                        {
+                          backgroundColor: theme.colors.surface,
+                          borderColor: theme.colors.surfaceBorder,
+                          borderRadius: theme.shapes.radiusMd,
+                        },
                       ]}
                     >
                       {availableSuggestions.map((suggestion) => (
                         <Pressable
                           key={suggestion.name}
                           onPress={() => addField(suggestion.name)}
-                          style={[styles.suggestionItem, { borderColor: colors.cardBorder }]}
-                          android_ripple={{ color: colors.accent + "22" }}
+                          style={[
+                            styles.suggestionItem,
+                            {
+                              borderColor: theme.colors.surfaceBorder,
+                              padding: theme.spacing.md,
+                            },
+                          ]}
+                          android_ripple={{ color: theme.colors.accentMuted }}
                         >
-                          <Ionicons name={suggestion.icon as any} size={18} color={colors.accent} />
+                          <Ionicons
+                            name={suggestion.icon as any}
+                            size={18}
+                            color={theme.colors.accent}
+                          />
                           <Text
                             style={[
                               styles.suggestionText,
-                              { color: colors.text, fontFamily: fontConfig.regular },
+                              {
+                                color: theme.colors.textPrimary,
+                                fontFamily: theme.typography.fontRegular,
+                              },
                             ]}
                           >
                             {suggestion.label}
                           </Text>
-                          <Ionicons name="add" size={18} color={colors.accent} />
+                          <Ionicons name="add" size={18} color={theme.colors.accent} />
                         </Pressable>
                       ))}
                     </MotiView>
@@ -468,9 +580,11 @@ export default function SchemaModal({
             style={[
               styles.bottomBar,
               {
-                paddingBottom: insets.bottom + 16,
-                backgroundColor: colors.card,
-                borderTopColor: colors.cardBorder,
+                paddingBottom: insets.bottom + theme.spacing.lg,
+                backgroundColor: theme.colors.surface,
+                borderTopColor: theme.colors.surfaceBorder,
+                padding: theme.spacing.lg,
+                gap: theme.spacing.md,
               },
             ]}
           >
@@ -479,14 +593,19 @@ export default function SchemaModal({
               style={[
                 styles.bottomButton,
                 styles.cancelButton,
-                { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                {
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.components.button.radius,
+                  height: theme.components.button.height,
+                },
               ]}
             >
-              <Ionicons name="close-outline" size={20} color={colors.text} />
+              <Ionicons name="close-outline" size={20} color={theme.colors.textPrimary} />
               <Text
                 style={[
                   styles.bottomButtonText,
-                  { color: colors.text, fontFamily: fontConfig.bold },
+                  { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                 ]}
               >
                 Cancel
@@ -494,11 +613,26 @@ export default function SchemaModal({
             </Pressable>
             <Pressable
               onPress={handleSave}
-              style={[styles.bottomButton, styles.submitButton, { backgroundColor: colors.accent }]}
+              style={[
+                styles.bottomButton,
+                styles.submitButton,
+                {
+                  backgroundColor: theme.colors.buttonPrimary,
+                  borderRadius: theme.components.button.radius,
+                  height: theme.components.button.height,
+                },
+              ]}
             >
-              <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={20}
+                color={theme.colors.textInverse}
+              />
               <Text
-                style={[styles.bottomButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
+                style={[
+                  styles.bottomButtonText,
+                  { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+                ]}
               >
                 Save Schema
               </Text>
@@ -526,9 +660,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -553,14 +684,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    gap: 20,
   },
   infoBox: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    padding: 16,
-    borderRadius: 12,
     borderWidth: 1,
   },
   infoText: {
@@ -568,9 +696,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  section: {
-    gap: 12,
-  },
+  section: {},
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -581,12 +707,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   fieldsCard: {
-    borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
   },
   emptyState: {
-    padding: 32,
     alignItems: "center",
     gap: 12,
   },
@@ -597,13 +721,11 @@ const styles = StyleSheet.create({
   fieldRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
     gap: 10,
   },
   fieldNumber: {
     width: 28,
     height: 28,
-    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -615,7 +737,6 @@ const styles = StyleSheet.create({
   },
   fieldInput: {
     flex: 1,
-    fontSize: 15,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
@@ -625,27 +746,21 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     padding: 6,
-    borderRadius: 6,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 14,
-    borderRadius: 12,
     borderWidth: 1,
   },
   addButtonText: {
     fontSize: 15,
-    color: "#fff",
   },
   suggestionsToggle: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    padding: 14,
-    borderRadius: 12,
     borderWidth: 1,
   },
   suggestionsToggleText: {
@@ -653,7 +768,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   suggestionsContainer: {
-    borderRadius: 12,
     borderWidth: 1,
     overflow: "hidden",
   },
@@ -661,7 +775,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 14,
     borderBottomWidth: 1,
   },
   suggestionText: {
@@ -670,8 +783,6 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     flexDirection: "row",
-    padding: 16,
-    gap: 12,
     borderTopWidth: 1,
   },
   bottomButton: {
@@ -680,8 +791,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
   },
   cancelButton: {
     borderWidth: 1,
@@ -696,9 +805,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   displayFieldContainer: {
-    borderRadius: 12,
     borderWidth: 1,
-    padding: 8,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
@@ -709,7 +816,6 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
     borderWidth: 1,
   },
   displayFieldOptionText: {

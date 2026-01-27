@@ -13,7 +13,7 @@ import {
   Feather,
 } from "@expo/vector-icons";
 import { getPlatformIcon, getPlatformInitials, getContrastColor } from "../utils/iconLibrary";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 interface PlatformIconProps {
   platformName: string;
@@ -32,12 +32,10 @@ export default function PlatformIcon({
   showFallback = true,
   style,
 }: PlatformIconProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   const iconMapping = iconKey ? getPlatformIcon(iconKey) : null;
-
-  const displayColor = iconColor || iconMapping?.defaultColor || colors.accent;
-
+  const displayColor = iconColor || iconMapping?.defaultColor || theme.colors.accent;
   const iconSize = Math.floor(size * 0.6);
 
   const renderLibraryIcon = () => {
@@ -96,7 +94,7 @@ export default function PlatformIcon({
             {
               color: textColor,
               fontSize,
-              fontFamily: fontConfig.bold,
+              fontFamily: theme.typography.fontBold,
             },
           ]}
         >

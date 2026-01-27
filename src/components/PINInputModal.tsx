@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import { validatePINFormat, getPINLockoutStatus } from "../utils/pinCode";
 import { formatRemainingTime, getAttemptsUntilNextLockout } from "../utils/pinAttemptTracker";
 import { log } from "../utils/logger";
@@ -38,7 +38,7 @@ export default function PINInputModal({
   minLength = 4,
   maxLength = 6,
 }: PINInputModalProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -216,17 +216,22 @@ export default function PINInputModal({
                     style={[
                       styles.keyButton,
                       {
-                        backgroundColor: colors.card,
-                        borderColor: colors.cardBorder,
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.surfaceBorder,
+                        borderRadius: theme.shapes.radiusLg,
                         opacity: isDisabled ? 0.5 : 1,
                       },
                     ]}
-                    android_ripple={{ color: colors.accent + "22" }}
+                    android_ripple={{ color: theme.colors.accentMuted }}
                   >
                     <Ionicons
                       name="backspace-outline"
                       size={28}
-                      color={pin.length === 0 || isDisabled ? colors.subtext : colors.text}
+                      color={
+                        pin.length === 0 || isDisabled
+                          ? theme.colors.textSecondary
+                          : theme.colors.textPrimary
+                      }
                     />
                   </Pressable>
                 );
@@ -240,19 +245,20 @@ export default function PINInputModal({
                   style={[
                     styles.keyButton,
                     {
-                      backgroundColor: colors.card,
-                      borderColor: colors.cardBorder,
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.surfaceBorder,
+                      borderRadius: theme.shapes.radiusLg,
                       opacity: isDisabled ? 0.5 : 1,
                     },
                   ]}
-                  android_ripple={{ color: colors.accent + "22" }}
+                  android_ripple={{ color: theme.colors.accentMuted }}
                 >
                   <Text
                     style={[
                       styles.keyText,
                       {
-                        color: isDisabled ? colors.subtext : colors.text,
-                        fontFamily: fontConfig.bold,
+                        color: isDisabled ? theme.colors.textSecondary : theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontBold,
                       },
                     ]}
                   >
@@ -282,7 +288,9 @@ export default function PINInputModal({
             style={[
               styles.pinDot,
               {
-                backgroundColor: index < pin.length ? colors.accent : colors.cardBorder,
+                backgroundColor:
+                  index < pin.length ? theme.colors.accent : theme.colors.surfaceBorder,
+                borderRadius: theme.shapes.radiusLg,
               },
             ]}
           />
@@ -298,25 +306,26 @@ export default function PINInputModal({
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ type: "timing", duration: 200 }}
+        transition={{ type: "timing", duration: theme.animations.durationNormal }}
         style={styles.lockoutOverlay}
       >
         <View
           style={[
             styles.lockoutCard,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.danger,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.error,
+              borderRadius: theme.components.modal.radius,
             },
           ]}
         >
-          <Ionicons name="lock-closed" size={48} color={colors.danger} />
+          <Ionicons name="lock-closed" size={48} color={theme.colors.error} />
           <Text
             style={[
               styles.lockoutTitle,
               {
-                color: colors.danger,
-                fontFamily: fontConfig.bold,
+                color: theme.colors.error,
+                fontFamily: theme.typography.fontBold,
               },
             ]}
           >
@@ -326,22 +335,27 @@ export default function PINInputModal({
             style={[
               styles.lockoutSubtitle,
               {
-                color: colors.subtext,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontRegular,
               },
             ]}
           >
             Please wait before trying again
           </Text>
 
-          <View style={[styles.countdownContainer, { backgroundColor: colors.danger + "15" }]}>
-            <Ionicons name="time-outline" size={24} color={colors.danger} />
+          <View
+            style={[
+              styles.countdownContainer,
+              { backgroundColor: theme.colors.error + "15", borderRadius: theme.shapes.radiusMd },
+            ]}
+          >
+            <Ionicons name="time-outline" size={24} color={theme.colors.error} />
             <Text
               style={[
                 styles.countdownText,
                 {
-                  color: colors.danger,
-                  fontFamily: fontConfig.bold,
+                  color: theme.colors.error,
+                  fontFamily: theme.typography.fontBold,
                 },
               ]}
             >
@@ -353,13 +367,13 @@ export default function PINInputModal({
             style={[
               styles.lockoutWarning,
               {
-                color: colors.muted,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.textMuted,
+                fontFamily: theme.typography.fontRegular,
               },
             ]}
           >
             {failedAttempts >= 15
-              ? "⚠️ Continued failed attempts may result in data wipe"
+              ? "Continued failed attempts may result in data wipe"
               : `${failedAttempts} failed attempt${failedAttempts !== 1 ? "s" : ""}`}
           </Text>
         </View>
@@ -381,18 +395,19 @@ export default function PINInputModal({
           style={[
             styles.loadingCard,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.accent,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.accent,
+              borderRadius: theme.components.modal.radius,
             },
           ]}
         >
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={theme.colors.accent} />
           <Text
             style={[
               styles.loadingText,
               {
-                color: colors.text,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontRegular,
               },
             ]}
           >
@@ -405,27 +420,29 @@ export default function PINInputModal({
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onCancel}>
-      <View style={[styles.modalOverlay, { backgroundColor: colors.bg[0] + "F5" }]}>
+      <View style={[styles.modalOverlay, { backgroundColor: theme.colors.background + "F5" }]}>
         <MotiView
           from={{ opacity: 0, translateY: 50 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: "timing", duration: 300 }}
+          transition={{ type: "timing", duration: theme.animations.durationNormal }}
           style={[
             styles.modalContent,
             {
-              backgroundColor: colors.bg[0],
-              borderColor: colors.cardBorder,
+              backgroundColor: theme.colors.background,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.components.modal.radius,
+              padding: theme.components.modal.padding,
             },
           ]}
         >
           <View style={styles.header}>
-            <Ionicons name="lock-closed-outline" size={48} color={colors.accent} />
+            <Ionicons name="lock-closed-outline" size={48} color={theme.colors.accent} />
             <Text
               style={[
                 styles.title,
                 {
-                  color: colors.text,
-                  fontFamily: fontConfig.bold,
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
                 },
               ]}
             >
@@ -435,8 +452,8 @@ export default function PINInputModal({
               style={[
                 styles.subtitle,
                 {
-                  color: colors.subtext,
-                  fontFamily: fontConfig.regular,
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.typography.fontRegular,
                 },
               ]}
             >
@@ -452,16 +469,16 @@ export default function PINInputModal({
                 from={{ opacity: 0, translateY: -10 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 exit={{ opacity: 0, translateY: -10 }}
-                transition={{ type: "timing", duration: 200 }}
+                transition={{ type: "timing", duration: theme.animations.durationNormal }}
                 style={styles.errorContainer}
               >
-                <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                <Ionicons name="alert-circle" size={16} color={theme.colors.error} />
                 <Text
                   style={[
                     styles.errorText,
                     {
-                      color: colors.danger,
-                      fontFamily: fontConfig.regular,
+                      color: theme.colors.error,
+                      fontFamily: theme.typography.fontRegular,
                     },
                   ]}
                 >
@@ -476,13 +493,13 @@ export default function PINInputModal({
             attemptsRemaining <= 3 &&
             failedAttempts > 0 && (
               <View style={styles.attemptsWarning}>
-                <Ionicons name="warning-outline" size={14} color={colors.accent} />
+                <Ionicons name="warning-outline" size={14} color={theme.colors.accent} />
                 <Text
                   style={[
                     styles.attemptsWarningText,
                     {
-                      color: colors.accent,
-                      fontFamily: fontConfig.regular,
+                      color: theme.colors.accent,
+                      fontFamily: theme.typography.fontRegular,
                     },
                   ]}
                 >
@@ -503,21 +520,25 @@ export default function PINInputModal({
                   {
                     backgroundColor:
                       pin.length >= minLength && !isLoading && !isLockedOut
-                        ? colors.accent
-                        : colors.cardBorder,
+                        ? theme.colors.accent
+                        : theme.colors.surfaceBorder,
+                    borderRadius: theme.components.button.radius,
                   },
                 ]}
-                android_ripple={{ color: colors.bg[0] }}
+                android_ripple={{ color: theme.colors.background }}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.colors.textInverse} />
                 ) : (
                   <Text
                     style={[
                       styles.submitButtonText,
                       {
-                        color: pin.length >= minLength && !isLockedOut ? "#fff" : colors.subtext,
-                        fontFamily: fontConfig.bold,
+                        color:
+                          pin.length >= minLength && !isLockedOut
+                            ? theme.colors.textInverse
+                            : theme.colors.textSecondary,
+                        fontFamily: theme.typography.fontBold,
                       },
                     ]}
                   >
@@ -533,8 +554,8 @@ export default function PINInputModal({
                   style={[
                     styles.cancelButtonText,
                     {
-                      color: colors.subtext,
-                      fontFamily: fontConfig.regular,
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.typography.fontRegular,
                     },
                   ]}
                 >
@@ -562,9 +583,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "100%",
     maxWidth: 400,
-    borderRadius: 24,
     borderWidth: 1,
-    padding: 24,
     gap: 24,
     position: "relative",
     overflow: "hidden",
@@ -590,7 +609,6 @@ const styles = StyleSheet.create({
   pinDot: {
     width: 16,
     height: 16,
-    borderRadius: 8,
   },
   errorContainer: {
     flexDirection: "row",
@@ -622,7 +640,6 @@ const styles = StyleSheet.create({
   keyButton: {
     width: 72,
     height: 72,
-    borderRadius: 36,
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -635,7 +652,6 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     paddingVertical: 14,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 48,
@@ -656,11 +672,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-    borderRadius: 24,
   },
   lockoutCard: {
     padding: 32,
-    borderRadius: 20,
     borderWidth: 2,
     alignItems: "center",
     gap: 12,
@@ -680,7 +694,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 12,
     marginTop: 8,
   },
   countdownText: {
@@ -696,11 +709,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.7)",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 24,
   },
   loadingCard: {
     padding: 32,
-    borderRadius: 20,
     borderWidth: 2,
     alignItems: "center",
     gap: 16,

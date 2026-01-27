@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Modal, Pressable, Dimensions, Platform } from "
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 const { width } = Dimensions.get("window");
 
@@ -30,13 +30,17 @@ export default function ConfirmModal({
   onCancel,
   type = "info",
 }: ConfirmModalProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   const iconName =
     type === "danger" ? "alert-circle" : type === "warning" ? "warning" : "information-circle";
 
   const iconColor =
-    type === "danger" ? colors.danger : type === "warning" ? "#FF9800" : colors.accent;
+    type === "danger"
+      ? theme.colors.error
+      : type === "warning"
+        ? theme.colors.warning
+        : theme.colors.accent;
 
   return (
     <Modal
@@ -57,22 +61,36 @@ export default function ConfirmModal({
           <MotiView
             from={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "timing", duration: 200 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal }}
             style={[
               styles.modalContainer,
-              { backgroundColor: colors.card, borderColor: colors.cardBorder },
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.surfaceBorder,
+                borderRadius: theme.components.modal.radius,
+                padding: theme.components.modal.padding,
+                ...theme.shadows.lg,
+              },
             ]}
           >
             <View style={[styles.iconContainer, { backgroundColor: `${iconColor}15` }]}>
               <Ionicons name={iconName} size={48} color={iconColor} />
             </View>
 
-            <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+            <Text
+              style={[
+                styles.title,
+                { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+              ]}
+            >
               {title}
             </Text>
 
             <Text
-              style={[styles.message, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+              style={[
+                styles.message,
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+              ]}
             >
               {message}
             </Text>
@@ -84,13 +102,18 @@ export default function ConfirmModal({
                   styles.button,
                   styles.cancelButton,
                   {
-                    backgroundColor: pressed ? `${colors.cardBorder}40` : colors.bg[0],
-                    borderColor: colors.cardBorder,
+                    backgroundColor: pressed ? theme.colors.accentMuted : theme.colors.background,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.components.button.radius,
+                    height: theme.components.button.height,
                   },
                 ]}
               >
                 <Text
-                  style={[styles.buttonText, { color: colors.text, fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.buttonText,
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   {cancelText}
                 </Text>
@@ -103,11 +126,16 @@ export default function ConfirmModal({
                   styles.confirmButton,
                   {
                     backgroundColor: pressed ? `${iconColor}CC` : iconColor,
+                    borderRadius: theme.components.button.radius,
+                    height: theme.components.button.height,
                   },
                 ]}
               >
                 <Text
-                  style={[styles.buttonText, { color: "#FFFFFF", fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.buttonText,
+                    { color: "#FFFFFF", fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   {confirmText}
                 </Text>
@@ -136,15 +164,8 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: width - 48,
     maxWidth: 400,
-    borderRadius: 20,
-    padding: 24,
     alignItems: "center",
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
   },
   iconContainer: {
     width: 80,
@@ -172,8 +193,6 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },

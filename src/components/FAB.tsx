@@ -1,28 +1,48 @@
 // src/components/FAB.tsx
 
 import React from "react";
-import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 export default function FAB({
   onPress,
   icon = "add",
   style,
-  color = "#6366f1",
+  color,
 }: {
   onPress: () => void;
   icon?: keyof typeof Ionicons.glyphMap;
   style?: ViewStyle;
   color?: string;
 }) {
+  const theme = useAppTheme();
+
+  const backgroundColor = color || theme.colors.buttonPrimary;
+
   return (
-    <TouchableOpacity
-      style={[styles.fab, { backgroundColor: color }, style]}
+    <Pressable
+      style={({ pressed }) => [
+        styles.fab,
+        {
+          width: theme.components.fab.size,
+          height: theme.components.fab.size,
+          borderRadius: theme.components.fab.radius,
+          backgroundColor,
+          transform: [{ scale: pressed ? theme.animations.fabPressScale : 1 }],
+          ...theme.shadows.lg,
+        },
+        style,
+      ]}
       onPress={onPress}
-      activeOpacity={0.9}
+      android_ripple={{ color: theme.colors.accentMuted }}
     >
-      <Ionicons name={icon as any} size={26} color="#fff" />
-    </TouchableOpacity>
+      <Ionicons
+        name={icon as any}
+        size={theme.components.fab.iconSize}
+        color={theme.colors.textInverse}
+      />
+    </Pressable>
   );
 }
 
@@ -31,15 +51,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 24,
     right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
   },
 });

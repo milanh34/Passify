@@ -1,16 +1,9 @@
 // src/components/SearchBar.tsx
 
 import React, { useState, useMemo, useRef } from "react";
-import {
-  View,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  Keyboard,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { View, TextInput, Pressable, StyleSheet, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import SearchSuggestionsDropdown from "./SearchSuggestionsDropdown";
 
 interface SearchBarProps {
@@ -28,7 +21,7 @@ export default function SearchBar({
   placeholder = "Search...",
   suggestions = [],
 }: SearchBarProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -84,20 +77,23 @@ export default function SearchBar({
         style={[
           styles.searchBar,
           {
-            backgroundColor: colors.card,
-            borderColor: isFocused ? colors.accent : colors.cardBorder,
+            backgroundColor: theme.colors.surface,
+            borderColor: isFocused ? theme.colors.accent : theme.colors.surfaceBorder,
+            borderWidth: isFocused ? theme.shapes.borderThick : theme.shapes.borderThin,
+            borderRadius: theme.components.input.radius,
+            height: theme.components.input.height,
           },
         ]}
       >
         <Pressable
           onPress={toggleSuggestions}
           style={styles.searchIconButton}
-          android_ripple={{ color: colors.accent + "33" }}
+          android_ripple={{ color: theme.colors.accentMuted }}
         >
           <Ionicons
             name={showSuggestions ? "chevron-down" : "search"}
             size={20}
-            color={isFocused ? colors.accent : colors.muted}
+            color={isFocused ? theme.colors.accent : theme.colors.textMuted}
           />
         </Pressable>
 
@@ -108,8 +104,15 @@ export default function SearchBar({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
-          placeholderTextColor={colors.muted}
-          style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
+          placeholderTextColor={theme.colors.textMuted}
+          style={[
+            styles.input,
+            {
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.components.input.fontSize,
+            },
+          ]}
           returnKeyType="search"
           clearButtonMode="never"
         />
@@ -117,9 +120,9 @@ export default function SearchBar({
           <Pressable
             onPress={handleClear}
             style={styles.clearButton}
-            android_ripple={{ color: colors.accent + "33" }}
+            android_ripple={{ color: theme.colors.accentMuted }}
           >
-            <Ionicons name="close-circle" size={20} color={colors.muted} />
+            <Ionicons name="close-circle" size={20} color={theme.colors.textMuted} />
           </Pressable>
         )}
       </View>
@@ -141,9 +144,6 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1.5,
     paddingHorizontal: 12,
   },
   searchIconButton: {
@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
     paddingVertical: 8,
   },
   clearButton: {

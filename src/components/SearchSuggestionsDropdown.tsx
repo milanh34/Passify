@@ -4,7 +4,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 interface SearchSuggestionsDropdownProps {
   visible: boolean;
@@ -19,7 +19,7 @@ export default function SearchSuggestionsDropdown({
   onSelectSuggestion,
   maxHeight = 300,
 }: SearchSuggestionsDropdownProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   if (!visible) return null;
 
@@ -28,13 +28,16 @@ export default function SearchSuggestionsDropdown({
       from={{ opacity: 0, translateY: -10 }}
       animate={{ opacity: 1, translateY: 0 }}
       exit={{ opacity: 0, translateY: -10 }}
-      transition={{ type: "timing", duration: 200 }}
+      transition={{ type: "timing", duration: theme.animations.durationFast }}
       style={[
         styles.container,
         {
-          backgroundColor: colors.card,
-          borderColor: colors.cardBorder,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.surfaceBorder,
+          borderWidth: theme.shapes.borderThin,
+          borderRadius: theme.components.card.radius,
           maxHeight,
+          ...theme.shadows.md,
         },
       ]}
     >
@@ -50,17 +53,22 @@ export default function SearchSuggestionsDropdown({
             style={[
               styles.suggestionItem,
               {
-                borderBottomColor: colors.cardBorder,
-                borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
+                borderBottomColor: theme.colors.surfaceBorder,
+                borderBottomWidth: index < suggestions.length - 1 ? theme.shapes.borderThin : 0,
+                padding: theme.spacing.md,
               },
             ]}
-            android_ripple={{ color: colors.accent + "22" }}
+            android_ripple={{ color: theme.colors.accentMuted }}
           >
-            <Ionicons name="search-outline" size={18} color={colors.muted} />
+            <Ionicons name="search-outline" size={18} color={theme.colors.textMuted} />
             <Text
               style={[
                 styles.suggestionText,
-                { color: colors.text, fontFamily: fontConfig.regular },
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeMd,
+                },
               ]}
               numberOfLines={1}
             >
@@ -79,15 +87,9 @@ const styles = StyleSheet.create({
     top: 52,
     left: 0,
     right: 0,
-    borderRadius: 12,
-    borderWidth: 1,
     overflow: "hidden",
     zIndex: 1000,
     elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
   },
   scrollView: {
     maxHeight: 250,
@@ -96,12 +98,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     minHeight: 48,
   },
   suggestionText: {
-    fontSize: 15,
     flex: 1,
   },
 });

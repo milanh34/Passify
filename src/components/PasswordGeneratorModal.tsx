@@ -15,7 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import * as Clipboard from "expo-clipboard";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import {
   generatePassword,
   generatePassphrase,
@@ -42,7 +42,7 @@ export default function PasswordGeneratorModal({
   onSelect,
   initialPassword = "",
 }: PasswordGeneratorModalProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   const [options, setOptions] = useState<PasswordOptions>(DEFAULT_PASSWORD_OPTIONS);
   const [generated, setGenerated] = useState<GeneratedPassword | null>(null);
@@ -53,7 +53,6 @@ export default function PasswordGeneratorModal({
   const [passphraseWords, setPassphraseWords] = useState(4);
   const [passwordVisible, setPasswordVisible] = useState(true);
 
-  const shouldGenerateRef = useRef(false);
   const isGeneratingRef = useRef(false);
 
   const generateWithParams = useCallback(
@@ -146,10 +145,6 @@ export default function PasswordGeneratorModal({
     setOptions((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSliderComplete = () => {
-    handleGenerate();
-  };
-
   const handleLengthChange = (value: number) => {
     updateOption("length", Math.round(value));
   };
@@ -178,28 +173,54 @@ export default function PasswordGeneratorModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: theme.colors.overlay }]}>
         <View
           style={[
             styles.modalContent,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.cardBorder,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.shapes.modalRadius,
               maxHeight: SCREEN_HEIGHT * 0.85,
+              ...theme.shadows.lg,
             },
           ]}
         >
-          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
+          <View
+            style={[
+              styles.header,
+              {
+                borderBottomColor: theme.colors.surfaceBorder,
+                padding: theme.spacing.lg,
+              },
+            ]}
+          >
             <View style={styles.headerLeft}>
-              <View style={[styles.headerIcon, { backgroundColor: colors.accent + "20" }]}>
-                <Ionicons name="key" size={24} color={colors.accent} />
+              <View
+                style={[
+                  styles.headerIcon,
+                  {
+                    backgroundColor: theme.colors.accentMuted,
+                    borderRadius: theme.shapes.radiusMd,
+                  },
+                ]}
+              >
+                <Ionicons name="key" size={24} color={theme.colors.accent} />
               </View>
               <View>
-                <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+                <Text
+                  style={[
+                    styles.title,
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                  ]}
+                >
                   Password Generator
                 </Text>
                 <Text
-                  style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}
+                  style={[
+                    styles.subtitle,
+                    { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
+                  ]}
                 >
                   Create a secure password
                 </Text>
@@ -207,15 +228,21 @@ export default function PasswordGeneratorModal({
             </View>
             <Pressable
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: colors.bg[0] }]}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: theme.colors.background,
+                  borderRadius: theme.shapes.radiusMd,
+                },
+              ]}
             >
-              <Ionicons name="close" size={22} color={colors.muted} />
+              <Ionicons name="close" size={22} color={theme.colors.textMuted} />
             </Pressable>
           </View>
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { padding: theme.spacing.lg }]}
             showsVerticalScrollIndicator={true}
             bounces={false}
           >
@@ -226,22 +253,24 @@ export default function PasswordGeneratorModal({
                   style={[
                     styles.modeButton,
                     {
-                      backgroundColor: mode === "password" ? colors.accent : colors.bg[0],
-                      borderColor: colors.accent,
+                      backgroundColor:
+                        mode === "password" ? theme.colors.accent : theme.colors.background,
+                      borderColor: theme.colors.accent,
+                      borderRadius: theme.shapes.buttonRadius,
                     },
                   ]}
                 >
                   <Ionicons
                     name="lock-closed"
                     size={16}
-                    color={mode === "password" ? "#fff" : colors.accent}
+                    color={mode === "password" ? theme.colors.textInverse : theme.colors.accent}
                   />
                   <Text
                     style={[
                       styles.modeButtonText,
                       {
-                        color: mode === "password" ? "#fff" : colors.accent,
-                        fontFamily: fontConfig.bold,
+                        color: mode === "password" ? theme.colors.textInverse : theme.colors.accent,
+                        fontFamily: theme.typography.fontBold,
                       },
                     ]}
                   >
@@ -253,22 +282,25 @@ export default function PasswordGeneratorModal({
                   style={[
                     styles.modeButton,
                     {
-                      backgroundColor: mode === "passphrase" ? colors.accent : colors.bg[0],
-                      borderColor: colors.accent,
+                      backgroundColor:
+                        mode === "passphrase" ? theme.colors.accent : theme.colors.background,
+                      borderColor: theme.colors.accent,
+                      borderRadius: theme.shapes.buttonRadius,
                     },
                   ]}
                 >
                   <Ionicons
                     name="text"
                     size={16}
-                    color={mode === "passphrase" ? "#fff" : colors.accent}
+                    color={mode === "passphrase" ? theme.colors.textInverse : theme.colors.accent}
                   />
                   <Text
                     style={[
                       styles.modeButtonText,
                       {
-                        color: mode === "passphrase" ? "#fff" : colors.accent,
-                        fontFamily: fontConfig.bold,
+                        color:
+                          mode === "passphrase" ? theme.colors.textInverse : theme.colors.accent,
+                        fontFamily: theme.typography.fontBold,
                       },
                     ]}
                   >
@@ -280,7 +312,10 @@ export default function PasswordGeneratorModal({
 
             <View style={styles.section}>
               <Text
-                style={[styles.sectionLabel, { color: colors.muted, fontFamily: fontConfig.bold }]}
+                style={[
+                  styles.sectionLabel,
+                  { color: theme.colors.textMuted, fontFamily: theme.typography.fontBold },
+                ]}
               >
                 GENERATED PASSWORD
               </Text>
@@ -288,18 +323,20 @@ export default function PasswordGeneratorModal({
                 style={[
                   styles.passwordBox,
                   {
-                    backgroundColor: colors.bg[0],
-                    borderColor: generated ? colors.accent : colors.cardBorder,
+                    backgroundColor: theme.colors.background,
+                    borderColor: generated ? theme.colors.accent : theme.colors.surfaceBorder,
+                    borderRadius: theme.shapes.cardRadius,
+                    borderWidth: theme.shapes.borderThick,
                   },
                 ]}
               >
                 {isGenerating ? (
                   <View style={styles.loadingBox}>
-                    <ActivityIndicator size="small" color={colors.accent} />
+                    <ActivityIndicator size="small" color={theme.colors.accent} />
                     <Text
                       style={[
                         styles.loadingText,
-                        { color: colors.muted, fontFamily: fontConfig.regular },
+                        { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                       ]}
                     >
                       Generating...
@@ -310,7 +347,7 @@ export default function PasswordGeneratorModal({
                     <Text
                       style={[
                         styles.passwordText,
-                        { color: colors.text, fontFamily: fontConfig.bold },
+                        { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                       ]}
                       selectable={passwordVisible}
                     >
@@ -318,22 +355,28 @@ export default function PasswordGeneratorModal({
                     </Text>
                     <Pressable
                       onPress={() => setPasswordVisible(!passwordVisible)}
-                      style={[styles.eyeButton, { backgroundColor: colors.cardBorder + "50" }]}
+                      style={[
+                        styles.eyeButton,
+                        {
+                          backgroundColor: theme.colors.surfaceBorder + "50",
+                          borderRadius: theme.shapes.radiusSm,
+                        },
+                      ]}
                     >
                       <Ionicons
                         name={passwordVisible ? "eye-off" : "eye"}
                         size={20}
-                        color={colors.text}
+                        color={theme.colors.textPrimary}
                       />
                     </Pressable>
                   </View>
                 ) : (
                   <View style={styles.loadingBox}>
-                    <Ionicons name="key-outline" size={28} color={colors.muted} />
+                    <Ionicons name="key-outline" size={28} color={theme.colors.textMuted} />
                     <Text
                       style={[
                         styles.loadingText,
-                        { color: colors.muted, fontFamily: fontConfig.regular },
+                        { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                       ]}
                     >
                       Tap Regenerate
@@ -350,22 +393,28 @@ export default function PasswordGeneratorModal({
                   />
                   <View style={styles.statsRow}>
                     <View style={styles.statItem}>
-                      <Ionicons name="shield-checkmark" size={14} color={colors.muted} />
+                      <Ionicons name="shield-checkmark" size={14} color={theme.colors.textMuted} />
                       <Text
                         style={[
                           styles.statText,
-                          { color: colors.muted, fontFamily: fontConfig.regular },
+                          {
+                            color: theme.colors.textMuted,
+                            fontFamily: theme.typography.fontRegular,
+                          },
                         ]}
                       >
                         {generated.entropy} bits entropy
                       </Text>
                     </View>
                     <View style={styles.statItem}>
-                      <Ionicons name="text" size={14} color={colors.muted} />
+                      <Ionicons name="text" size={14} color={theme.colors.textMuted} />
                       <Text
                         style={[
                           styles.statText,
-                          { color: colors.muted, fontFamily: fontConfig.regular },
+                          {
+                            color: theme.colors.textMuted,
+                            fontFamily: theme.typography.fontRegular,
+                          },
                         ]}
                       >
                         {generated.password.length} chars
@@ -384,17 +433,18 @@ export default function PasswordGeneratorModal({
                   style={[
                     styles.actionBtn,
                     {
-                      backgroundColor: colors.accent + "15",
-                      borderColor: colors.accent,
+                      backgroundColor: theme.colors.accentMuted,
+                      borderColor: theme.colors.accent,
+                      borderRadius: theme.shapes.buttonRadius,
                       opacity: isGenerating ? 0.6 : 1,
                     },
                   ]}
                 >
-                  <Ionicons name="refresh" size={18} color={colors.accent} />
+                  <Ionicons name="refresh" size={18} color={theme.colors.accent} />
                   <Text
                     style={[
                       styles.actionBtnText,
-                      { color: colors.accent, fontFamily: fontConfig.bold },
+                      { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                     ]}
                   >
                     Regenerate
@@ -406,8 +456,9 @@ export default function PasswordGeneratorModal({
                   style={[
                     styles.actionBtn,
                     {
-                      backgroundColor: copied ? colors.accent : colors.accent + "15",
-                      borderColor: colors.accent,
+                      backgroundColor: copied ? theme.colors.accent : theme.colors.accentMuted,
+                      borderColor: theme.colors.accent,
+                      borderRadius: theme.shapes.buttonRadius,
                       opacity: !generated || isGenerating ? 0.6 : 1,
                     },
                   ]}
@@ -415,12 +466,15 @@ export default function PasswordGeneratorModal({
                   <Ionicons
                     name={copied ? "checkmark" : "copy"}
                     size={18}
-                    color={copied ? "#fff" : colors.accent}
+                    color={copied ? theme.colors.textInverse : theme.colors.accent}
                   />
                   <Text
                     style={[
                       styles.actionBtnText,
-                      { color: copied ? "#fff" : colors.accent, fontFamily: fontConfig.bold },
+                      {
+                        color: copied ? theme.colors.textInverse : theme.colors.accent,
+                        fontFamily: theme.typography.fontBold,
+                      },
                     ]}
                   >
                     {copied ? "Copied!" : "Copy"}
@@ -434,7 +488,7 @@ export default function PasswordGeneratorModal({
                 <Text
                   style={[
                     styles.sectionLabel,
-                    { color: colors.muted, fontFamily: fontConfig.bold },
+                    { color: theme.colors.textMuted, fontFamily: theme.typography.fontBold },
                   ]}
                 >
                   QUICK PRESETS
@@ -450,13 +504,20 @@ export default function PasswordGeneratorModal({
                       onPress={() => handlePresetSelect(preset.id)}
                       style={[
                         styles.presetCard,
-                        { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                        {
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.surfaceBorder,
+                          borderRadius: theme.shapes.radiusMd,
+                        },
                       ]}
                     >
                       <Text
                         style={[
                           styles.presetName,
-                          { color: colors.text, fontFamily: fontConfig.bold },
+                          {
+                            color: theme.colors.textPrimary,
+                            fontFamily: theme.typography.fontBold,
+                          },
                         ]}
                       >
                         {preset.name}
@@ -464,7 +525,10 @@ export default function PasswordGeneratorModal({
                       <Text
                         style={[
                           styles.presetDesc,
-                          { color: colors.muted, fontFamily: fontConfig.regular },
+                          {
+                            color: theme.colors.textMuted,
+                            fontFamily: theme.typography.fontRegular,
+                          },
                         ]}
                       >
                         {preset.description}
@@ -480,13 +544,17 @@ export default function PasswordGeneratorModal({
                 onPress={() => setShowAdvanced(!showAdvanced)}
                 style={[
                   styles.advancedHeader,
-                  { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                  {
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.shapes.radiusMd,
+                  },
                 ]}
               >
                 <Text
                   style={[
                     styles.advancedTitle,
-                    { color: colors.text, fontFamily: fontConfig.bold },
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                   ]}
                 >
                   {mode === "password" ? "Advanced Options" : "Passphrase Options"}
@@ -494,7 +562,7 @@ export default function PasswordGeneratorModal({
                 <Ionicons
                   name={showAdvanced ? "chevron-up" : "chevron-down"}
                   size={20}
-                  color={colors.accent}
+                  color={theme.colors.accent}
                 />
               </Pressable>
 
@@ -502,7 +570,11 @@ export default function PasswordGeneratorModal({
                 <View
                   style={[
                     styles.optionsBox,
-                    { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                    {
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.surfaceBorder,
+                      borderRadius: theme.shapes.radiusMd,
+                    },
                   ]}
                 >
                   {mode === "password" ? (
@@ -512,16 +584,30 @@ export default function PasswordGeneratorModal({
                           <Text
                             style={[
                               styles.optionLabel,
-                              { color: colors.text, fontFamily: fontConfig.regular },
+                              {
+                                color: theme.colors.textPrimary,
+                                fontFamily: theme.typography.fontRegular,
+                              },
                             ]}
                           >
                             Length
                           </Text>
-                          <View style={[styles.badge, { backgroundColor: colors.accent + "20" }]}>
+                          <View
+                            style={[
+                              styles.badge,
+                              {
+                                backgroundColor: theme.colors.accentMuted,
+                                borderRadius: theme.shapes.radiusSm,
+                              },
+                            ]}
+                          >
                             <Text
                               style={[
                                 styles.badgeText,
-                                { color: colors.accent, fontFamily: fontConfig.bold },
+                                {
+                                  color: theme.colors.accent,
+                                  fontFamily: theme.typography.fontBold,
+                                },
                               ]}
                             >
                               {options.length}
@@ -536,9 +622,9 @@ export default function PasswordGeneratorModal({
                           value={options.length}
                           onValueChange={handleLengthChange}
                           onSlidingComplete={handleLengthComplete}
-                          minimumTrackTintColor={colors.accent}
-                          maximumTrackTintColor={colors.cardBorder}
-                          thumbTintColor={colors.accent}
+                          minimumTrackTintColor={theme.colors.accent}
+                          maximumTrackTintColor={theme.colors.surfaceBorder}
+                          thumbTintColor={theme.colors.accent}
                         />
                       </View>
 
@@ -551,12 +637,18 @@ export default function PasswordGeneratorModal({
                       ].map((item) => (
                         <View
                           key={item.key}
-                          style={[styles.toggleItem, { borderTopColor: colors.cardBorder }]}
+                          style={[
+                            styles.toggleItem,
+                            { borderTopColor: theme.colors.surfaceBorder },
+                          ]}
                         >
                           <Text
                             style={[
                               styles.toggleLabel,
-                              { color: colors.text, fontFamily: fontConfig.regular },
+                              {
+                                color: theme.colors.textPrimary,
+                                fontFamily: theme.typography.fontRegular,
+                              },
                             ]}
                           >
                             {item.label}
@@ -564,8 +656,13 @@ export default function PasswordGeneratorModal({
                           <Switch
                             value={options[item.key]}
                             onValueChange={(value) => updateOptionAndGenerate(item.key, value)}
-                            trackColor={{ false: colors.cardBorder, true: colors.accent + "60" }}
-                            thumbColor={options[item.key] ? colors.accent : colors.card}
+                            trackColor={{
+                              false: theme.colors.surfaceBorder,
+                              true: theme.colors.accent + "60",
+                            }}
+                            thumbColor={
+                              options[item.key] ? theme.colors.accent : theme.colors.surface
+                            }
                           />
                         </View>
                       ))}
@@ -576,16 +673,27 @@ export default function PasswordGeneratorModal({
                         <Text
                           style={[
                             styles.optionLabel,
-                            { color: colors.text, fontFamily: fontConfig.regular },
+                            {
+                              color: theme.colors.textPrimary,
+                              fontFamily: theme.typography.fontRegular,
+                            },
                           ]}
                         >
                           Number of Words
                         </Text>
-                        <View style={[styles.badge, { backgroundColor: colors.accent + "20" }]}>
+                        <View
+                          style={[
+                            styles.badge,
+                            {
+                              backgroundColor: theme.colors.accentMuted,
+                              borderRadius: theme.shapes.radiusSm,
+                            },
+                          ]}
+                        >
                           <Text
                             style={[
                               styles.badgeText,
-                              { color: colors.accent, fontFamily: fontConfig.bold },
+                              { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                             ]}
                           >
                             {passphraseWords}
@@ -600,9 +708,9 @@ export default function PasswordGeneratorModal({
                         value={passphraseWords}
                         onValueChange={handlePassphraseWordsChange}
                         onSlidingComplete={handlePassphraseWordsComplete}
-                        minimumTrackTintColor={colors.accent}
-                        maximumTrackTintColor={colors.cardBorder}
-                        thumbTintColor={colors.accent}
+                        minimumTrackTintColor={theme.colors.accent}
+                        maximumTrackTintColor={theme.colors.surfaceBorder}
+                        thumbTintColor={theme.colors.accent}
                       />
                     </View>
                   )}
@@ -614,7 +722,11 @@ export default function PasswordGeneratorModal({
           <View
             style={[
               styles.footer,
-              { borderTopColor: colors.cardBorder, backgroundColor: colors.card },
+              {
+                borderTopColor: theme.colors.surfaceBorder,
+                backgroundColor: theme.colors.surface,
+                padding: theme.spacing.lg,
+              },
             ]}
           >
             <Pressable
@@ -623,12 +735,22 @@ export default function PasswordGeneratorModal({
               style={[
                 styles.useButton,
                 {
-                  backgroundColor: generated && !isGenerating ? colors.accent : colors.cardBorder,
+                  backgroundColor:
+                    generated && !isGenerating
+                      ? theme.colors.buttonPrimary
+                      : theme.colors.surfaceBorder,
+                  borderRadius: theme.shapes.buttonRadius,
+                  height: theme.components.button.height,
                 },
               ]}
             >
-              <Ionicons name="checkmark-circle" size={22} color="#fff" />
-              <Text style={[styles.useButtonText, { fontFamily: fontConfig.bold }]}>
+              <Ionicons name="checkmark-circle" size={22} color={theme.colors.textInverse} />
+              <Text
+                style={[
+                  styles.useButtonText,
+                  { fontFamily: theme.typography.fontBold, color: theme.colors.textInverse },
+                ]}
+              >
                 Use This Password
               </Text>
             </Pressable>
@@ -642,7 +764,6 @@ export default function PasswordGeneratorModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
@@ -650,7 +771,6 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "100%",
     maxWidth: 420,
-    borderRadius: 20,
     borderWidth: 1,
     overflow: "hidden",
   },
@@ -658,7 +778,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
     borderBottomWidth: 1,
   },
   headerLeft: {
@@ -670,7 +789,6 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 44,
     height: 44,
-    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -683,15 +801,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
-    borderRadius: 16,
   },
   scrollView: {
     flexGrow: 0,
     flexShrink: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingTop: 12,
     gap: 16,
   },
   section: {
@@ -713,15 +828,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 12,
-    borderRadius: 10,
     borderWidth: 1.5,
   },
   modeButtonText: {
     fontSize: 14,
   },
   passwordBox: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 16,
     height: 100,
     justifyContent: "center",
@@ -748,7 +860,6 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 8,
-    borderRadius: 8,
   },
   strengthBox: {
     gap: 10,
@@ -777,7 +888,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 12,
-    borderRadius: 10,
     borderWidth: 1.5,
   },
   actionBtnText: {
@@ -789,7 +899,6 @@ const styles = StyleSheet.create({
   presetCard: {
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 10,
     borderWidth: 1,
     marginHorizontal: 4,
     minWidth: 100,
@@ -806,14 +915,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 14,
-    borderRadius: 10,
     borderWidth: 1,
   },
   advancedTitle: {
     fontSize: 14,
   },
   optionsBox: {
-    borderRadius: 10,
     borderWidth: 1,
     padding: 14,
     marginTop: 8,
@@ -832,7 +939,6 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
   },
   badgeText: {
     fontSize: 13,
@@ -854,7 +960,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footer: {
-    padding: 16,
     borderTopWidth: 1,
   },
   useButton: {
@@ -862,11 +967,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingVertical: 16,
-    borderRadius: 12,
   },
   useButtonText: {
     fontSize: 16,
-    color: "#fff",
   },
 });

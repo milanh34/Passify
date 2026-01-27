@@ -4,7 +4,7 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import { getBiometricIcon, getBiometricTypeName, BiometricType } from "../utils/biometricAuth";
 
 interface BiometricPromptProps {
@@ -18,7 +18,7 @@ export default function BiometricPrompt({
   onPress,
   isLoading = false,
 }: BiometricPromptProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const iconName = getBiometricIcon(biometricType);
   const typeName = getBiometricTypeName(biometricType);
 
@@ -26,20 +26,26 @@ export default function BiometricPrompt({
     <MotiView
       from={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "timing", duration: 300 }}
+      transition={{ type: "timing", duration: theme.animations.durationNormal }}
       style={styles.container}
     >
       <Pressable
         onPress={onPress}
         disabled={isLoading}
-        style={[
+        style={({ pressed }) => [
           styles.promptButton,
           {
-            backgroundColor: colors.accent + "15",
-            borderColor: colors.accent,
+            backgroundColor: theme.colors.accentMuted,
+            borderColor: theme.colors.accent,
+            borderWidth: theme.shapes.borderThick,
+            borderRadius: theme.components.modal.radius,
+            paddingVertical: theme.spacing.xxl + 16,
+            paddingHorizontal: theme.spacing.xxl,
+            gap: theme.spacing.lg,
+            opacity: pressed ? 0.8 : 1,
           },
         ]}
-        android_ripple={{ color: colors.accent + "22" }}
+        android_ripple={{ color: theme.colors.accentMuted }}
       >
         <MotiView
           from={{ scale: 1 }}
@@ -50,15 +56,16 @@ export default function BiometricPrompt({
             loop: isLoading,
           }}
         >
-          <Ionicons name={iconName as any} size={64} color={colors.accent} />
+          <Ionicons name={iconName as any} size={64} color={theme.colors.accent} />
         </MotiView>
 
         <Text
           style={[
             styles.promptTitle,
             {
-              color: colors.text,
-              fontFamily: fontConfig.bold,
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontBold,
+              fontSize: theme.typography.sizeXl,
             },
           ]}
         >
@@ -69,8 +76,9 @@ export default function BiometricPrompt({
           style={[
             styles.promptSubtitle,
             {
-              color: colors.subtext,
-              fontFamily: fontConfig.regular,
+              color: theme.colors.textSecondary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeMd,
             },
           ]}
         >
@@ -89,19 +97,12 @@ const styles = StyleSheet.create({
   promptButton: {
     width: "100%",
     maxWidth: 320,
-    paddingVertical: 40,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    borderWidth: 2,
     alignItems: "center",
-    gap: 16,
   },
   promptTitle: {
-    fontSize: 20,
     textAlign: "center",
   },
   promptSubtitle: {
-    fontSize: 14,
     textAlign: "center",
   },
 });

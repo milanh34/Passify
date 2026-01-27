@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import { ProgressPhase } from "../types/progress";
 
 interface ProgressBarProps {
@@ -40,7 +40,7 @@ export default function ProgressBar({
   totalBytes,
   visible,
 }: ProgressBarProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -63,29 +63,80 @@ export default function ProgressBar({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.surfaceBorder,
+          borderWidth: theme.shapes.borderThin,
+          borderRadius: theme.components.card.radius,
+          padding: theme.spacing.lg,
+        },
+      ]}
       accessible
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(percent) }}
       accessibilityLabel={`${phaseLabel}: ${Math.round(percent)}%`}
     >
       <View style={styles.header}>
-        <Text style={[styles.phase, { color: colors.text, fontFamily: fontConfig.regular }]}>
+        <Text
+          style={[
+            styles.phase,
+            {
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeMd,
+            },
+          ]}
+        >
           {phaseLabel}
         </Text>
-        <Text style={[styles.percentage, { color: colors.accent, fontFamily: fontConfig.bold }]}>
+        <Text
+          style={[
+            styles.percentage,
+            {
+              color: theme.colors.accent,
+              fontFamily: theme.typography.fontBold,
+              fontSize: theme.typography.sizeLg,
+            },
+          ]}
+        >
           {Math.round(percent)}%
         </Text>
       </View>
 
-      <View style={[styles.progressTrack, { backgroundColor: colors.bg[0] }]}>
+      <View
+        style={[
+          styles.progressTrack,
+          {
+            backgroundColor: theme.colors.background,
+            borderRadius: theme.shapes.radiusSm,
+          },
+        ]}
+      >
         <Animated.View
-          style={[styles.progressFill, { backgroundColor: colors.accent, width: progressWidth }]}
+          style={[
+            styles.progressFill,
+            {
+              backgroundColor: theme.colors.accent,
+              width: progressWidth,
+              borderRadius: theme.shapes.radiusSm,
+            },
+          ]}
         />
       </View>
 
       {showBytes && (
-        <Text style={[styles.bytes, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+        <Text
+          style={[
+            styles.bytes,
+            {
+              color: theme.colors.textMuted,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeSm,
+            },
+          ]}
+        >
           {formatBytes(processedBytes!)} / {formatBytes(totalBytes!)}
         </Text>
       )}
@@ -95,9 +146,6 @@ export default function ProgressBar({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
     gap: 8,
   },
   header: {
@@ -106,24 +154,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   phase: {
-    fontSize: 14,
     flex: 1,
   },
   percentage: {
-    fontSize: 16,
     marginLeft: 8,
   },
   progressTrack: {
     height: 8,
-    borderRadius: 4,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 4,
   },
   bytes: {
-    fontSize: 12,
     textAlign: "right",
   },
 });

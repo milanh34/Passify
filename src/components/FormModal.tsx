@@ -16,11 +16,11 @@ import {
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import PasswordGeneratorModal from "./PasswordGeneratorModal";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import DatePickerModal from "./DatePickerModal";
-import { getFieldType, validateField, ValidationResult } from "../utils/formValidation";
+import { getFieldType, validateField } from "../utils/formValidation";
 import { getDateFormat, DateFormatOption } from "../utils/dateFormat";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -42,7 +42,7 @@ export default function FormModal({
   fields: Field[];
   initialData?: Record<string, any>;
 }) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const insets = useSafeAreaInsets();
 
   const [data, setData] = useState<Record<string, string>>({});
@@ -89,24 +89,12 @@ export default function FormModal({
       setRecentlyGenerated({});
       setErrors({});
       setTouched({});
-    }
-  }, [visible, initialData]);
-
-  useEffect(() => {
-    if (visible) {
-      setData(initialData as any);
-      setVisibleFields({});
-      setRecentlyGenerated({});
-      setErrors({});
-      setTouched({});
-
       getDateFormat().then(setCurrentDateFormat);
     }
   }, [visible, initialData]);
 
   const handleFieldChange = (fieldName: string, value: string) => {
     setData((d) => ({ ...d, [fieldName]: value }));
-
     if (errors[fieldName]) {
       setErrors((e) => ({ ...e, [fieldName]: "" }));
     }
@@ -114,10 +102,8 @@ export default function FormModal({
 
   const handleFieldBlur = (fieldName: string) => {
     setTouched((t) => ({ ...t, [fieldName]: true }));
-
     const value = data[fieldName] || "";
     const validation = validateField(fieldName, value);
-
     if (!validation.isValid && validation.error) {
       setErrors((e) => ({ ...e, [fieldName]: validation.error! }));
     } else {
@@ -137,7 +123,6 @@ export default function FormModal({
     organizedFields.forEach((field) => {
       const value = data[field.name] || "";
       const validation = validateField(field.name, value);
-
       if (!validation.isValid && validation.error) {
         newErrors[field.name] = validation.error;
         isValid = false;
@@ -146,7 +131,6 @@ export default function FormModal({
 
     setErrors(newErrors);
     setTouched(Object.fromEntries(organizedFields.map((f) => [f.name, true])));
-
     return isValid;
   };
 
@@ -166,7 +150,6 @@ export default function FormModal({
       setData((d) => ({ ...d, [activePasswordField]: password }));
       setVisibleFields((prev) => ({ ...prev, [activePasswordField]: true }));
       setRecentlyGenerated((prev) => ({ ...prev, [activePasswordField]: true }));
-
       setTimeout(() => {
         setRecentlyGenerated((prev) => ({ ...prev, [activePasswordField!]: false }));
       }, 3000);
@@ -263,7 +246,11 @@ export default function FormModal({
         key={field.name}
         from={{ opacity: 0, translateY: 20 }}
         animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 200, delay: index * 50 }}
+        transition={{
+          type: "timing",
+          duration: theme.animations.durationNormal,
+          delay: index * theme.animations.listItemStagger,
+        }}
         style={styles.fieldContainer}
       >
         <View style={styles.labelRow}>
@@ -271,19 +258,19 @@ export default function FormModal({
             <Ionicons
               name={getFieldIcon(field.name) as any}
               size={16}
-              color={error ? colors.danger : colors.accent}
+              color={error ? theme.colors.error : theme.colors.accent}
             />
             <Text
               style={[
                 styles.label,
                 {
-                  color: error ? colors.danger : colors.text,
-                  fontFamily: fontConfig.bold,
+                  color: error ? theme.colors.error : theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
                 },
               ]}
             >
               {field.label}
-              {isRequired && <Text style={{ color: colors.danger }}> *</Text>}
+              {isRequired && <Text style={{ color: theme.colors.error }}> *</Text>}
             </Text>
           </View>
 
@@ -292,14 +279,18 @@ export default function FormModal({
               onPress={() => handleOpenGenerator(field.name)}
               style={[
                 styles.generateButton,
-                { backgroundColor: colors.accent + "15", borderColor: colors.accent + "40" },
+                {
+                  backgroundColor: theme.colors.accentMuted,
+                  borderColor: theme.colors.accent + "40",
+                  borderRadius: theme.shapes.radiusSm,
+                },
               ]}
             >
-              <Ionicons name="key" size={14} color={colors.accent} />
+              <Ionicons name="key" size={14} color={theme.colors.accent} />
               <Text
                 style={[
                   styles.generateButtonText,
-                  { color: colors.accent, fontFamily: fontConfig.bold },
+                  { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                 ]}
               >
                 Generate
@@ -315,42 +306,52 @@ export default function FormModal({
               styles.inputContainer,
               styles.dateInputContainer,
               {
-                backgroundColor: colors.bg[0],
+                backgroundColor: theme.colors.background,
                 borderColor: error
-                  ? colors.danger
+                  ? theme.colors.error
                   : wasRecentlyGenerated
-                    ? colors.accent
-                    : colors.cardBorder,
-                borderWidth: error || wasRecentlyGenerated ? 2 : 1,
+                    ? theme.colors.accent
+                    : theme.colors.surfaceBorder,
+                borderWidth:
+                  error || wasRecentlyGenerated
+                    ? theme.shapes.borderThick
+                    : theme.shapes.borderThin,
+                borderRadius: theme.shapes.radiusMd,
+                minHeight: theme.components.input.height,
               },
             ]}
           >
-            <Ionicons name="calendar-outline" size={20} color={colors.muted} />
+            <Ionicons name="calendar-outline" size={20} color={theme.colors.textMuted} />
             <Text
               style={[
                 styles.dateText,
                 {
-                  color: currentValue ? colors.text : colors.muted,
-                  fontFamily: fontConfig.regular,
+                  color: currentValue ? theme.colors.textPrimary : theme.colors.textMuted,
+                  fontFamily: theme.typography.fontRegular,
                 },
               ]}
             >
               {currentValue || "Select date"}
             </Text>
-            <Ionicons name="chevron-down" size={18} color={colors.muted} />
+            <Ionicons name="chevron-down" size={18} color={theme.colors.textMuted} />
           </Pressable>
         ) : (
           <View
             style={[
               styles.inputContainer,
               {
-                backgroundColor: colors.bg[0],
+                backgroundColor: theme.colors.background,
                 borderColor: error
-                  ? colors.danger
+                  ? theme.colors.error
                   : wasRecentlyGenerated
-                    ? colors.accent
-                    : colors.cardBorder,
-                borderWidth: error || wasRecentlyGenerated ? 2 : 1,
+                    ? theme.colors.accent
+                    : theme.colors.surfaceBorder,
+                borderWidth:
+                  error || wasRecentlyGenerated
+                    ? theme.shapes.borderThick
+                    : theme.shapes.borderThin,
+                borderRadius: theme.shapes.radiusMd,
+                minHeight: theme.components.input.height,
               },
             ]}
           >
@@ -359,12 +360,19 @@ export default function FormModal({
               onChangeText={(v) => handleFieldChange(field.name, v)}
               onBlur={() => handleFieldBlur(field.name)}
               placeholder={getPlaceholder(field)}
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={theme.colors.textMuted}
               secureTextEntry={isPassword && !isVisible}
               keyboardType={getKeyboardType(field.name)}
               autoCapitalize={getAutoCapitalize(field.name)}
               autoCorrect={!isPassword && fieldType !== "email"}
-              style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
+              style={[
+                styles.input,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeMd,
+                },
+              ]}
             />
 
             {isPassword && currentValue.length > 0 && (
@@ -375,7 +383,7 @@ export default function FormModal({
                 <Ionicons
                   name={isVisible ? "eye-off-outline" : "eye-outline"}
                   size={20}
-                  color={colors.muted}
+                  color={theme.colors.textMuted}
                 />
               </Pressable>
             )}
@@ -386,11 +394,15 @@ export default function FormModal({
           <MotiView
             from={{ opacity: 0, translateY: -5 }}
             animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: theme.animations.durationFast }}
             style={styles.errorContainer}
           >
-            <Ionicons name="alert-circle" size={14} color={colors.danger} />
+            <Ionicons name="alert-circle" size={14} color={theme.colors.error} />
             <Text
-              style={[styles.errorText, { color: colors.danger, fontFamily: fontConfig.regular }]}
+              style={[
+                styles.errorText,
+                { color: theme.colors.error, fontFamily: theme.typography.fontRegular },
+              ]}
             >
               {error}
             </Text>
@@ -408,13 +420,14 @@ export default function FormModal({
           <MotiView
             from={{ opacity: 0, translateY: -5 }}
             animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: theme.animations.durationFast }}
             style={styles.generatedIndicator}
           >
-            <Ionicons name="checkmark-circle" size={14} color={colors.accent} />
+            <Ionicons name="checkmark-circle" size={14} color={theme.colors.accent} />
             <Text
               style={[
                 styles.generatedText,
-                { color: colors.accent, fontFamily: fontConfig.regular },
+                { color: theme.colors.accent, fontFamily: theme.typography.fontRegular },
               ]}
             >
               Password generated successfully
@@ -423,12 +436,22 @@ export default function FormModal({
         )}
 
         {fieldType === "email" && !error && !touched[field.name] && (
-          <Text style={[styles.hint, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+          <Text
+            style={[
+              styles.hint,
+              { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
+            ]}
+          >
             Enter a valid email address
           </Text>
         )}
         {fieldType === "phone" && !error && !touched[field.name] && (
-          <Text style={[styles.hint, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+          <Text
+            style={[
+              styles.hint,
+              { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
+            ]}
+          >
             Include country code for international numbers
           </Text>
         )}
@@ -439,7 +462,7 @@ export default function FormModal({
   return (
     <>
       <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-        <View style={[styles.modalContainer, { backgroundColor: colors.bg[0] }]}>
+        <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.keyboardView}
@@ -449,8 +472,9 @@ export default function FormModal({
                 styles.header,
                 {
                   paddingTop: insets.top + 12,
-                  borderBottomColor: colors.cardBorder,
-                  backgroundColor: colors.bg[0],
+                  borderBottomColor: theme.colors.surfaceBorder,
+                  backgroundColor: theme.colors.background,
+                  height: insets.top + theme.components.header.height,
                 },
               ]}
             >
@@ -458,22 +482,31 @@ export default function FormModal({
                 onPress={onClose}
                 style={[
                   styles.headerButton,
-                  { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.components.header.backButtonRadius,
+                    width: theme.components.header.backButtonSize,
+                    height: theme.components.header.backButtonSize,
+                  },
                 ]}
               >
-                <Ionicons name="close" size={22} color={colors.text} />
+                <Ionicons name="close" size={22} color={theme.colors.textPrimary} />
               </Pressable>
 
               <View style={styles.headerCenter}>
                 <Text
-                  style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.headerTitle,
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   {title}
                 </Text>
                 <Text
                   style={[
                     styles.headerSubtitle,
-                    { color: colors.muted, fontFamily: fontConfig.regular },
+                    { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                   ]}
                 >
                   {organizedFields.length} field{organizedFields.length !== 1 ? "s" : ""}
@@ -482,9 +515,18 @@ export default function FormModal({
 
               <Pressable
                 onPress={handleSave}
-                style={[styles.headerButton, styles.saveButton, { backgroundColor: colors.accent }]}
+                style={[
+                  styles.headerButton,
+                  styles.saveButton,
+                  {
+                    backgroundColor: theme.colors.accent,
+                    borderRadius: theme.components.header.backButtonRadius,
+                    width: theme.components.header.backButtonSize,
+                    height: theme.components.header.backButtonSize,
+                  },
+                ]}
               >
-                <Ionicons name="checkmark" size={22} color="#fff" />
+                <Ionicons name="checkmark" size={22} color={theme.colors.textInverse} />
               </Pressable>
             </View>
 
@@ -496,11 +538,15 @@ export default function FormModal({
             >
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={18}
+                    color={theme.colors.accent}
+                  />
                   <Text
                     style={[
                       styles.sectionTitle,
-                      { color: colors.text, fontFamily: fontConfig.bold },
+                      { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                     ]}
                   >
                     Account Details
@@ -510,7 +556,12 @@ export default function FormModal({
                 <View
                   style={[
                     styles.fieldsCard,
-                    { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.surfaceBorder,
+                      borderRadius: theme.shapes.cardRadius,
+                      padding: theme.spacing.cardPadding,
+                    },
                   ]}
                 >
                   {organizedFields.map((field, index) => renderField(field, index))}
@@ -520,14 +571,19 @@ export default function FormModal({
               <View
                 style={[
                   styles.infoBox,
-                  { backgroundColor: colors.accent + "10", borderColor: colors.accent + "30" },
+                  {
+                    backgroundColor: theme.colors.accentMuted,
+                    borderColor: theme.colors.accent + "30",
+                    borderRadius: theme.shapes.radiusMd,
+                    padding: theme.spacing.lg,
+                  },
                 ]}
               >
-                <Ionicons name="shield-checkmark-outline" size={20} color={colors.accent} />
+                <Ionicons name="shield-checkmark-outline" size={20} color={theme.colors.accent} />
                 <Text
                   style={[
                     styles.infoText,
-                    { color: colors.subtext, fontFamily: fontConfig.regular },
+                    { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
                   ]}
                 >
                   Your data is encrypted and stored securely on this device only.
@@ -539,9 +595,10 @@ export default function FormModal({
               style={[
                 styles.bottomBar,
                 {
-                  paddingBottom: insets.bottom + 16,
-                  backgroundColor: colors.card,
-                  borderTopColor: colors.cardBorder,
+                  paddingBottom: insets.bottom + theme.spacing.lg,
+                  backgroundColor: theme.colors.surface,
+                  borderTopColor: theme.colors.surfaceBorder,
+                  padding: theme.spacing.lg,
                 },
               ]}
             >
@@ -550,14 +607,19 @@ export default function FormModal({
                 style={[
                   styles.bottomButton,
                   styles.cancelButton,
-                  { backgroundColor: colors.bg[0], borderColor: colors.cardBorder },
+                  {
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.shapes.buttonRadius,
+                    height: theme.components.button.height,
+                  },
                 ]}
               >
-                <Ionicons name="close-outline" size={20} color={colors.text} />
+                <Ionicons name="close-outline" size={20} color={theme.colors.textPrimary} />
                 <Text
                   style={[
                     styles.bottomButtonText,
-                    { color: colors.text, fontFamily: fontConfig.bold },
+                    { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                   ]}
                 >
                   Cancel
@@ -569,12 +631,23 @@ export default function FormModal({
                 style={[
                   styles.bottomButton,
                   styles.submitButton,
-                  { backgroundColor: colors.accent },
+                  {
+                    backgroundColor: theme.colors.buttonPrimary,
+                    borderRadius: theme.shapes.buttonRadius,
+                    height: theme.components.button.height,
+                  },
                 ]}
               >
-                <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color={theme.colors.textInverse}
+                />
                 <Text
-                  style={[styles.bottomButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.bottomButtonText,
+                    { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   Save Account
                 </Text>
@@ -624,9 +697,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -666,9 +736,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   fieldsCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
     gap: 20,
   },
   fieldContainer: {
@@ -693,7 +761,6 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 8,
     borderWidth: 1,
   },
   generateButtonText: {
@@ -702,9 +769,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
     overflow: "hidden",
-    minHeight: 52,
   },
   dateInputContainer: {
     paddingHorizontal: 14,
@@ -714,7 +779,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    fontSize: 15,
   },
   dateText: {
     flex: 1,
@@ -747,8 +811,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    padding: 16,
-    borderRadius: 12,
     borderWidth: 1,
   },
   infoText: {
@@ -758,7 +820,6 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     flexDirection: "row",
-    padding: 16,
     gap: 12,
     borderTopWidth: 1,
   },
@@ -768,8 +829,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
   },
   cancelButton: {
     borderWidth: 1,

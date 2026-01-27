@@ -4,7 +4,7 @@ import React from "react";
 import { Modal, View, Text, StyleSheet, Pressable } from "react-native";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../context/ThemeContext";
+import { useAppTheme } from "../../themes/hooks/useAppTheme";
 
 type ConflictResolution = "update" | "skip";
 
@@ -20,7 +20,7 @@ interface ConflictModalProps {
 }
 
 export default function ConflictModal({ visible, conflict, onDecision }: ConflictModalProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   if (!conflict) return null;
 
@@ -30,28 +30,39 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "timing", duration: 200 }}
+          transition={{ type: "timing", duration: theme.animations.durationNormal }}
           style={[
             styles.modalCard,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.accent,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.accent,
+              borderRadius: theme.components.modal.radius,
+              padding: theme.components.modal.padding,
+              ...theme.shadows.lg,
             },
           ]}
         >
           <View style={styles.modalHeader}>
-            <Ionicons name="warning" size={32} color={colors.accent} />
-            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+            <Ionicons name="warning" size={32} color={theme.colors.accent} />
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+              ]}
+            >
               Account Already Exists
             </Text>
           </View>
 
           <View style={styles.modalContent}>
             <Text
-              style={[styles.modalText, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+              style={[
+                styles.modalText,
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+              ]}
             >
               An account with {conflict.identifierField}{" "}
-              <Text style={{ color: colors.accent, fontFamily: fontConfig.bold }}>
+              <Text style={{ color: theme.colors.accent, fontFamily: theme.typography.fontBold }}>
                 {conflict.newAccount[conflict.identifierField]}
               </Text>{" "}
               already exists in {conflict.platformName}.
@@ -61,15 +72,16 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
               style={[
                 styles.comparisonBox,
                 {
-                  backgroundColor: colors.bg[0] + "40",
-                  borderColor: colors.accent + "20",
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.accentMuted,
+                  borderRadius: theme.shapes.radiusMd,
                 },
               ]}
             >
               <Text
                 style={[
                   styles.comparisonTitle,
-                  { color: colors.accent2, fontFamily: fontConfig.bold },
+                  { color: theme.colors.accentSecondary, fontFamily: theme.typography.fontBold },
                 ]}
               >
                 Existing Account:
@@ -77,7 +89,7 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
               <Text
                 style={[
                   styles.comparisonText,
-                  { color: colors.text, fontFamily: fontConfig.regular },
+                  { color: theme.colors.textPrimary, fontFamily: theme.typography.fontRegular },
                 ]}
               >
                 Name: {conflict.existingAccount.name}
@@ -85,7 +97,10 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
             </View>
 
             <Text
-              style={[styles.modalQuestion, { color: colors.text, fontFamily: fontConfig.bold }]}
+              style={[
+                styles.modalQuestion,
+                { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+              ]}
             >
               What would you like to do?
             </Text>
@@ -96,13 +111,17 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
               onPress={() => onDecision("skip", false)}
               style={[
                 styles.modalButton,
-                { backgroundColor: colors.card, borderColor: colors.accent },
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.accent,
+                  borderRadius: theme.components.button.radius,
+                },
               ]}
             >
               <Text
                 style={[
                   styles.modalButtonText,
-                  { color: colors.accent, fontFamily: fontConfig.bold },
+                  { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                 ]}
               >
                 Skip
@@ -111,10 +130,19 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
 
             <Pressable
               onPress={() => onDecision("update", false)}
-              style={[styles.modalButton, { backgroundColor: colors.accent }]}
+              style={[
+                styles.modalButton,
+                {
+                  backgroundColor: theme.colors.accent,
+                  borderRadius: theme.components.button.radius,
+                },
+              ]}
             >
               <Text
-                style={[styles.modalButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
+                style={[
+                  styles.modalButtonText,
+                  { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+                ]}
               >
                 Update
               </Text>
@@ -126,7 +154,7 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
               <Text
                 style={[
                   styles.applyAllText,
-                  { color: colors.subtext, fontFamily: fontConfig.regular },
+                  { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
                 ]}
               >
                 Skip All Remaining
@@ -135,7 +163,10 @@ export default function ConflictModal({ visible, conflict, onDecision }: Conflic
 
             <Pressable onPress={() => onDecision("update", true)} style={styles.applyAllButton}>
               <Text
-                style={[styles.applyAllText, { color: colors.accent, fontFamily: fontConfig.bold }]}
+                style={[
+                  styles.applyAllText,
+                  { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
+                ]}
               >
                 Update All Remaining
               </Text>
@@ -158,8 +189,6 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "100%",
     maxWidth: 400,
-    borderRadius: 20,
-    padding: 24,
     borderWidth: 2,
   },
   modalHeader: {
@@ -171,7 +200,6 @@ const styles = StyleSheet.create({
   modalContent: { gap: 16, marginBottom: 24 },
   modalText: { fontSize: 15, lineHeight: 22, textAlign: "center" },
   comparisonBox: {
-    borderRadius: 12,
     padding: 16,
     borderWidth: 1,
   },
@@ -182,7 +210,6 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
     alignItems: "center",
     borderWidth: 1,
   },

@@ -1,10 +1,21 @@
 // src/components/transfer/ImportTab.tsx
 
 import React, { useState, useRef } from "react";
-import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  Pressable,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useRouter } from "expo-router";
-import { useTheme } from "../../context/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDb } from "../../context/DbContext";
+import { useAppTheme } from "../../themes/hooks/useAppTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import { parseTransferText, toTitleCase } from "../../utils/transferParser";
@@ -22,7 +33,8 @@ interface ConflictDecision {
 }
 
 export default function ImportTab() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } =
     useDb();
   const router = useRouter();
@@ -41,6 +53,9 @@ export default function ImportTab() {
     newAccount: any;
     identifierField: string;
   } | null>(null);
+
+  const [expandModalVisible, setExpandModalVisible] = useState(false);
+  const [expandedText, setExpandedText] = useState("");
 
   const globalResolutionRef = useRef<ConflictResolution | null>(null);
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
@@ -127,6 +142,20 @@ export default function ImportTab() {
     if (resolutionCallbackRef.current) {
       resolutionCallbackRef.current(action);
     }
+  };
+
+  const handleOpenExpandModal = () => {
+    setExpandedText(inputText);
+    setExpandModalVisible(true);
+  };
+
+  const handleCloseExpandModal = () => {
+    setExpandModalVisible(false);
+  };
+
+  const handleSaveExpandedText = () => {
+    setInputText(expandedText);
+    setExpandModalVisible(false);
   };
 
   const handleImport = async () => {
@@ -287,12 +316,20 @@ export default function ImportTab() {
     <>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Ionicons name="cloud-upload" size={36} color={colors.accent} />
-          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+          <Ionicons name="cloud-upload" size={36} color={theme.colors.accent} />
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+            ]}
+          >
             Import Data
           </Text>
           <Text
-            style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+            style={[
+              styles.subtitle,
+              { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+            ]}
           >
             Paste your formatted text below
           </Text>
@@ -303,21 +340,26 @@ export default function ImportTab() {
           style={[
             styles.guideCard,
             {
-              backgroundColor: colors.card,
-              borderColor: isGuideExpanded ? colors.accent : colors.accent + "30",
+              backgroundColor: theme.colors.surface,
+              borderColor: isGuideExpanded ? theme.colors.accent : theme.colors.surfaceBorder,
+              borderRadius: theme.components.card.radius,
+              padding: theme.components.card.padding,
             },
           ]}
         >
           <View style={styles.guideHeader}>
             <Text
-              style={[styles.guideTitle, { color: colors.accent2, fontFamily: fontConfig.bold }]}
+              style={[
+                styles.guideTitle,
+                { color: theme.colors.accentSecondary, fontFamily: theme.typography.fontBold },
+              ]}
             >
               Format Guide
             </Text>
             <Ionicons
               name={isGuideExpanded ? "chevron-up" : "chevron-down"}
               size={20}
-              color={colors.accent}
+              color={theme.colors.accent}
             />
           </View>
 
@@ -327,13 +369,16 @@ export default function ImportTab() {
                 from={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ type: "timing", duration: 200 }}
+                transition={{ type: "timing", duration: theme.animations.durationNormal }}
               >
                 <View style={styles.guideContent}>
                   <Text
                     style={[
                       styles.guideText,
-                      { color: colors.subtext, fontFamily: fontConfig.regular },
+                      {
+                        color: theme.colors.textSecondary,
+                        fontFamily: theme.typography.fontRegular,
+                      },
                     ]}
                   >
                     • Platform name on first line{"\n"}• Two blank lines after platform name{"\n"}•
@@ -345,15 +390,16 @@ export default function ImportTab() {
                     style={[
                       styles.exampleBox,
                       {
-                        backgroundColor: colors.bg[0] + "40",
-                        borderColor: colors.accent + "20",
+                        backgroundColor: theme.colors.background,
+                        borderColor: theme.colors.accentMuted,
+                        borderRadius: theme.shapes.radiusMd,
                       },
                     ]}
                   >
                     <Text
                       style={[
                         styles.exampleTitle,
-                        { color: colors.accent, fontFamily: fontConfig.bold },
+                        { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                       ]}
                     >
                       Example:
@@ -361,7 +407,10 @@ export default function ImportTab() {
                     <Text
                       style={[
                         styles.exampleText,
-                        { color: colors.text, fontFamily: fontConfig.regular },
+                        {
+                          color: theme.colors.textPrimary,
+                          fontFamily: theme.typography.fontRegular,
+                        },
                       ]}
                     >
                       Google{"\n\n"}Email - user@gmail.com{"\n"}Password - pass123{"\n"}DOB -
@@ -381,23 +430,58 @@ export default function ImportTab() {
           style={[
             styles.inputCard,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.accent + "40",
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.components.card.radius,
             },
           ]}
         >
+          <View style={styles.inputHeader}>
+            <Text
+              style={[
+                styles.inputLabel,
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontBold },
+              ]}
+            >
+              Paste Data
+            </Text>
+            <Pressable
+              onPress={handleOpenExpandModal}
+              style={[
+                styles.expandButton,
+                {
+                  backgroundColor: theme.colors.accentMuted,
+                  borderRadius: theme.shapes.radiusSm,
+                },
+              ]}
+            >
+              <Ionicons name="expand-outline" size={18} color={theme.colors.accent} />
+              <Text
+                style={[
+                  styles.expandButtonText,
+                  { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
+                ]}
+              >
+                Expand
+              </Text>
+            </Pressable>
+          </View>
+
           <TextInput
             value={inputText}
             onChangeText={setInputText}
             placeholder="Paste your data here..."
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={theme.colors.textMuted}
             multiline
-            numberOfLines={12}
+            numberOfLines={8}
             style={[
               styles.textInput,
               {
-                color: colors.text,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontRegular,
+                backgroundColor: theme.colors.background,
+                borderColor: theme.colors.surfaceBorder,
+                borderRadius: theme.shapes.radiusMd,
               },
             ]}
             textAlignVertical="top"
@@ -410,12 +494,19 @@ export default function ImportTab() {
             style={[
               styles.button,
               styles.clearButton,
-              { backgroundColor: colors.card, borderColor: colors.accent },
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.accent,
+                borderRadius: theme.components.button.radius,
+              },
             ]}
           >
-            <Ionicons name="trash-outline" size={18} color={colors.accent} />
+            <Ionicons name="trash-outline" size={18} color={theme.colors.accent} />
             <Text
-              style={[styles.buttonText, { color: colors.accent, fontFamily: fontConfig.bold }]}
+              style={[
+                styles.buttonText,
+                { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
+              ]}
             >
               Clear
             </Text>
@@ -427,21 +518,162 @@ export default function ImportTab() {
             style={[
               styles.button,
               styles.importButton,
-              { backgroundColor: colors.accent },
+              {
+                backgroundColor: theme.colors.buttonPrimary,
+                borderRadius: theme.components.button.radius,
+              },
               isProcessing && { opacity: 0.6 },
             ]}
           >
             <Ionicons
               name={isProcessing ? "hourglass-outline" : "download-outline"}
               size={18}
-              color="#fff"
+              color={theme.colors.textInverse}
             />
-            <Text style={[styles.buttonText, { color: "#fff", fontFamily: fontConfig.bold }]}>
+            <Text
+              style={[
+                styles.buttonText,
+                { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+              ]}
+            >
               {isProcessing ? "Importing..." : "Import"}
             </Text>
           </Pressable>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={expandModalVisible}
+        animationType="slide"
+        onRequestClose={handleCloseExpandModal}
+      >
+        <View style={[styles.expandModalContainer, { backgroundColor: theme.colors.background }]}>
+          <View
+            style={[
+              styles.expandModalHeader,
+              {
+                paddingTop: insets.top + 12,
+                borderBottomColor: theme.colors.surfaceBorder,
+                backgroundColor: theme.colors.background,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={handleCloseExpandModal}
+              style={[
+                styles.expandModalHeaderButton,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.shapes.radiusMd,
+                },
+              ]}
+            >
+              <Ionicons name="close" size={22} color={theme.colors.textPrimary} />
+            </Pressable>
+
+            <Text
+              style={[
+                styles.expandModalTitle,
+                { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+              ]}
+            >
+              Edit Import Data
+            </Text>
+
+            <Pressable
+              onPress={handleSaveExpandedText}
+              style={[
+                styles.expandModalHeaderButton,
+                {
+                  backgroundColor: theme.colors.accent,
+                  borderRadius: theme.shapes.radiusMd,
+                },
+              ]}
+            >
+              <Ionicons name="checkmark" size={22} color={theme.colors.textInverse} />
+            </Pressable>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.expandModalContent}
+          >
+            <TextInput
+              value={expandedText}
+              onChangeText={setExpandedText}
+              placeholder="Paste your data here..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              autoFocus
+              style={[
+                styles.expandedTextInput,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontRegular,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.shapes.radiusMd,
+                },
+              ]}
+              textAlignVertical="top"
+            />
+          </KeyboardAvoidingView>
+
+          <View
+            style={[
+              styles.expandModalFooter,
+              {
+                paddingBottom: insets.bottom + 16,
+                backgroundColor: theme.colors.surface,
+                borderTopColor: theme.colors.surfaceBorder,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={handleCloseExpandModal}
+              style={[
+                styles.expandModalFooterButton,
+                {
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.components.button.radius,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.expandModalFooterButtonText,
+                  { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                ]}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSaveExpandedText}
+              style={[
+                styles.expandModalFooterButton,
+                {
+                  backgroundColor: theme.colors.buttonPrimary,
+                  borderRadius: theme.components.button.radius,
+                },
+              ]}
+            >
+              <Ionicons name="checkmark-circle" size={20} color={theme.colors.textInverse} />
+              <Text
+                style={[
+                  styles.expandModalFooterButtonText,
+                  { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+                ]}
+              >
+                Save & Close
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <ConflictModal
         visible={conflictModalVisible}
@@ -460,8 +692,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, marginTop: 6 },
   subtitle: { fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
   guideCard: {
-    borderRadius: 14,
-    padding: 14,
     marginBottom: 12,
     borderWidth: 1,
   },
@@ -474,23 +704,44 @@ const styles = StyleSheet.create({
   guideContent: { marginTop: 12 },
   guideText: { fontSize: 12, lineHeight: 20, marginBottom: 12 },
   exampleBox: {
-    borderRadius: 10,
     padding: 12,
     borderWidth: 1,
   },
   exampleTitle: { fontSize: 13, marginBottom: 6 },
   exampleText: { fontSize: 11, lineHeight: 16 },
   inputCard: {
-    borderRadius: 14,
-    padding: 12,
     marginBottom: 14,
     borderWidth: 1,
+    padding: 12,
+  },
+  inputHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  inputLabel: {
+    fontSize: 13,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  expandButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  expandButtonText: {
+    fontSize: 12,
   },
   textInput: {
     fontSize: 13,
     lineHeight: 19,
-    height: 300,
+    height: 180,
     textAlignVertical: "top",
+    padding: 12,
+    borderWidth: 1,
   },
   buttonRow: { flexDirection: "row", gap: 10 },
   button: {
@@ -499,7 +750,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
-    borderRadius: 10,
     gap: 6,
   },
   clearButton: { borderWidth: 1 },
@@ -511,4 +761,58 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonText: { fontSize: 14 },
+
+  expandModalContainer: {
+    flex: 1,
+  },
+  expandModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  expandModalHeaderButton: {
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  expandModalTitle: {
+    fontSize: 18,
+    flex: 1,
+    textAlign: "center",
+  },
+  expandModalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  expandedTextInput: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 22,
+    padding: 16,
+    borderWidth: 1,
+  },
+  expandModalFooter: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 1,
+  },
+  expandModalFooterButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderWidth: 1,
+  },
+  expandModalFooterButtonText: {
+    fontSize: 15,
+  },
 });

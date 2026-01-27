@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 import { toTitleCase } from "../utils/transferParser";
 import * as Clipboard from "expo-clipboard";
 
@@ -17,7 +17,7 @@ interface DecodedDataDisplayProps {
 }
 
 export default function DecodedDataDisplay({ decodedData, onCopyField }: DecodedDataDisplayProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -69,7 +69,12 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+      <Text
+        style={[
+          styles.sectionTitle,
+          { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+        ]}
+      >
         Decoded Accounts
       </Text>
 
@@ -86,7 +91,7 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
             animate={{ opacity: 1, translateY: 0 }}
             transition={{
               type: "timing",
-              duration: 300,
+              duration: theme.animations.durationNormal,
               delay: platformIndex * 50,
             }}
           >
@@ -95,20 +100,22 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
               style={[
                 styles.platformCard,
                 {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.components.card.radius,
+                  padding: theme.components.card.padding,
                 },
               ]}
-              android_ripple={{ color: colors.accent + "22" }}
+              android_ripple={{ color: theme.colors.accentMuted }}
             >
               <View style={styles.platformHeader}>
                 <View style={styles.platformLeft}>
-                  <Ionicons name="folder" size={24} color={colors.accent} />
+                  <Ionicons name="folder" size={24} color={theme.colors.accent} />
                   <View style={styles.platformInfo}>
                     <Text
                       style={[
                         styles.platformName,
-                        { color: colors.text, fontFamily: fontConfig.bold },
+                        { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                       ]}
                     >
                       {platformName}
@@ -116,18 +123,17 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                     <Text
                       style={[
                         styles.accountCount,
-                        { color: colors.muted, fontFamily: fontConfig.regular },
+                        { color: theme.colors.textMuted, fontFamily: theme.typography.fontRegular },
                       ]}
                     >
-                      {accounts.length} account
-                      {accounts.length !== 1 ? "s" : ""}
+                      {accounts.length} account{accounts.length !== 1 ? "s" : ""}
                     </Text>
                   </View>
                 </View>
                 <Ionicons
                   name={isPlatformExpanded ? "chevron-up" : "chevron-down"}
                   size={20}
-                  color={colors.muted}
+                  color={theme.colors.textMuted}
                 />
               </View>
 
@@ -143,22 +149,23 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                         style={[
                           styles.accountCard,
                           {
-                            backgroundColor: colors.bg[0],
-                            borderColor: colors.cardBorder,
+                            backgroundColor: theme.colors.background,
+                            borderColor: theme.colors.surfaceBorder,
+                            borderRadius: theme.shapes.radiusMd,
                           },
                         ]}
                       >
                         <Pressable
                           onPress={() => toggleAccount(accountKey)}
                           style={styles.accountHeader}
-                          android_ripple={{ color: colors.accent + "15" }}
+                          android_ripple={{ color: theme.colors.accentMuted }}
                         >
                           <Text
                             style={[
                               styles.accountName,
                               {
-                                color: colors.text,
-                                fontFamily: fontConfig.bold,
+                                color: theme.colors.textPrimary,
+                                fontFamily: theme.typography.fontBold,
                               },
                             ]}
                           >
@@ -167,7 +174,7 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                           <Ionicons
                             name={isAccountExpanded ? "chevron-up" : "chevron-down"}
                             size={18}
-                            color={colors.muted}
+                            color={theme.colors.textMuted}
                           />
                         </Pressable>
 
@@ -190,8 +197,8 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                         style={[
                                           styles.fieldLabel,
                                           {
-                                            color: colors.muted,
-                                            fontFamily: fontConfig.regular,
+                                            color: theme.colors.textMuted,
+                                            fontFamily: theme.typography.fontRegular,
                                           },
                                         ]}
                                       >
@@ -202,8 +209,8 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                         style={[
                                           styles.fieldValue,
                                           {
-                                            color: colors.text,
-                                            fontFamily: fontConfig.regular,
+                                            color: theme.colors.textPrimary,
+                                            fontFamily: theme.typography.fontRegular,
                                           },
                                         ]}
                                         selectable
@@ -215,24 +222,26 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                       {isPassword && (
                                         <Pressable
                                           onPress={() => togglePasswordVisibility(fieldKey)}
-                                          style={styles.iconButton}
-                                          android_ripple={{
-                                            color: colors.accent + "33",
-                                          }}
+                                          style={[
+                                            styles.iconButton,
+                                            { borderRadius: theme.shapes.radiusSm },
+                                          ]}
+                                          android_ripple={{ color: theme.colors.accentMuted }}
                                         >
                                           <Ionicons
                                             name={isVisible ? "eye-off" : "eye"}
                                             size={18}
-                                            color={colors.muted}
+                                            color={theme.colors.textMuted}
                                           />
                                         </Pressable>
                                       )}
                                       <Pressable
                                         onPress={() => copyToClipboard(value, fieldKey)}
-                                        style={styles.iconButton}
-                                        android_ripple={{
-                                          color: colors.accent + "33",
-                                        }}
+                                        style={[
+                                          styles.iconButton,
+                                          { borderRadius: theme.shapes.radiusSm },
+                                        ]}
+                                        android_ripple={{ color: theme.colors.accentMuted }}
                                       >
                                         <Ionicons
                                           name={
@@ -240,7 +249,9 @@ export default function DecodedDataDisplay({ decodedData, onCopyField }: Decoded
                                           }
                                           size={18}
                                           color={
-                                            copiedField === fieldKey ? colors.accent : colors.muted
+                                            copiedField === fieldKey
+                                              ? theme.colors.accent
+                                              : theme.colors.textMuted
                                           }
                                         />
                                       </Pressable>
@@ -272,9 +283,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   platformCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
     marginBottom: 12,
   },
   platformHeader: {
@@ -303,7 +312,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   accountCard: {
-    borderRadius: 12,
     borderWidth: 1,
     overflow: "hidden",
   },
@@ -344,6 +352,5 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 8,
-    borderRadius: 8,
   },
 });

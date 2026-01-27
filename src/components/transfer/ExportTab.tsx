@@ -1,9 +1,9 @@
 // src/components/transfer/ExportTab.tsx
 
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { useTheme } from "../../context/ThemeContext";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { useDb } from "../../context/DbContext";
+import { useAppTheme } from "../../themes/hooks/useAppTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import { generateExportText, toTitleCase } from "../../utils/transferParser";
@@ -19,7 +19,7 @@ type Selection = {
 };
 
 export default function ExportTab() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const { database, schemas, platformsMetadata } = useDb();
 
   const [selection, setSelection] = useState<Selection>({});
@@ -28,12 +28,21 @@ export default function ExportTab() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
   const [exportedText, setExportedText] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const platformIds = Object.keys(database).sort((a, b) => {
     const nameA = (database[a]?.[0]?.platform || toTitleCase(a.replace(/_/g, " "))).toLowerCase();
     const nameB = (database[b]?.[0]?.platform || toTitleCase(b.replace(/_/g, " "))).toLowerCase();
     return nameA.localeCompare(nameB);
   });
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [database]);
 
   const showToastMessage = (
     message: string,
@@ -168,11 +177,8 @@ export default function ExportTab() {
 
     try {
       const exportText = generateExportText(selectedData, schemas);
-
       setExportedText(exportText);
-
       showToastMessage("Data exported successfully!", "success");
-
       setSelection({});
     } catch (error) {
       log.error("Export error:", error);
@@ -201,12 +207,20 @@ export default function ExportTab() {
     <>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Ionicons name="cloud-upload" size={36} color={colors.accent} />
-          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+          <Ionicons name="cloud-upload" size={36} color={theme.colors.accent} />
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+            ]}
+          >
             Export Data
           </Text>
           <Text
-            style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+            style={[
+              styles.subtitle,
+              { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+            ]}
           >
             Select platforms and accounts to export
           </Text>
@@ -217,14 +231,18 @@ export default function ExportTab() {
             onPress={selectAll}
             style={[
               styles.selectButton,
-              { backgroundColor: colors.card, borderColor: colors.accent },
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.accent,
+                borderRadius: theme.shapes.radiusMd,
+              },
             ]}
           >
-            <Ionicons name="checkmark-done" size={16} color={colors.accent} />
+            <Ionicons name="checkmark-done" size={16} color={theme.colors.accent} />
             <Text
               style={[
                 styles.selectButtonText,
-                { color: colors.accent, fontFamily: fontConfig.bold },
+                { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
               ]}
             >
               Select All
@@ -235,14 +253,18 @@ export default function ExportTab() {
             onPress={deselectAll}
             style={[
               styles.selectButton,
-              { backgroundColor: colors.card, borderColor: colors.accent },
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.accent,
+                borderRadius: theme.shapes.radiusMd,
+              },
             ]}
           >
-            <Ionicons name="close-circle" size={16} color={colors.accent} />
+            <Ionicons name="close-circle" size={16} color={theme.colors.accent} />
             <Text
               style={[
                 styles.selectButtonText,
-                { color: colors.accent, fontFamily: fontConfig.bold },
+                { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
               ]}
             >
               Deselect All
@@ -250,11 +272,26 @@ export default function ExportTab() {
           </Pressable>
         </View>
 
-        {platformIds.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="folder-open-outline" size={64} color={colors.muted} />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.accent} />
             <Text
-              style={[styles.emptyText, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+              style={[
+                styles.loadingText,
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+              ]}
+            >
+              Loading platforms...
+            </Text>
+          </View>
+        ) : platformIds.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="folder-open-outline" size={64} color={theme.colors.textMuted} />
+            <Text
+              style={[
+                styles.emptyText,
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+              ]}
             >
               No platforms found. Add some accounts first!
             </Text>
@@ -273,12 +310,16 @@ export default function ExportTab() {
                 key={platformId}
                 from={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "timing", duration: 200 }}
+                transition={{ type: "timing", duration: theme.animations.durationNormal }}
                 style={[
                   styles.platformCard,
                   {
-                    backgroundColor: colors.card,
-                    borderColor: isPlatformSelected ? colors.accent : colors.accent + "30",
+                    backgroundColor: theme.colors.surface,
+                    borderColor: isPlatformSelected
+                      ? theme.colors.accent
+                      : theme.colors.surfaceBorder,
+                    borderRadius: theme.components.card.radius,
+                    padding: theme.components.card.padding,
                   },
                 ]}
               >
@@ -289,19 +330,25 @@ export default function ExportTab() {
                       style={[
                         styles.checkbox,
                         {
-                          borderColor: colors.accent,
-                          backgroundColor: isPlatformSelected ? colors.accent : "transparent",
+                          borderColor: theme.colors.accent,
+                          backgroundColor: isPlatformSelected ? theme.colors.accent : "transparent",
+                          borderRadius: theme.shapes.radiusSm,
                         },
                       ]}
                     >
-                      {isPlatformSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
+                      {isPlatformSelected && (
+                        <Ionicons name="checkmark" size={16} color={theme.colors.textInverse} />
+                      )}
                     </Pressable>
 
                     <View>
                       <Text
                         style={[
                           styles.platformName,
-                          { color: colors.text, fontFamily: fontConfig.bold },
+                          {
+                            color: theme.colors.textPrimary,
+                            fontFamily: theme.typography.fontBold,
+                          },
                         ]}
                       >
                         {platformName}
@@ -310,13 +357,12 @@ export default function ExportTab() {
                         style={[
                           styles.platformCount,
                           {
-                            color: colors.subtext,
-                            fontFamily: fontConfig.regular,
+                            color: theme.colors.textSecondary,
+                            fontFamily: theme.typography.fontRegular,
                           },
                         ]}
                       >
-                        {accounts.length} account
-                        {accounts.length !== 1 ? "s" : ""}
+                        {accounts.length} account{accounts.length !== 1 ? "s" : ""}
                       </Text>
                     </View>
                   </View>
@@ -324,7 +370,7 @@ export default function ExportTab() {
                   <Ionicons
                     name={isExpanded ? "chevron-up" : "chevron-down"}
                     size={20}
-                    color={colors.accent}
+                    color={theme.colors.accent}
                   />
                 </Pressable>
 
@@ -334,7 +380,7 @@ export default function ExportTab() {
                       from={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ type: "timing", duration: 200 }}
+                      transition={{ type: "timing", duration: theme.animations.durationNormal }}
                     >
                       <View style={styles.accountsList}>
                         {accounts.map((account: any, index: number) => {
@@ -347,7 +393,7 @@ export default function ExportTab() {
                               animate={{ opacity: 1, translateX: 0 }}
                               transition={{
                                 type: "timing",
-                                duration: 200,
+                                duration: theme.animations.durationNormal,
                                 delay: index * 50,
                               }}
                             >
@@ -361,13 +407,20 @@ export default function ExportTab() {
                                     styles.checkbox,
                                     styles.accountCheckbox,
                                     {
-                                      borderColor: colors.accent,
-                                      backgroundColor: isSelected ? colors.accent : "transparent",
+                                      borderColor: theme.colors.accent,
+                                      backgroundColor: isSelected
+                                        ? theme.colors.accent
+                                        : "transparent",
+                                      borderRadius: theme.shapes.radiusSm,
                                     },
                                   ]}
                                 >
                                   {isSelected && (
-                                    <Ionicons name="checkmark" size={14} color="#fff" />
+                                    <Ionicons
+                                      name="checkmark"
+                                      size={14}
+                                      color={theme.colors.textInverse}
+                                    />
                                   )}
                                 </Pressable>
 
@@ -375,8 +428,8 @@ export default function ExportTab() {
                                   style={[
                                     styles.accountName,
                                     {
-                                      color: colors.text,
-                                      fontFamily: fontConfig.regular,
+                                      color: theme.colors.textPrimary,
+                                      fontFamily: theme.typography.fontRegular,
                                     },
                                   ]}
                                 >
@@ -399,28 +452,38 @@ export default function ExportTab() {
           <MotiView
             from={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "timing", duration: 200 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal }}
             style={[
               styles.previewCard,
               {
-                backgroundColor: colors.card,
-                borderColor: colors.accent + "40",
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.accent + "40",
+                borderRadius: theme.components.card.radius,
               },
             ]}
           >
             <View style={styles.previewHeader}>
               <Text
-                style={[styles.previewTitle, { color: colors.text, fontFamily: fontConfig.bold }]}
+                style={[
+                  styles.previewTitle,
+                  { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+                ]}
               >
                 Exported Data
               </Text>
               <Pressable
                 onPress={handleCopyExport}
-                style={[styles.copyButton, { backgroundColor: colors.accent }]}
+                style={[
+                  styles.copyButton,
+                  { backgroundColor: theme.colors.accent, borderRadius: theme.shapes.radiusMd },
+                ]}
               >
-                <Ionicons name="copy-outline" size={16} color="#fff" />
+                <Ionicons name="copy-outline" size={16} color={theme.colors.textInverse} />
                 <Text
-                  style={[styles.copyButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}
+                  style={[
+                    styles.copyButtonText,
+                    { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+                  ]}
                 >
                   Copy
                 </Text>
@@ -428,7 +491,10 @@ export default function ExportTab() {
             </View>
             <ScrollView style={styles.previewScroll} nestedScrollEnabled>
               <Text
-                style={[styles.previewText, { color: colors.text, fontFamily: fontConfig.regular }]}
+                style={[
+                  styles.previewText,
+                  { color: theme.colors.textPrimary, fontFamily: theme.typography.fontRegular },
+                ]}
               >
                 {exportedText}
               </Text>
@@ -441,15 +507,27 @@ export default function ExportTab() {
         <MotiView
           from={{ opacity: 0, translateY: 50 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: "timing", duration: 200 }}
+          transition={{ type: "timing", duration: theme.animations.durationNormal }}
           style={styles.exportButtonContainer}
         >
           <Pressable
             onPress={handleExport}
-            style={[styles.exportButton, { backgroundColor: colors.accent }]}
+            style={[
+              styles.exportButton,
+              {
+                backgroundColor: theme.colors.buttonPrimary,
+                borderRadius: theme.components.button.radius,
+                ...theme.shadows.lg,
+              },
+            ]}
           >
-            <Ionicons name="share-outline" size={20} color="#fff" />
-            <Text style={[styles.exportButtonText, { color: "#fff", fontFamily: fontConfig.bold }]}>
+            <Ionicons name="share-outline" size={20} color={theme.colors.textInverse} />
+            <Text
+              style={[
+                styles.exportButtonText,
+                { color: theme.colors.textInverse, fontFamily: theme.typography.fontBold },
+              ]}
+            >
               Export {selectedCount} Account{selectedCount !== 1 ? "s" : ""}
             </Text>
           </Pressable>
@@ -473,7 +551,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
-    borderRadius: 10,
     gap: 6,
     borderWidth: 1,
   },
@@ -481,8 +558,6 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: "center", marginTop: 60, gap: 16 },
   emptyText: { fontSize: 15, textAlign: "center" },
   platformCard: {
-    borderRadius: 14,
-    padding: 14,
     marginBottom: 10,
     borderWidth: 1,
   },
@@ -500,7 +575,6 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 6,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
@@ -517,7 +591,6 @@ const styles = StyleSheet.create({
   accountCheckbox: { width: 20, height: 20 },
   accountName: { fontSize: 14 },
   previewCard: {
-    borderRadius: 14,
     padding: 14,
     marginTop: 16,
     borderWidth: 1,
@@ -536,7 +609,6 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
   },
   copyButtonText: { fontSize: 13 },
   previewScroll: {
@@ -557,13 +629,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
-    borderRadius: 12,
     gap: 8,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   exportButtonText: { fontSize: 16 },
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 80,
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 15,
+    marginTop: 8,
+  },
 });

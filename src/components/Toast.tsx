@@ -1,10 +1,10 @@
 // src/components/Toast.tsx
 
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { Text, StyleSheet } from "react-native";
 import { MotiView, AnimatePresence } from "moti";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 interface ToastProps {
   message: string;
@@ -21,7 +21,7 @@ export default function Toast({
   duration = 3000,
   onHide,
 }: ToastProps) {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const [internalVisible, setInternalVisible] = useState(visible);
 
   useEffect(() => {
@@ -40,34 +40,19 @@ export default function Toast({
   const getToastStyle = () => {
     switch (type) {
       case "error":
-        return {
-          bgColor: "#EF4444",
-          borderColor: "#DC2626",
-          icon: "alert-circle" as const,
-        };
+        return { bgColor: theme.colors.error, icon: "alert-circle" as const };
       case "warning":
-        return {
-          bgColor: "#F59E0B",
-          borderColor: "#D97706",
-          icon: "warning" as const,
-        };
+        return { bgColor: theme.colors.warning, icon: "warning" as const };
       case "info":
-        return {
-          bgColor: "#3B82F6",
-          borderColor: "#2563EB",
-          icon: "information-circle" as const,
-        };
+        return { bgColor: theme.colors.info, icon: "information-circle" as const };
       case "success":
       default:
-        return {
-          bgColor: colors.accent,
-          borderColor: colors.accent2 || colors.accent,
-          icon: "checkmark-circle" as const,
-        };
+        return { bgColor: theme.colors.success, icon: "checkmark-circle" as const };
     }
   };
 
-  const { bgColor, borderColor, icon } = getToastStyle();
+  const { bgColor, icon } = getToastStyle();
+  const isTop = theme.components.toast.position === "top";
 
   return (
     <AnimatePresence>
@@ -75,7 +60,7 @@ export default function Toast({
         <MotiView
           from={{
             opacity: 0,
-            translateY: 50,
+            translateY: isTop ? -50 : 50,
             scale: 0.9,
           }}
           animate={{
@@ -85,24 +70,31 @@ export default function Toast({
           }}
           exit={{
             opacity: 0,
-            translateY: 50,
+            translateY: isTop ? -50 : 50,
             scale: 0.9,
           }}
           transition={{
             type: "spring",
-            damping: 15,
-            stiffness: 150,
+            damping: theme.animations.springDamping,
+            stiffness: theme.animations.springStiffness,
           }}
           style={[
             styles.toast,
             {
+              [isTop ? "top" : "bottom"]: theme.components.toast.offset,
               backgroundColor: bgColor,
-              borderColor: borderColor,
+              borderRadius: theme.components.toast.radius,
+              paddingVertical: theme.components.toast.padding,
+              paddingHorizontal: theme.components.toast.padding + 4,
+              ...theme.shadows.lg,
             },
           ]}
         >
           <Ionicons name={icon} size={24} color="#fff" style={styles.icon} />
-          <Text style={[styles.toastText, { fontFamily: fontConfig.regular }]} numberOfLines={3}>
+          <Text
+            style={[styles.toastText, { fontFamily: theme.typography.fontRegular }]}
+            numberOfLines={3}
+          >
             {message}
           </Text>
         </MotiView>
@@ -114,21 +106,11 @@ export default function Toast({
 const styles = StyleSheet.create({
   toast: {
     position: "absolute",
-    bottom: 30,
     left: 20,
     right: 20,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     zIndex: 9999,
   },
   icon: {

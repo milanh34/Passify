@@ -3,7 +3,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { MotiView } from "moti";
-import { useTheme } from "../context/ThemeContext";
+import { useAppTheme } from "../themes/hooks/useAppTheme";
 
 interface OnboardingSlideProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ interface OnboardingSlideProps {
 }
 
 export default function OnboardingSlide({ children, slideIndex }: OnboardingSlideProps) {
-  const { colors } = useTheme();
+  const theme = useAppTheme();
 
   return (
     <MotiView
@@ -26,9 +26,9 @@ export default function OnboardingSlide({ children, slideIndex }: OnboardingSlid
       }}
       transition={{
         type: "timing",
-        duration: 300,
+        duration: theme.animations.durationNormal,
       }}
-      style={[styles.container, { backgroundColor: colors.bg[0] }]}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       {children}
     </MotiView>
