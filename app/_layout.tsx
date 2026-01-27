@@ -1,7 +1,8 @@
 // app/_layout.tsx
 
 import { Stack } from "expo-router";
-import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import { ThemeProvider } from "../src/context/ThemeContext";
+import { GlobalThemeProvider } from "../src/context/GlobalThemeContext";
 import { AnimationProvider } from "../src/context/AnimationContext";
 import { DbProvider, useDb } from "../src/context/DbContext";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
@@ -16,6 +17,7 @@ import { useRouter, useSegments, useRootNavigationState } from "expo-router";
 import { isOnboardingComplete } from "../src/utils/onboardingState";
 import { initializeScreenSecurity } from "../src/utils/screenSecurity";
 import { errorHandler, safeAsync } from "../src/utils/errorHandler";
+import { useAppTheme } from "../src/themes/hooks/useAppTheme";
 
 LogBox.ignoreLogs(["Non-serializable values were found in the navigation state"]);
 
@@ -56,7 +58,7 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLocked, isInitialized } = useAuth();
-  const { colors } = useTheme();
+  const theme = useAppTheme();
 
   useEffect(() => {
     safeAsync(() => initializeScreenSecurity(), {
@@ -69,12 +71,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       <View
         style={{
           flex: 1,
-          backgroundColor: colors.bg[0],
+          backgroundColor: theme.colors.background,
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={theme.colors.accent} />
       </View>
     );
   }
@@ -88,25 +90,25 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 function DatabaseGate({ children }: { children: React.ReactNode }) {
   const { isDbLoading, dbError, refreshDatabase } = useDb();
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   if (isDbLoading) {
     return (
       <View
         style={{
           flex: 1,
-          backgroundColor: colors.bg[0],
+          backgroundColor: theme.colors.background,
           justifyContent: "center",
           alignItems: "center",
           gap: 16,
         }}
       >
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={theme.colors.accent} />
         <Text
           style={{
-            color: colors.subtext,
-            fontFamily: fontConfig.regular,
-            fontSize: 14,
+            color: theme.colors.textSecondary,
+            fontFamily: theme.typography.fontRegular,
+            fontSize: theme.typography.sizeMd,
           }}
         >
           Loading encrypted database...
@@ -123,10 +125,10 @@ function DatabaseGate({ children }: { children: React.ReactNode }) {
 }
 
 function RootStack() {
-  const { colors } = useTheme();
+  const theme = useAppTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg[0] }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <OnboardingGate>
         <AuthGate>
           <DatabaseGate>
@@ -134,7 +136,7 @@ function RootStack() {
               screenOptions={{
                 headerShown: false,
                 animation: "fade",
-                animationDuration: 200,
+                animationDuration: theme.animations.durationNormal,
               }}
             >
               <Stack.Screen
@@ -147,14 +149,14 @@ function RootStack() {
                 name="settings"
                 options={{
                   animation: "flip",
-                  animationDuration: 200,
+                  animationDuration: theme.animations.durationNormal,
                 }}
               />
               <Stack.Screen
                 name="onboarding"
                 options={{
                   animation: "fade",
-                  animationDuration: 300,
+                  animationDuration: theme.animations.durationSlow,
                   gestureEnabled: false,
                 }}
               />
@@ -162,21 +164,21 @@ function RootStack() {
                 name="legal"
                 options={{
                   animation: "slide_from_right",
-                  animationDuration: 200,
+                  animationDuration: theme.animations.durationNormal,
                 }}
               />
               <Stack.Screen
                 name="accounts"
                 options={{
                   animation: "slide_from_right",
-                  animationDuration: 200,
+                  animationDuration: theme.animations.durationNormal,
                 }}
               />
               <Stack.Screen
                 name="connected-accounts"
                 options={{
                   animation: "slide_from_right",
-                  animationDuration: 200,
+                  animationDuration: theme.animations.durationNormal,
                 }}
               />
             </Stack>
@@ -191,16 +193,18 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider>
-          <AnimationProvider>
-            <AuthProvider>
-              <DbProvider>
-                <StatusBar style="auto" />
-                <RootStack />
-              </DbProvider>
-            </AuthProvider>
-          </AnimationProvider>
-        </ThemeProvider>
+        <GlobalThemeProvider>
+          <ThemeProvider>
+            <AnimationProvider>
+              <AuthProvider>
+                <DbProvider>
+                  <StatusBar style="auto" />
+                  <RootStack />
+                </DbProvider>
+              </AuthProvider>
+            </AnimationProvider>
+          </ThemeProvider>
+        </GlobalThemeProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
   );

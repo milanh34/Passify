@@ -6,10 +6,10 @@ import { useLocalSearchParams, useRouter, useNavigation, Stack } from "expo-rout
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../src/context/ThemeContext";
 import { useDb } from "../src/context/DbContext";
 import { useAuth } from "../src/context/AuthContext";
 import { useInactivityTracker } from "../src/utils/inactivityTracker";
+import { useAppTheme } from "../src/themes/hooks/useAppTheme";
 import PlatformIcon from "../src/components/PlatformIcon";
 import {
   findConnectedAccounts,
@@ -29,7 +29,7 @@ export default function ConnectedAccountsScreen() {
   const router = useRouter();
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const { database, platformsMetadata } = useDb();
 
   const { isAuthEnabled } = useAuth();
@@ -119,24 +119,25 @@ export default function ConnectedAccountsScreen() {
         animate={{ opacity: 1, translateY: 0 }}
         transition={{
           type: "timing",
-          duration: 300,
-          delay: index * 80,
+          duration: theme.animations.durationNormal,
+          delay: index * theme.animations.listItemStagger,
         }}
       >
         <View
           style={[
             styles.platformCard,
             {
-              backgroundColor: colors.card,
-              borderColor: isSourcePlatform ? colors.accent : colors.cardBorder,
-              borderWidth: isSourcePlatform ? 2 : 1,
+              backgroundColor: theme.colors.surface,
+              borderColor: isSourcePlatform ? theme.colors.accent : theme.colors.surfaceBorder,
+              borderWidth: isSourcePlatform ? theme.shapes.borderThick : theme.shapes.borderThin,
+              borderRadius: theme.components.card.radius,
             },
           ]}
         >
           <Pressable
             onPress={() => togglePlatformExpand(item.platformKey)}
             style={styles.platformHeader}
-            android_ripple={{ color: colors.accent + "22" }}
+            android_ripple={{ color: theme.colors.accentMuted }}
           >
             <View style={styles.platformHeaderLeft}>
               <PlatformIcon
@@ -150,15 +151,17 @@ export default function ConnectedAccountsScreen() {
                   <Text
                     style={[
                       styles.platformName,
-                      { color: colors.text, fontFamily: fontConfig.bold },
+                      { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
                     ]}
                     numberOfLines={1}
                   >
                     {toTitleCase(item.platformName)}
                   </Text>
                   {isSourcePlatform && (
-                    <View style={[styles.currentBadge, { backgroundColor: colors.accent }]}>
-                      <Text style={[styles.currentBadgeText, { fontFamily: fontConfig.bold }]}>
+                    <View style={[styles.currentBadge, { backgroundColor: theme.colors.accent }]}>
+                      <Text
+                        style={[styles.currentBadgeText, { fontFamily: theme.typography.fontBold }]}
+                      >
                         Source
                       </Text>
                     </View>
@@ -167,7 +170,7 @@ export default function ConnectedAccountsScreen() {
                 <Text
                   style={[
                     styles.accountCount,
-                    { color: colors.subtext, fontFamily: fontConfig.regular },
+                    { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
                   ]}
                 >
                   {item.accountCount} account{item.accountCount !== 1 ? "s" : ""} using this email
@@ -185,27 +188,28 @@ export default function ConnectedAccountsScreen() {
                   style={[
                     styles.goButton,
                     {
-                      backgroundColor: colors.accent + "15",
-                      borderColor: colors.accent + "30",
+                      backgroundColor: theme.colors.accentMuted,
+                      borderColor: theme.colors.accent + "30",
+                      borderRadius: theme.shapes.radiusSm,
                     },
                   ]}
-                  android_ripple={{ color: colors.accent + "33" }}
+                  android_ripple={{ color: theme.colors.accentMuted }}
                 >
                   <Text
                     style={[
                       styles.goButtonText,
-                      { color: colors.accent, fontFamily: fontConfig.bold },
+                      { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
                     ]}
                   >
                     View
                   </Text>
-                  <Ionicons name="arrow-forward" size={14} color={colors.accent} />
+                  <Ionicons name="arrow-forward" size={14} color={theme.colors.accent} />
                 </Pressable>
               )}
               <Ionicons
                 name={isExpanded ? "chevron-up" : "chevron-down"}
                 size={22}
-                color={colors.muted}
+                color={theme.colors.textMuted}
               />
             </View>
           </Pressable>
@@ -216,9 +220,9 @@ export default function ConnectedAccountsScreen() {
                 from={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ type: "timing", duration: 200 }}
+                transition={{ type: "timing", duration: theme.animations.durationFast }}
               >
-                <View style={[styles.accountsList, { borderTopColor: colors.cardBorder }]}>
+                <View style={[styles.accountsList, { borderTopColor: theme.colors.surfaceBorder }]}>
                   {item.accounts.map((account, accIndex) => {
                     const isSourceAccount =
                       isSourcePlatform && account.accountId === sourceAccountId;
@@ -248,31 +252,34 @@ export default function ConnectedAccountsScreen() {
                             styles.accountItem,
                             {
                               backgroundColor: isSourceAccount
-                                ? colors.accent + "15"
-                                : colors.bg[0],
+                                ? theme.colors.accentMuted
+                                : theme.colors.background,
                               borderColor: isSourceAccount
-                                ? colors.accent + "40"
-                                : colors.cardBorder,
+                                ? theme.colors.accent + "40"
+                                : theme.colors.surfaceBorder,
+                              borderRadius: theme.shapes.radiusMd,
                             },
                           ]}
                           android_ripple={
-                            !isSourcePlatform ? { color: colors.accent + "22" } : undefined
+                            !isSourcePlatform ? { color: theme.colors.accentMuted } : undefined
                           }
                         >
                           <Ionicons
                             name="person-circle"
                             size={24}
-                            color={isSourceAccount ? colors.accent : colors.muted}
+                            color={isSourceAccount ? theme.colors.accent : theme.colors.textMuted}
                           />
                           <View style={styles.accountInfo}>
                             <Text
                               style={[
                                 styles.accountName,
                                 {
-                                  color: isSourceAccount ? colors.accent : colors.text,
+                                  color: isSourceAccount
+                                    ? theme.colors.accent
+                                    : theme.colors.textPrimary,
                                   fontFamily: isSourceAccount
-                                    ? fontConfig.bold
-                                    : fontConfig.regular,
+                                    ? theme.typography.fontBold
+                                    : theme.typography.fontRegular,
                                 },
                               ]}
                               numberOfLines={1}
@@ -282,7 +289,10 @@ export default function ConnectedAccountsScreen() {
                             <Text
                               style={[
                                 styles.accountField,
-                                { color: colors.muted, fontFamily: fontConfig.regular },
+                                {
+                                  color: theme.colors.textMuted,
+                                  fontFamily: theme.typography.fontRegular,
+                                },
                               ]}
                             >
                               via {account.matchingField}
@@ -290,7 +300,10 @@ export default function ConnectedAccountsScreen() {
                           </View>
                           {isSourceAccount && (
                             <View
-                              style={[styles.sourceIndicator, { backgroundColor: colors.accent }]}
+                              style={[
+                                styles.sourceIndicator,
+                                { backgroundColor: theme.colors.accent },
+                              ]}
                             >
                               <Ionicons name="checkmark" size={12} color="#fff" />
                             </View>
@@ -309,7 +322,7 @@ export default function ConnectedAccountsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <View
@@ -317,7 +330,8 @@ export default function ConnectedAccountsScreen() {
           styles.header,
           {
             paddingTop: insets.top + 12,
-            borderBottomColor: colors.cardBorder,
+            borderBottomColor: theme.colors.surfaceBorder,
+            height: insets.top + theme.components.header.height,
           },
         ]}
       >
@@ -331,23 +345,29 @@ export default function ConnectedAccountsScreen() {
           style={[
             styles.backButton,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.cardBorder,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.components.header.backButtonRadius,
             },
           ]}
-          android_ripple={{ color: colors.accent + "22" }}
+          android_ripple={{ color: theme.colors.accentMuted }}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
         </Pressable>
 
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+          <Text
+            style={[
+              styles.headerTitle,
+              { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+            ]}
+          >
             Connected Platforms
           </Text>
           <Text
             style={[
               styles.headerSubtitle,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
+              { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
             ]}
             numberOfLines={1}
           >
@@ -363,14 +383,18 @@ export default function ConnectedAccountsScreen() {
           style={[
             styles.emailBadge,
             {
-              backgroundColor: colors.accent + "15",
-              borderColor: colors.accent + "30",
+              backgroundColor: theme.colors.accentMuted,
+              borderColor: theme.colors.accent + "30",
+              borderRadius: theme.shapes.radiusMd,
             },
           ]}
         >
-          <Ionicons name="mail" size={20} color={colors.accent} />
+          <Ionicons name="mail" size={20} color={theme.colors.accent} />
           <Text
-            style={[styles.emailText, { color: colors.accent, fontFamily: fontConfig.bold }]}
+            style={[
+              styles.emailText,
+              { color: theme.colors.accent, fontFamily: theme.typography.fontBold },
+            ]}
             numberOfLines={1}
           >
             {email}
@@ -383,39 +407,46 @@ export default function ConnectedAccountsScreen() {
           style={[
             styles.summaryCard,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.cardBorder,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.shapes.radiusMd,
             },
           ]}
         >
           <View style={styles.summaryItem}>
-            <Ionicons name="layers" size={24} color={colors.accent} />
+            <Ionicons name="layers" size={24} color={theme.colors.accent} />
             <Text
-              style={[styles.summaryNumber, { color: colors.text, fontFamily: fontConfig.bold }]}
+              style={[
+                styles.summaryNumber,
+                { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+              ]}
             >
               {connectedData.totalPlatforms}
             </Text>
             <Text
               style={[
                 styles.summaryLabel,
-                { color: colors.subtext, fontFamily: fontConfig.regular },
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
               ]}
             >
               Platform{connectedData.totalPlatforms !== 1 ? "s" : ""}
             </Text>
           </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.cardBorder }]} />
+          <View style={[styles.summaryDivider, { backgroundColor: theme.colors.surfaceBorder }]} />
           <View style={styles.summaryItem}>
-            <Ionicons name="people" size={24} color={colors.accent} />
+            <Ionicons name="people" size={24} color={theme.colors.accent} />
             <Text
-              style={[styles.summaryNumber, { color: colors.text, fontFamily: fontConfig.bold }]}
+              style={[
+                styles.summaryNumber,
+                { color: theme.colors.textPrimary, fontFamily: theme.typography.fontBold },
+              ]}
             >
               {connectedData.totalAccounts}
             </Text>
             <Text
               style={[
                 styles.summaryLabel,
-                { color: colors.subtext, fontFamily: fontConfig.regular },
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
               ]}
             >
               Account{connectedData.totalAccounts !== 1 ? "s" : ""}
@@ -434,15 +465,18 @@ export default function ConnectedAccountsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={theme.colors.accent}
+            colors={[theme.colors.accent]}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="link-outline" size={64} color={colors.muted} />
+            <Ionicons name="link-outline" size={64} color={theme.colors.textMuted} />
             <Text
-              style={[styles.emptyText, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+              style={[
+                styles.emptyText,
+                { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
+              ]}
             >
               No connected platforms found for this email.
             </Text>
@@ -455,17 +489,17 @@ export default function ConnectedAccountsScreen() {
           style={[
             styles.securityTip,
             {
-              backgroundColor: colors.card,
-              borderTopColor: colors.cardBorder,
+              backgroundColor: theme.colors.surface,
+              borderTopColor: theme.colors.surfaceBorder,
               paddingBottom: insets.bottom + 16,
             },
           ]}
         >
-          <Ionicons name="shield-checkmark" size={18} color={colors.accent} />
+          <Ionicons name="shield-checkmark" size={18} color={theme.colors.accent} />
           <Text
             style={[
               styles.securityTipText,
-              { color: colors.subtext, fontFamily: fontConfig.regular },
+              { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
             ]}
           >
             Tip: Use unique passwords for each platform to improve security.
@@ -490,7 +524,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
-    borderRadius: 12,
     borderWidth: 1,
   },
   headerCenter: {
@@ -518,7 +551,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 14,
     borderWidth: 1,
   },
   emailText: {
@@ -534,7 +566,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
-    borderRadius: 14,
     borderWidth: 1,
   },
   summaryItem: {
@@ -558,8 +589,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   platformCard: {
-    borderRadius: 16,
     overflow: "hidden",
+    marginBottom: 12,
   },
   platformHeader: {
     flexDirection: "row",
@@ -609,7 +640,6 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8,
     borderWidth: 1,
   },
   goButtonText: {
@@ -628,7 +658,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 10,
     borderWidth: 1,
   },
   accountInfo: {

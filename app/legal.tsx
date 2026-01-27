@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../src/context/ThemeContext";
+import { useAppTheme } from "../src/themes/hooks/useAppTheme";
 import {
   PRIVACY_POLICY,
   TERMS_OF_SERVICE,
@@ -53,7 +53,7 @@ export default function LegalScreen() {
   const { type } = useLocalSearchParams<{ type: LegalType }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   const [content, setContent] = useState<Section[]>([]);
   const [title, setTitle] = useState("");
@@ -91,8 +91,8 @@ export default function LegalScreen() {
             style={[
               styles.heading,
               {
-                color: colors.text,
-                fontFamily: fontConfig.bold,
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
               },
             ]}
           >
@@ -107,9 +107,9 @@ export default function LegalScreen() {
             style={[
               styles.subheading,
               {
-                color: colors.text,
-                fontFamily: fontConfig.bold,
-                fontSize: section.level === 3 ? 16 : 18,
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
+                fontSize: section.level === 3 ? theme.typography.sizeLg : theme.typography.sizeXl,
               },
             ]}
           >
@@ -120,13 +120,13 @@ export default function LegalScreen() {
       case "bullet":
         return (
           <View key={index} style={styles.bulletContainer}>
-            <Text style={[styles.bulletPoint, { color: colors.accent }]}>•</Text>
+            <Text style={[styles.bulletPoint, { color: theme.colors.accent }]}>•</Text>
             <Text
               style={[
                 styles.bulletText,
                 {
-                  color: colors.text,
-                  fontFamily: fontConfig.regular,
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontRegular,
                 },
               ]}
             >
@@ -142,8 +142,8 @@ export default function LegalScreen() {
             style={[
               styles.boldText,
               {
-                color: colors.accent,
-                fontFamily: fontConfig.bold,
+                color: theme.colors.accent,
+                fontFamily: theme.typography.fontBold,
               },
             ]}
           >
@@ -163,8 +163,8 @@ export default function LegalScreen() {
             style={[
               styles.paragraph,
               {
-                color: colors.subtext,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontRegular,
               },
             ]}
           >
@@ -175,7 +175,7 @@ export default function LegalScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <View
@@ -183,7 +183,8 @@ export default function LegalScreen() {
           styles.header,
           {
             paddingTop: insets.top + 12,
-            borderBottomColor: colors.cardBorder,
+            borderBottomColor: theme.colors.surfaceBorder,
+            height: insets.top + theme.components.header.height,
           },
         ]}
       >
@@ -192,21 +193,22 @@ export default function LegalScreen() {
           style={[
             styles.backButton,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.cardBorder,
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.components.header.backButtonRadius,
             },
           ]}
-          android_ripple={{ color: colors.accent + "22" }}
+          android_ripple={{ color: theme.colors.accentMuted }}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
         </Pressable>
 
         <Text
           style={[
             styles.headerTitle,
             {
-              color: colors.text,
-              fontFamily: fontConfig.bold,
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontBold,
             },
           ]}
         >
@@ -225,18 +227,19 @@ export default function LegalScreen() {
           style={[
             styles.updatedBadge,
             {
-              backgroundColor: colors.accent + "15",
-              borderColor: colors.accent + "30",
+              backgroundColor: theme.colors.accentMuted,
+              borderColor: theme.colors.accent + "30",
+              borderRadius: theme.shapes.radiusXl,
             },
           ]}
         >
-          <Ionicons name="time-outline" size={14} color={colors.accent} />
+          <Ionicons name="time-outline" size={14} color={theme.colors.accent} />
           <Text
             style={[
               styles.updatedText,
               {
-                color: colors.accent,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.accent,
+                fontFamily: theme.typography.fontRegular,
               },
             ]}
           >
@@ -246,13 +249,13 @@ export default function LegalScreen() {
 
         {content.map((section, index) => renderSection(section, index))}
 
-        <View style={[styles.footer, { borderTopColor: colors.cardBorder }]}>
+        <View style={[styles.footer, { borderTopColor: theme.colors.surfaceBorder }]}>
           <Text
             style={[
               styles.footerText,
               {
-                color: colors.muted,
-                fontFamily: fontConfig.regular,
+                color: theme.colors.textMuted,
+                fontFamily: theme.typography.fontRegular,
               },
             ]}
           >
@@ -278,7 +281,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
-    borderRadius: 12,
     borderWidth: 1,
   },
   headerTitle: {
@@ -299,7 +301,6 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 20,
     borderWidth: 1,
     marginBottom: 24,
   },
