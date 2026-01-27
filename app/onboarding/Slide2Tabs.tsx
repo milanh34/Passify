@@ -1,44 +1,74 @@
 // app/onboarding/Slide2Tabs.tsx
 
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { useTheme } from "../../src/context/ThemeContext";
-import OnboardingSlide from "../../src/components/OnboardingSlide";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 
 export default function Slide2Tabs() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   return (
-    <OnboardingSlide slideIndex={1}>
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          Explore the Four Tabs
-        </Text>
+    <View style={[styles.wrapper, { backgroundColor: theme.colors.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={[styles.container, { paddingHorizontal: theme.spacing.xl }]}>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal }}
+          >
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeXxl + 4,
+                  marginBottom: theme.spacing.sm,
+                },
+              ]}
+            >
+              Explore the Four Tabs
+            </Text>
 
-        <Text style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}>
-          Each tab has a specific purpose:
-        </Text>
+            <Text
+              style={[
+                styles.subtitle,
+                {
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeMd,
+                  marginBottom: theme.spacing.xl,
+                },
+              ]}
+            >
+              Each tab has a specific purpose:
+            </Text>
+          </MotiView>
 
-        <TabCard
-          icon="grid"
-          title="Manage"
-          description="Add, edit, delete, and organize your accounts. Search and sort your credentials by platform or creation date."
-          color={colors.accent}
-          colors={colors}
-          fontConfig={fontConfig}
-        />
+          <TabCard
+            icon="grid"
+            title="Manage"
+            description="Add, edit, delete, and organize your accounts. Search and sort your credentials by platform or creation date."
+            theme={theme}
+            delay={150}
+          />
 
-        <TabCard
-          icon="swap-horizontal"
-          title="Transfer"
-          description="Import account data from external sources into the app. Export your credentials to text format for backup or migration."
-          color={colors.accent}
-          colors={colors}
-          fontConfig={fontConfig}
-        />
-      </View>
-    </OnboardingSlide>
+          <TabCard
+            icon="swap-horizontal"
+            title="Transfer"
+            description="Import account data from external sources into the app. Export your credentials to text format for backup or migration."
+            theme={theme}
+            delay={300}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -46,57 +76,90 @@ function TabCard({
   icon,
   title,
   description,
-  color,
-  colors,
-  fontConfig,
+  theme,
+  delay,
 }: {
   icon: string;
   title: string;
   description: string;
-  color: string;
-  colors: any;
-  fontConfig: any;
+  theme: ReturnType<typeof useAppTheme>;
+  delay: number;
 }) {
   return (
-    <View style={[styles.card, { backgroundColor: `${color}10`, borderColor: color }]}>
+    <MotiView
+      from={{ opacity: 0, translateX: -30 }}
+      animate={{ opacity: 1, translateX: 0 }}
+      transition={{ type: "timing", duration: theme.animations.durationNormal, delay }}
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.accentMuted,
+          borderColor: theme.colors.accent,
+          borderWidth: theme.shapes.borderThin,
+          borderRadius: theme.components.card.radius,
+          padding: theme.components.card.padding,
+          marginBottom: theme.spacing.lg,
+        },
+      ]}
+    >
       <View style={styles.cardHeader}>
-        <View style={[styles.iconBox, { backgroundColor: `${color}20` }]}>
-          <Ionicons name={icon as any} size={28} color={color} />
+        <View
+          style={[
+            styles.iconBox,
+            {
+              backgroundColor: theme.colors.accent + "30",
+              borderRadius: theme.shapes.radiusMd,
+            },
+          ]}
+        >
+          <Ionicons name={icon as any} size={28} color={theme.colors.accent} />
         </View>
-        <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+        <Text
+          style={[
+            styles.cardTitle,
+            {
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontBold,
+              fontSize: theme.typography.sizeXl,
+            },
+          ]}
+        >
           {title}
         </Text>
       </View>
       <Text
-        style={[styles.cardDescription, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+        style={[
+          styles.cardDescription,
+          {
+            color: theme.colors.textSecondary,
+            fontFamily: theme.typography.fontRegular,
+            fontSize: theme.typography.sizeSm + 1,
+            lineHeight: 20,
+          },
+        ]}
       >
         {description}
       </Text>
-    </View>
+    </MotiView>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
   container: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 20,
-    gap: 24,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
+  title: {},
+  subtitle: {},
   card: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 16,
     gap: 12,
   },
   cardHeader: {
@@ -107,16 +170,9 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 48,
     height: 48,
-    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  cardDescription: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
+  cardTitle: {},
+  cardDescription: {},
 });

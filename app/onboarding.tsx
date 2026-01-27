@@ -13,9 +13,9 @@ import Animated, {
   withTiming,
   runOnJS,
 } from "react-native-reanimated";
-import { useTheme } from "../src/context/ThemeContext";
 import { saveOnboardingState } from "../src/utils/onboardingState";
 import ConfirmModal from "../src/components/ConfirmModal";
+import { useAppTheme } from "../src/themes/hooks/useAppTheme";
 
 import Slide1Welcome from "./onboarding/Slide1Welcome";
 import Slide2Tabs from "./onboarding/Slide2Tabs";
@@ -41,7 +41,7 @@ export default function OnboardingScreen() {
   const [showSkipModal, setShowSkipModal] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   const translateX = useSharedValue(0);
   const isTransitioning = useSharedValue(false);
@@ -69,15 +69,19 @@ export default function OnboardingScreen() {
     isTransitioning.value = true;
     const targetX = direction === "next" ? -SCREEN_WIDTH : SCREEN_WIDTH;
 
-    translateX.value = withTiming(targetX, { duration: 300 }, (finished) => {
-      if (finished) {
-        runOnJS(setCurrentSlide)(newIndex);
-        translateX.value = direction === "next" ? SCREEN_WIDTH : -SCREEN_WIDTH;
-        translateX.value = withTiming(0, { duration: 300 }, () => {
-          isTransitioning.value = false;
-        });
+    translateX.value = withTiming(
+      targetX,
+      { duration: theme.animations.durationNormal },
+      (finished) => {
+        if (finished) {
+          runOnJS(setCurrentSlide)(newIndex);
+          translateX.value = direction === "next" ? SCREEN_WIDTH : -SCREEN_WIDTH;
+          translateX.value = withTiming(0, { duration: theme.animations.durationNormal }, () => {
+            isTransitioning.value = false;
+          });
+        }
       }
-    });
+    );
   };
 
   const handleSkipAll = () => {
@@ -117,7 +121,7 @@ export default function OnboardingScreen() {
       } else if ((event.translationX > SWIPE_THRESHOLD || velocity > 500) && !isFirstSlide) {
         runOnJS(handlePrevious)();
       } else {
-        translateX.value = withTiming(0, { duration: 200 });
+        translateX.value = withTiming(0, { duration: theme.animations.durationFast });
       }
     });
 
@@ -130,19 +134,26 @@ export default function OnboardingScreen() {
   const CurrentSlideComponent = SLIDES[currentSlide];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View
         style={[
           styles.header,
           {
-            paddingTop: insets.top + 16,
-            backgroundColor: colors.bg[0],
-            borderBottomColor: colors.cardBorder,
+            paddingTop: insets.top + theme.spacing.lg,
+            backgroundColor: theme.colors.background,
+            borderBottomColor: theme.colors.surfaceBorder,
           },
         ]}
       >
         <Text
-          style={[styles.slideCounter, { color: colors.subtext, fontFamily: fontConfig.regular }]}
+          style={[
+            styles.slideCounter,
+            {
+              color: theme.colors.textSecondary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeMd,
+            },
+          ]}
         >
           {currentSlide + 1} / {SLIDES.length}
         </Text>
@@ -153,12 +164,20 @@ export default function OnboardingScreen() {
             style={({ pressed }) => [
               styles.skipButton,
               {
-                backgroundColor: pressed ? `${colors.accent}20` : `${colors.accent}10`,
+                backgroundColor: pressed ? theme.colors.accentMuted : theme.colors.accentMuted,
+                borderRadius: theme.shapes.radiusXl,
               },
             ]}
           >
             <Text
-              style={[styles.skipButtonText, { color: colors.accent, fontFamily: fontConfig.bold }]}
+              style={[
+                styles.skipButtonText,
+                {
+                  color: theme.colors.accent,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeMd,
+                },
+              ]}
             >
               Skip
             </Text>
@@ -172,19 +191,20 @@ export default function OnboardingScreen() {
         </Animated.View>
       </GestureDetector>
 
-      <View style={[styles.dotContainer, { backgroundColor: colors.bg[0] }]}>
+      <View style={[styles.dotContainer, { backgroundColor: theme.colors.background }]}>
         {SLIDES.map((_, index) => (
           <MotiView
             key={index}
             animate={{
               width: index === currentSlide ? 24 : 8,
-              backgroundColor: index === currentSlide ? colors.accent : `${colors.accent}30`,
+              backgroundColor:
+                index === currentSlide ? theme.colors.accent : theme.colors.accentMuted,
             }}
             transition={{
               type: "timing",
-              duration: 300,
+              duration: theme.animations.durationNormal,
             }}
-            style={styles.dot}
+            style={[styles.dot, { borderRadius: theme.shapes.radiusSm }]}
           />
         ))}
       </View>
@@ -192,7 +212,12 @@ export default function OnboardingScreen() {
       <View
         style={[
           styles.footer,
-          { paddingBottom: insets.bottom + 20, backgroundColor: colors.bg[0] },
+          {
+            paddingBottom: insets.bottom + theme.spacing.xl,
+            backgroundColor: theme.colors.background,
+            paddingHorizontal: theme.spacing.xl,
+            gap: theme.spacing.md,
+          },
         ]}
       >
         <Pressable
@@ -203,22 +228,29 @@ export default function OnboardingScreen() {
             styles.previousButton,
             {
               backgroundColor: isFirstSlide
-                ? colors.card
+                ? theme.colors.surface
                 : pressed
-                  ? `${colors.accent}20`
-                  : colors.card,
-              borderColor: colors.cardBorder,
+                  ? theme.colors.accentMuted
+                  : theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderRadius: theme.components.button.radius,
               opacity: isFirstSlide ? 0.5 : 1,
+              height: theme.components.button.height,
             },
           ]}
         >
-          <Ionicons name="arrow-back" size={20} color={isFirstSlide ? colors.muted : colors.text} />
+          <Ionicons
+            name="arrow-back"
+            size={20}
+            color={isFirstSlide ? theme.colors.textMuted : theme.colors.textPrimary}
+          />
           <Text
             style={[
               styles.navButtonText,
               {
-                color: isFirstSlide ? colors.muted : colors.text,
-                fontFamily: fontConfig.bold,
+                color: isFirstSlide ? theme.colors.textMuted : theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.typography.sizeLg,
               },
             ]}
             numberOfLines={1}
@@ -233,17 +265,30 @@ export default function OnboardingScreen() {
             styles.navButton,
             styles.nextButton,
             {
-              backgroundColor: pressed ? `${colors.accent}CC` : colors.accent,
+              backgroundColor: pressed ? theme.colors.accentSecondary : theme.colors.accent,
+              borderRadius: theme.components.button.radius,
+              height: theme.components.button.height,
             },
           ]}
         >
           <Text
-            style={[styles.navButtonText, { color: "#FFFFFF", fontFamily: fontConfig.bold }]}
+            style={[
+              styles.navButtonText,
+              {
+                color: theme.colors.textInverse,
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.typography.sizeLg,
+              },
+            ]}
             numberOfLines={1}
           >
             {isLastSlide ? "Let's Go!" : "Next"}
           </Text>
-          <Ionicons name={isLastSlide ? "rocket" : "arrow-forward"} size={20} color="#FFFFFF" />
+          <Ionicons
+            name={isLastSlide ? "rocket" : "arrow-forward"}
+            size={20}
+            color={theme.colors.textInverse}
+          />
         </Pressable>
       </View>
 
@@ -276,17 +321,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
-  slideCounter: {
-    fontSize: 14,
-  },
+  slideCounter: {},
   skipButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
   },
-  skipButtonText: {
-    fontSize: 14,
-  },
+  skipButtonText: {},
   slideContainer: {
     flex: 1,
   },
@@ -299,24 +339,18 @@ const styles = StyleSheet.create({
   },
   dot: {
     height: 8,
-    borderRadius: 4,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
     paddingTop: 16,
-    gap: 12,
   },
   navButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
     gap: 8,
-    minHeight: 52,
   },
   previousButton: {
     flex: 1,
@@ -325,7 +359,5 @@ const styles = StyleSheet.create({
   nextButton: {
     flex: 2,
   },
-  navButtonText: {
-    fontSize: 16,
-  },
+  navButtonText: {},
 });

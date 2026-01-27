@@ -1,62 +1,62 @@
 // app/onboarding/Slide4ManageAccounts.tsx
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { useTheme } from "../../src/context/ThemeContext";
-import OnboardingSlide from "../../src/components/OnboardingSlide";
 import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti";
 import Animated, { useAnimatedStyle, useSharedValue, interpolate } from "react-native-reanimated";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
+
+const features = [
+  {
+    icon: "add-circle",
+    title: "Add Accounts",
+    description:
+      "Use the + button to add individual accounts, or use the Transfer tab to import accounts in bulk from external sources.",
+  },
+  {
+    icon: "create",
+    title: "Edit Accounts",
+    description:
+      "Tap any account card to expand it, then tap the edit icon to modify usernames, passwords, or platform details.",
+  },
+  {
+    icon: "trash",
+    title: "Delete Accounts",
+    description:
+      "Remove accounts you no longer need. Expand a card and tap the delete icon to remove it permanently.",
+  },
+  {
+    icon: "search",
+    title: "Search Accounts",
+    description:
+      "Quickly find any account using the search bar. Search by platform name, username, or any keyword.",
+  },
+  {
+    icon: "funnel",
+    title: "Sort & Filter",
+    description:
+      "Organize your accounts by date added, platform name, alphabetically, or custom sorting preferences.",
+  },
+  {
+    icon: "shield-checkmark",
+    title: "Encrypt Data",
+    description:
+      "Encrypt your entire credential database into a secure image format using your master password.",
+  },
+  {
+    icon: "key",
+    title: "Decrypt Data",
+    description:
+      "Decrypt your encrypted image back to access all your credentials using your master password.",
+  },
+];
 
 export default function Slide4ManageAccounts() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const [completeScrollBarHeight, setCompleteScrollBarHeight] = useState(1);
   const [visibleScrollBarHeight, setVisibleScrollBarHeight] = useState(0);
   const scrollIndicator = useSharedValue(0);
-
-  const features = [
-    {
-      icon: "add-circle",
-      title: "Add Accounts",
-      description:
-        "Use the + button to add individual accounts, or use the Transfer tab to import accounts in bulk from external sources.",
-    },
-    {
-      icon: "create",
-      title: "Edit Accounts",
-      description:
-        "Tap any account card to expand it, then tap the edit icon to modify usernames, passwords, or platform details.",
-    },
-    {
-      icon: "trash",
-      title: "Delete Accounts",
-      description:
-        "Remove accounts you no longer need. Expand a card and tap the delete icon to remove it permanently.",
-    },
-    {
-      icon: "search",
-      title: "Search Accounts",
-      description:
-        "Quickly find any account using the search bar. Search by platform name, username, or any keyword.",
-    },
-    {
-      icon: "funnel",
-      title: "Sort & Filter",
-      description:
-        "Organize your accounts by date added, platform name, alphabetically, or custom sorting preferences.",
-    },
-    {
-      icon: "shield-checkmark",
-      title: "Encrypt Data",
-      description:
-        "Encrypt your entire credential database into a secure image format using your master password.",
-    },
-    {
-      icon: "key",
-      title: "Decrypt Data",
-      description:
-        "Decrypt your encrypted image back to access all your credentials using your master password.",
-    },
-  ];
 
   const scrollIndicatorSize =
     completeScrollBarHeight > visibleScrollBarHeight
@@ -83,20 +83,46 @@ export default function Slide4ManageAccounts() {
   };
 
   return (
-    <OnboardingSlide slideIndex={3}>
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          Managing Your Accounts
-        </Text>
+    <View style={[styles.wrapper, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.container, { paddingHorizontal: theme.spacing.xl }]}>
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: theme.animations.durationNormal }}
+        >
+          <Text
+            style={[
+              styles.title,
+              {
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.typography.sizeXxl + 4,
+                marginBottom: theme.spacing.sm,
+              },
+            ]}
+          >
+            Managing Your Accounts
+          </Text>
 
-        <Text style={[styles.subtitle, { color: colors.subtext, fontFamily: fontConfig.regular }]}>
-          Complete control over your credentials:
-        </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeMd,
+                marginBottom: theme.spacing.lg,
+              },
+            ]}
+          >
+            Complete control over your credentials:
+          </Text>
+        </MotiView>
 
         <View style={styles.scrollContainer}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { gap: theme.spacing.md }]}
             style={styles.scrollView}
             onContentSizeChange={(_, height) => {
               setCompleteScrollBarHeight(height);
@@ -117,21 +143,29 @@ export default function Slide4ManageAccounts() {
                 icon={feature.icon}
                 title={feature.title}
                 description={feature.description}
-                color={colors.accent}
-                colors={colors}
-                fontConfig={fontConfig}
+                theme={theme}
+                index={index}
               />
             ))}
           </ScrollView>
 
           <View style={styles.scrollBarContainer}>
-            <View style={[styles.scrollBarTrack, { backgroundColor: `${colors.accent}20` }]}>
+            <View
+              style={[
+                styles.scrollBarTrack,
+                {
+                  backgroundColor: theme.colors.accentMuted,
+                  borderRadius: theme.shapes.radiusSm,
+                },
+              ]}
+            >
               <Animated.View
                 style={[
                   styles.scrollBarThumb,
                   {
-                    backgroundColor: colors.accent,
+                    backgroundColor: theme.colors.accent,
                     height: scrollIndicatorSize,
+                    borderRadius: theme.shapes.radiusSm,
                   },
                   scrollIndicatorPosition,
                 ]}
@@ -140,7 +174,7 @@ export default function Slide4ManageAccounts() {
           </View>
         </View>
       </View>
-    </OnboardingSlide>
+    </View>
   );
 }
 
@@ -148,56 +182,88 @@ function FeatureItem({
   icon,
   title,
   description,
-  color,
-  colors,
-  fontConfig,
+  theme,
+  index,
 }: {
   icon: string;
   title: string;
   description: string;
-  color: string;
-  colors: any;
-  fontConfig: any;
+  theme: ReturnType<typeof useAppTheme>;
+  index: number;
 }) {
   return (
-    <View style={styles.featureCard}>
-      <View style={[styles.iconBox, { backgroundColor: `${color}15` }]}>
-        <Ionicons name={icon as any} size={24} color={color} />
+    <MotiView
+      from={{ opacity: 0, translateX: -20 }}
+      animate={{ opacity: 1, translateX: 0 }}
+      transition={{
+        type: "timing",
+        duration: theme.animations.durationNormal,
+        delay: index * theme.animations.listItemStagger,
+      }}
+      style={[
+        styles.featureCard,
+        {
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.shapes.radiusMd,
+          borderWidth: theme.shapes.borderThin,
+          borderColor: theme.colors.surfaceBorder,
+          padding: theme.spacing.md,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.iconBox,
+          {
+            backgroundColor: theme.colors.accentMuted,
+            borderRadius: theme.shapes.radiusMd,
+          },
+        ]}
+      >
+        <Ionicons name={icon as any} size={24} color={theme.colors.accent} />
       </View>
       <View style={styles.featureContent}>
-        <Text style={[styles.featureTitle, { color: colors.text, fontFamily: fontConfig.bold }]}>
+        <Text
+          style={[
+            styles.featureTitle,
+            {
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontBold,
+              fontSize: theme.typography.sizeMd + 1,
+            },
+          ]}
+        >
           {title}
         </Text>
         <Text
           style={[
             styles.featureDescription,
-            { color: colors.subtext, fontFamily: fontConfig.regular },
+            {
+              color: theme.colors.textSecondary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeSm + 1,
+              lineHeight: 19,
+            },
           ]}
         >
           {description}
         </Text>
       </View>
-    </View>
+    </MotiView>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 60,
+    paddingBottom: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
+  title: {},
+  subtitle: {},
   scrollContainer: {
     flex: 1,
     flexDirection: "row",
@@ -206,7 +272,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    gap: 14,
     paddingBottom: 20,
     paddingRight: 8,
   },
@@ -214,14 +279,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 14,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: "rgba(0,0,0,0.02)",
   },
   iconBox: {
     width: 44,
     height: 44,
-    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -229,14 +290,8 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  featureTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  featureDescription: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
+  featureTitle: {},
+  featureDescription: {},
   scrollBarContainer: {
     width: 6,
     marginLeft: 8,
@@ -245,10 +300,8 @@ const styles = StyleSheet.create({
   scrollBarTrack: {
     width: 6,
     height: "100%",
-    borderRadius: 3,
   },
   scrollBarThumb: {
     width: 6,
-    borderRadius: 3,
   },
 });

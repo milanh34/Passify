@@ -1,96 +1,175 @@
 // app/onboarding/Slide6GetStarted.tsx
 
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { useTheme } from "../../src/context/ThemeContext";
-import OnboardingSlide from "../../src/components/OnboardingSlide";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 
 export default function Slide6GetStarted() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
 
   return (
-    <OnboardingSlide slideIndex={5}>
-      <View style={styles.container}>
-        <View style={[styles.successIcon, { backgroundColor: `${colors.accent}15` }]}>
-          <Ionicons name="checkmark-circle" size={80} color={colors.accent} />
+    <View style={[styles.wrapper, { backgroundColor: theme.colors.background }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={[styles.container, { paddingHorizontal: theme.spacing.xl }]}>
+          <MotiView
+            from={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              type: "spring",
+              damping: theme.animations.springDamping,
+              stiffness: theme.animations.springStiffness,
+            }}
+            style={[
+              styles.successIcon,
+              {
+                backgroundColor: theme.colors.accentMuted,
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+              },
+            ]}
+          >
+            <Ionicons name="checkmark-circle" size={80} color={theme.colors.accent} />
+          </MotiView>
+
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal, delay: 200 }}
+          >
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeHero,
+                  marginBottom: theme.spacing.lg,
+                },
+              ]}
+            >
+              You're All Set!
+            </Text>
+          </MotiView>
+
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal, delay: 300 }}
+          >
+            <Text
+              style={[
+                styles.description,
+                {
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeLg,
+                  lineHeight: 24,
+                  marginBottom: theme.spacing.xxl,
+                },
+              ]}
+            >
+              Use your master password to encrypt all your data into a single secure image.
+            </Text>
+          </MotiView>
+
+          <MotiView
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal, delay: 400 }}
+            style={[
+              styles.infoBox,
+              {
+                backgroundColor: theme.colors.accentMuted,
+                borderColor: theme.colors.accent,
+                borderWidth: theme.shapes.borderThin,
+                borderRadius: theme.shapes.radiusMd,
+                padding: theme.spacing.lg,
+              },
+            ]}
+          >
+            <Ionicons name="information-circle" size={24} color={theme.colors.accent} />
+            <Text
+              style={[
+                styles.infoText,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeSm + 1,
+                  lineHeight: 20,
+                },
+              ]}
+            >
+              Your data stays on your device. Nothing is synced to external servers.
+            </Text>
+          </MotiView>
+
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ type: "timing", duration: theme.animations.durationNormal, delay: 500 }}
+          >
+            <Text
+              style={[
+                styles.cta,
+                {
+                  color: theme.colors.accent,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeMd,
+                  marginTop: theme.spacing.xl,
+                },
+              ]}
+            >
+              Tap "Let's Go!" to start securing your passwords
+            </Text>
+          </MotiView>
         </View>
-
-        <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
-          You're All Set!
-        </Text>
-
-        <Text
-          style={[styles.description, { color: colors.subtext, fontFamily: fontConfig.regular }]}
-        >
-          Use your master password to encrypt all your data into a single secure image.
-        </Text>
-
-        <View
-          style={[
-            styles.infoBox,
-            {
-              backgroundColor: `${colors.accent}10`,
-              borderColor: `${colors.accent}30`,
-            },
-          ]}
-        >
-          <Ionicons name="information-circle" size={24} color={colors.accent} />
-          <Text style={[styles.infoText, { color: colors.text, fontFamily: fontConfig.regular }]}>
-            Your data stays on your device. Nothing is synced to external servers.
-          </Text>
-        </View>
-
-        <Text style={[styles.cta, { color: colors.accent, fontFamily: fontConfig.bold }]}>
-          Tap "Let's Go!" to start securing your passwords
-        </Text>
-      </View>
-    </OnboardingSlide>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
+    paddingVertical: 20,
+  },
+  container: {
     alignItems: "center",
-    paddingHorizontal: 24,
-    gap: 24,
+    paddingBottom: 20,
   },
   successIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "600",
     textAlign: "center",
   },
   description: {
-    fontSize: 16,
     textAlign: "center",
-    lineHeight: 24,
+    paddingHorizontal: 16,
   },
   infoBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
     width: "100%",
   },
   infoText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 20,
   },
   cta: {
-    fontSize: 14,
     textAlign: "center",
-    marginTop: 12,
   },
 });

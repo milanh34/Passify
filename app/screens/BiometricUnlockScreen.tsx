@@ -1,12 +1,12 @@
 // app/screens/BiometricUnlockScreen.tsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, Pressable, StatusBar, Platform } from "react-native";
+import { View, Text, StyleSheet, Pressable, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../../src/context/ThemeContext";
 import { useAuth } from "../../src/context/AuthContext";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 import { authenticateWithBiometric } from "../../src/utils/biometricAuth";
 import { verifyPINWithDetails, getPINLockoutStatus } from "../../src/utils/pinCode";
 import { formatRemainingTime } from "../../src/utils/pinAttemptTracker";
@@ -21,7 +21,7 @@ import Toast from "../../src/components/Toast";
 import { log } from "@/src/utils/logger";
 
 export default function BiometricUnlockScreen() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const { unlock, biometricCapability, preferences, isPINConfigured } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -173,41 +173,44 @@ export default function BiometricUnlockScreen() {
       style={[
         styles.container,
         {
-          backgroundColor: colors.bg[0],
+          backgroundColor: theme.colors.background,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
         },
       ]}
     >
       <StatusBar
-        barStyle={colors.bg[0] === "#000000" ? "light-content" : "dark-content"}
-        backgroundColor={colors.bg[0]}
+        barStyle={theme.isDark ? "light-content" : "dark-content"}
+        backgroundColor={theme.colors.background}
       />
 
       <MotiView
         from={{ opacity: 0, translateY: -30 }}
         animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 500 }}
+        transition={{ type: "timing", duration: theme.animations.durationNormal }}
         style={styles.header}
       >
         <View
           style={[
             styles.logoContainer,
             {
-              backgroundColor: colors.accent + "15",
-              borderColor: colors.accent,
+              backgroundColor: theme.colors.accentMuted,
+              borderColor: theme.colors.accent,
+              borderWidth: theme.shapes.borderThick,
+              borderRadius: 48,
             },
           ]}
         >
-          <Ionicons name="key" size={48} color={colors.accent} />
+          <Ionicons name="key" size={48} color={theme.colors.accent} />
         </View>
 
         <Text
           style={[
             styles.title,
             {
-              color: colors.text,
-              fontFamily: fontConfig.bold,
+              color: theme.colors.textPrimary,
+              fontFamily: theme.typography.fontBold,
+              fontSize: theme.typography.sizeHero,
             },
           ]}
         >
@@ -218,8 +221,9 @@ export default function BiometricUnlockScreen() {
           style={[
             styles.subtitle,
             {
-              color: colors.subtext,
-              fontFamily: fontConfig.regular,
+              color: theme.colors.textSecondary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeLg,
             },
           ]}
         >
@@ -231,23 +235,28 @@ export default function BiometricUnlockScreen() {
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "timing", duration: 300 }}
+          transition={{ type: "timing", duration: theme.animations.durationNormal }}
           style={[
             styles.lockoutBanner,
             {
-              backgroundColor: colors.danger + "15",
-              borderColor: colors.danger,
+              backgroundColor: theme.colors.error + "15",
+              borderColor: theme.colors.error,
+              borderWidth: theme.shapes.borderThick,
+              borderRadius: theme.components.card.radius,
+              padding: theme.spacing.lg,
+              marginHorizontal: theme.spacing.xl,
             },
           ]}
         >
-          <Ionicons name="lock-closed" size={24} color={colors.danger} />
+          <Ionicons name="lock-closed" size={24} color={theme.colors.error} />
           <View style={styles.lockoutBannerText}>
             <Text
               style={[
                 styles.lockoutTitle,
                 {
-                  color: colors.danger,
-                  fontFamily: fontConfig.bold,
+                  color: theme.colors.error,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeLg,
                 },
               ]}
             >
@@ -257,8 +266,9 @@ export default function BiometricUnlockScreen() {
               style={[
                 styles.lockoutCountdown,
                 {
-                  color: colors.danger,
-                  fontFamily: fontConfig.regular,
+                  color: theme.colors.error,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeMd,
                 },
               ]}
             >
@@ -283,28 +293,30 @@ export default function BiometricUnlockScreen() {
           <Pressable
             onPress={handleUsePIN}
             disabled={isAuthenticating}
-            style={[
+            style={({ pressed }) => [
               styles.fallbackButton,
               {
-                borderColor: isLockedOut ? colors.danger : colors.cardBorder,
-                opacity: isLockedOut ? 0.6 : 1,
+                borderColor: isLockedOut ? theme.colors.error : theme.colors.surfaceBorder,
+                borderWidth: theme.shapes.borderThin,
+                borderRadius: theme.shapes.radiusMd,
+                opacity: isLockedOut ? 0.6 : pressed ? 0.8 : 1,
+                paddingVertical: theme.spacing.md,
+                paddingHorizontal: theme.spacing.xl,
               },
             ]}
-            android_ripple={{ color: colors.accent + "22" }}
+            android_ripple={{ color: theme.colors.accentMuted }}
           >
             <Ionicons
               name="keypad-outline"
               size={20}
-              color={isLockedOut ? colors.danger : colors.subtext}
+              color={isLockedOut ? theme.colors.error : theme.colors.textSecondary}
             />
             <Text
-              style={[
-                styles.fallbackText,
-                {
-                  color: isLockedOut ? colors.danger : colors.subtext,
-                  fontFamily: fontConfig.regular,
-                },
-              ]}
+              style={{
+                color: isLockedOut ? theme.colors.error : theme.colors.textSecondary,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeMd,
+              }}
             >
               {isLockedOut ? `Locked (${lockoutRemaining})` : "Use PIN Instead"}
             </Text>
@@ -315,26 +327,31 @@ export default function BiometricUnlockScreen() {
           <Pressable
             onPress={() => !isLockedOut && setShowPINModal(true)}
             disabled={isLockedOut}
-            style={[
+            style={({ pressed }) => [
               styles.primaryButton,
               {
-                backgroundColor: isLockedOut ? colors.cardBorder : colors.accent,
+                backgroundColor: isLockedOut
+                  ? theme.colors.surfaceBorder
+                  : theme.colors.buttonPrimary,
+                borderRadius: theme.components.button.radius,
+                paddingVertical: theme.spacing.lg,
+                paddingHorizontal: theme.spacing.xxl,
+                opacity: isLockedOut ? 0.6 : pressed ? 0.8 : 1,
               },
             ]}
-            android_ripple={{ color: colors.bg[0] }}
+            android_ripple={{ color: theme.colors.background }}
           >
             <Ionicons
               name={isLockedOut ? "lock-closed-outline" : "keypad-outline"}
               size={24}
-              color="#fff"
+              color={theme.colors.textInverse}
             />
             <Text
-              style={[
-                styles.primaryButtonText,
-                {
-                  fontFamily: fontConfig.bold,
-                },
-              ]}
+              style={{
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.typography.sizeXl,
+                color: theme.colors.textInverse,
+              }}
             >
               {isLockedOut ? `Locked (${lockoutRemaining})` : "Enter PIN to Unlock"}
             </Text>
@@ -343,15 +360,15 @@ export default function BiometricUnlockScreen() {
 
         {!canUseBiometric && !isPINConfigured && (
           <View style={styles.errorState}>
-            <Ionicons name="alert-circle" size={48} color={colors.danger} />
+            <Ionicons name="alert-circle" size={48} color={theme.colors.error} />
             <Text
-              style={[
-                styles.errorText,
-                {
-                  color: colors.text,
-                  fontFamily: fontConfig.regular,
-                },
-              ]}
+              style={{
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeMd,
+                textAlign: "center",
+                lineHeight: 22,
+              }}
             >
               No authentication method configured.{"\n"}
               Please reinstall the app.
@@ -368,13 +385,11 @@ export default function BiometricUnlockScreen() {
           style={styles.lastUnlockContainer}
         >
           <Text
-            style={[
-              styles.lastUnlockText,
-              {
-                color: colors.subtext,
-                fontFamily: fontConfig.regular,
-              },
-            ]}
+            style={{
+              color: theme.colors.textSecondary,
+              fontFamily: theme.typography.fontRegular,
+              fontSize: theme.typography.sizeSm,
+            }}
           >
             Last unlocked: {new Date(preferences.lastUnlockTime).toLocaleString()}
           </Text>
@@ -409,37 +424,25 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
   },
-  title: {
-    fontSize: 36,
-  },
+  title: {},
   subtitle: {
-    fontSize: 16,
     textAlign: "center",
   },
   lockoutBanner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-    marginHorizontal: 20,
   },
   lockoutBannerText: {
     flex: 1,
   },
   lockoutTitle: {
-    fontSize: 16,
     marginBottom: 4,
   },
-  lockoutCountdown: {
-    fontSize: 14,
-  },
+  lockoutCountdown: {},
   biometricContainer: {
     alignItems: "center",
   },
@@ -451,38 +454,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  fallbackText: {
-    fontSize: 14,
   },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
     width: "100%",
     maxWidth: 320,
-  },
-  primaryButtonText: {
-    fontSize: 18,
-    color: "#fff",
   },
   errorState: {
     alignItems: "center",
     gap: 16,
     paddingVertical: 32,
-  },
-  errorText: {
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
   },
   lastUnlockContainer: {
     position: "absolute",
@@ -490,8 +474,5 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
-  },
-  lastUnlockText: {
-    fontSize: 12,
   },
 });
