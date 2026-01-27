@@ -2,11 +2,11 @@
 
 import { Tabs, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Text } from "react-native";
-import { useTheme } from "../../src/context/ThemeContext";
+import { Text, View } from "react-native";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 
 export default function TabsLayout() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const segments = useSegments();
 
   const isOnAccounts = segments[segments.length - 1] === "accounts";
@@ -15,17 +15,18 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.subtext,
+        tabBarActiveTintColor: theme.colors.accent,
+        tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.bg[1] || colors.bg[0],
-          borderTopColor: colors.cardBorder,
-          height: 75,
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.surfaceBorder,
+          borderTopWidth: theme.shapes.borderThin,
+          height: theme.components.tabBar.height,
           paddingBottom: 10,
         },
         tabBarLabelStyle: {
-          fontFamily: fontConfig.bold,
-          fontSize: 11,
+          fontFamily: theme.typography.fontBold,
+          fontSize: theme.components.tabBar.labelSize,
         },
         tabBarItemStyle: {
           paddingVertical: 4,
@@ -33,7 +34,7 @@ export default function TabsLayout() {
         headerShown: false,
         animation: "none",
         sceneStyle: {
-          backgroundColor: colors.bg[0],
+          backgroundColor: theme.colors.background,
         },
       }}
     >
@@ -44,17 +45,19 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused || isOnAccounts || isOnConnectedAccounts ? "grid" : "grid-outline"}
-              size={22}
-              color={focused || isOnAccounts || isOnConnectedAccounts ? colors.accent : color}
+              size={theme.components.tabBar.iconSize}
+              color={focused || isOnAccounts || isOnConnectedAccounts ? theme.colors.accent : color}
             />
           ),
           tabBarLabel: ({ focused }) => (
             <Text
               style={{
-                fontFamily: fontConfig.bold,
-                fontSize: 11,
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.components.tabBar.labelSize,
                 color:
-                  focused || isOnAccounts || isOnConnectedAccounts ? colors.accent : colors.subtext,
+                  focused || isOnAccounts || isOnConnectedAccounts
+                    ? theme.colors.accent
+                    : theme.colors.textMuted,
               }}
             >
               Manage
@@ -69,7 +72,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "swap-horizontal" : "swap-horizontal-outline"}
-              size={22}
+              size={theme.components.tabBar.iconSize}
               color={color}
             />
           ),
@@ -82,7 +85,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "lock-closed" : "lock-closed-outline"}
-              size={22}
+              size={theme.components.tabBar.iconSize}
               color={color}
             />
           ),
@@ -93,7 +96,11 @@ export default function TabsLayout() {
         options={{
           title: "Decoder",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "key" : "key-outline"} size={22} color={color} />
+            <Ionicons
+              name={focused ? "key" : "key-outline"}
+              size={theme.components.tabBar.iconSize}
+              color={color}
+            />
           ),
         }}
       />

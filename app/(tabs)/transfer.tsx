@@ -3,20 +3,17 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, Text } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { MotiView, AnimatePresence } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../src/context/ThemeContext";
-import { useAnimation } from "../../src/context/AnimationContext";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 import ImportTab from "../../src/components/transfer/ImportTab";
 import ExportTab from "../../src/components/transfer/ExportTab";
 
 export default function TransferScreen() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const [animationKey, setAnimationKey] = useState(0);
-  const { TAB_ANIMATION } = useAnimation();
   const [activeTab, setActiveTab] = useState<"import" | "export">("import");
 
   useFocusEffect(
@@ -26,23 +23,33 @@ export default function TransferScreen() {
   );
 
   return (
-    <LinearGradient colors={colors.bg} style={styles.root}>
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       <MotiView
         key={animationKey}
-        from={TAB_ANIMATION.from}
-        animate={TAB_ANIMATION.animate}
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
         transition={{
-          type: TAB_ANIMATION.type,
-          duration: TAB_ANIMATION.duration,
+          type: "timing",
+          duration: theme.animations.durationNormal,
         }}
-        style={[styles.container, { paddingTop: insets.top + 20 }]}
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top + theme.spacing.xl,
+            paddingHorizontal: theme.spacing.xl,
+          },
+        ]}
       >
         <View
           style={[
             styles.tabContainer,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.accent + "30",
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.surfaceBorder,
+              borderWidth: theme.shapes.borderThin,
+              borderRadius: theme.shapes.radiusMd,
+              padding: 3,
+              marginBottom: theme.spacing.lg,
             },
           ]}
         >
@@ -50,22 +57,25 @@ export default function TransferScreen() {
             onPress={() => setActiveTab("import")}
             style={[
               styles.tab,
-              activeTab === "import" && {
-                backgroundColor: colors.accent,
+              {
+                borderRadius: theme.shapes.radiusSm,
+                backgroundColor: activeTab === "import" ? theme.colors.accent : "transparent",
               },
             ]}
           >
             <Ionicons
-              name={activeTab === "export" ? "cloud-upload-outline" : "cloud-upload"}
+              name={activeTab === "import" ? "cloud-upload" : "cloud-upload-outline"}
               size={16}
-              color={activeTab === "import" ? "#fff" : colors.text}
+              color={activeTab === "import" ? theme.colors.textInverse : theme.colors.textPrimary}
             />
             <Text
               style={[
                 styles.tabText,
                 {
-                  color: activeTab === "import" ? "#fff" : colors.text,
-                  fontFamily: fontConfig.bold,
+                  color:
+                    activeTab === "import" ? theme.colors.textInverse : theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeMd,
                 },
               ]}
             >
@@ -77,22 +87,25 @@ export default function TransferScreen() {
             onPress={() => setActiveTab("export")}
             style={[
               styles.tab,
-              activeTab === "export" && {
-                backgroundColor: colors.accent,
+              {
+                borderRadius: theme.shapes.radiusSm,
+                backgroundColor: activeTab === "export" ? theme.colors.accent : "transparent",
               },
             ]}
           >
             <Ionicons
-              name={activeTab === "import" ? "cloud-download-outline" : "cloud-download"}
+              name={activeTab === "export" ? "cloud-download" : "cloud-download-outline"}
               size={16}
-              color={activeTab === "export" ? "#fff" : colors.text}
+              color={activeTab === "export" ? theme.colors.textInverse : theme.colors.textPrimary}
             />
             <Text
               style={[
                 styles.tabText,
                 {
-                  color: activeTab === "export" ? "#fff" : colors.text,
-                  fontFamily: fontConfig.bold,
+                  color:
+                    activeTab === "export" ? theme.colors.textInverse : theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeMd,
                 },
               ]}
             >
@@ -108,7 +121,7 @@ export default function TransferScreen() {
               from={{ opacity: 0, translateX: -20 }}
               animate={{ opacity: 1, translateX: 0 }}
               exit={{ opacity: 0, translateX: 20 }}
-              transition={{ type: "timing", duration: 200 }}
+              transition={{ type: "timing", duration: theme.animations.durationFast }}
               style={{ flex: 1 }}
             >
               <ImportTab />
@@ -119,7 +132,7 @@ export default function TransferScreen() {
               from={{ opacity: 0, translateX: 20 }}
               animate={{ opacity: 1, translateX: 0 }}
               exit={{ opacity: 0, translateX: -20 }}
-              transition={{ type: "timing", duration: 200 }}
+              transition={{ type: "timing", duration: theme.animations.durationFast }}
               style={{ flex: 1 }}
             >
               <ExportTab />
@@ -127,30 +140,23 @@ export default function TransferScreen() {
           )}
         </AnimatePresence>
       </MotiView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  container: { flex: 1, paddingHorizontal: 20 },
+  container: { flex: 1 },
   tabContainer: {
     flexDirection: "row",
-    borderRadius: 10,
-    padding: 3,
-    marginBottom: 16,
-    borderWidth: 1,
   },
   tab: {
     flex: 1,
     flexDirection: "row",
     paddingVertical: 10,
-    borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
-  tabText: {
-    fontSize: 14,
-  },
+  tabText: {},
 });

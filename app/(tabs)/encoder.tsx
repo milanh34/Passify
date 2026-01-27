@@ -11,17 +11,17 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
-  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
-import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { useAuth } from "../../src/context/AuthContext";
 import { useInactivityTracker } from "../../src/utils/inactivityTracker";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 import ProgressBar from "../../src/components/ProgressBar";
 import Toast from "../../src/components/Toast";
 import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti";
 import { encryptData } from "../../src/utils/crypto";
 import {
   calculateDimensions,
@@ -33,20 +33,17 @@ import {
 import { savePixelsAsPNG, getBase64FromUri } from "../../src/utils/image";
 import { saveFileWithSAF, shareFile } from "../../src/utils/safFileManager";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
-import { useAnimation } from "../../src/context/AnimationContext";
-import { MotiView } from "moti";
 import { Platform } from "react-native";
 import { log } from "@/src/utils/logger";
 
 export default function EncoderScreen() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const { database, schemas } = useDb();
   const insets = useSafeAreaInsets();
-  const { TAB_ANIMATION } = useAnimation();
-  const [animationKey, setAnimationKey] = useState(0);
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
 
+  const [animationKey, setAnimationKey] = useState(0);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [imageUri, setImageUri] = useState("");
@@ -57,8 +54,6 @@ export default function EncoderScreen() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "info" | "warning">("success");
-
-  const [downloadModalVisible, setDownloadModalVisible] = useState(false);
 
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate>({
     phase: "stringify",
@@ -238,7 +233,6 @@ export default function EncoderScreen() {
 
       const generatedFilename = `passify_backup_${Date.now()}.png`;
       let cacheUri: string;
-      let base64Content: string;
 
       try {
         const result = await savePixelsAsPNG(
@@ -257,7 +251,6 @@ export default function EncoderScreen() {
         );
 
         cacheUri = result.cacheUri;
-        base64Content = result.base64;
       } catch (error: any) {
         throw new Error(`Failed to save image: ${error.message}`);
       }
@@ -324,7 +317,6 @@ export default function EncoderScreen() {
 
     try {
       const base64Content = await getBase64FromUri(imageUri);
-
       const result = await saveFileWithSAF(filename, base64Content, "image/png");
 
       if (result.success) {
@@ -340,47 +332,97 @@ export default function EncoderScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <MotiView
         key={animationKey}
-        from={TAB_ANIMATION.from}
-        animate={TAB_ANIMATION.animate}
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
         transition={{
-          type: TAB_ANIMATION.type,
-          duration: TAB_ANIMATION.duration,
+          type: "timing",
+          duration: theme.animations.durationNormal,
         }}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingTop: insets.top + theme.spacing.xl,
+              paddingHorizontal: theme.spacing.xl,
+              paddingBottom: insets.bottom + theme.spacing.xxl,
+            },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.accent}
-              colors={[colors.accent]}
+              tintColor={theme.colors.accent}
+              colors={[theme.colors.accent]}
             />
           }
         >
-          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.typography.sizeXxl,
+                marginBottom: theme.spacing.sm,
+              },
+            ]}
+          >
             Encode to Image
           </Text>
-          <Text style={[styles.subtitle, { color: colors.muted, fontFamily: fontConfig.regular }]}>
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                color: theme.colors.textMuted,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeLg,
+                marginBottom: theme.spacing.xxl,
+              },
+            ]}
+          >
             Create an encrypted backup image from your account data
           </Text>
 
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+          <View style={[styles.section, { marginBottom: theme.spacing.lg }]}>
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeLg,
+                  marginBottom: theme.spacing.sm,
+                },
+              ]}
+            >
               Encryption Password
             </Text>
             <View
               style={[
                 styles.inputContainer,
-                { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderWidth: theme.shapes.borderThin,
+                  borderRadius: theme.components.input.radius,
+                  height: theme.components.input.height,
+                },
               ]}
             >
               <TextInput
-                style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
+                style={[
+                  styles.input,
+                  {
+                    color: theme.colors.textPrimary,
+                    fontFamily: theme.typography.fontRegular,
+                    fontSize: theme.components.input.fontSize,
+                  },
+                ]}
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
@@ -391,7 +433,7 @@ export default function EncoderScreen() {
                 secureTextEntry={!showPassword}
                 editable={!loading}
                 placeholder="Enter a strong password"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={theme.colors.textMuted}
               />
               <Pressable
                 onPress={() => {
@@ -402,71 +444,160 @@ export default function EncoderScreen() {
                 }}
                 style={styles.eyeIcon}
               >
-                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color={theme.colors.textMuted}
+                />
               </Pressable>
             </View>
           </View>
 
           {showProgress && (
-            <ProgressBar
-              percent={progressUpdate.percent}
-              phase={progressUpdate.phase}
-              processedBytes={progressUpdate.processedBytes}
-              totalBytes={progressUpdate.totalBytes}
-              visible={showProgress}
-            />
+            <View style={{ marginBottom: theme.spacing.lg }}>
+              <ProgressBar
+                percent={progressUpdate.percent}
+                phase={progressUpdate.phase}
+                processedBytes={progressUpdate.processedBytes}
+                totalBytes={progressUpdate.totalBytes}
+                visible={showProgress}
+              />
+            </View>
           )}
 
           <Pressable
             onPress={handleEncode}
             disabled={loading || !password.trim()}
-            style={[
+            style={({ pressed }) => [
               styles.button,
               {
-                backgroundColor: colors.accent,
-                opacity: loading || !password.trim() ? 0.5 : 1,
+                backgroundColor: theme.colors.buttonPrimary,
+                opacity: loading || !password.trim() ? 0.5 : pressed ? 0.8 : 1,
+                borderRadius: theme.components.button.radius,
+                height: theme.components.button.height,
+                marginBottom: theme.spacing.lg,
               },
             ]}
           >
             {loading && !imageUri ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={theme.colors.textInverse} />
             ) : (
-              <Ionicons name="lock-closed" size={20} color="#fff" />
+              <Ionicons name="lock-closed" size={20} color={theme.colors.textInverse} />
             )}
-            <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+            <Text
+              style={[
+                styles.buttonText,
+                {
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.components.button.fontSize,
+                  color: theme.colors.textInverse,
+                },
+              ]}
+            >
               Generate Encrypted Image
             </Text>
           </Pressable>
 
           {imageUri && !loading && (
-            <View style={styles.section}>
-              <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+            <MotiView
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "timing", duration: theme.animations.durationNormal }}
+              style={styles.section}
+            >
+              <Text
+                style={[
+                  styles.label,
+                  {
+                    color: theme.colors.textPrimary,
+                    fontFamily: theme.typography.fontRegular,
+                    fontSize: theme.typography.sizeLg,
+                    marginBottom: theme.spacing.sm,
+                  },
+                ]}
+              >
                 Generated Backup Image
               </Text>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="contain" />
+              <Image
+                source={{ uri: imageUri }}
+                style={[
+                  styles.imagePreview,
+                  {
+                    borderRadius: theme.shapes.radiusMd,
+                    borderWidth: theme.shapes.borderThin,
+                    borderColor: theme.colors.surfaceBorder,
+                  },
+                ]}
+                resizeMode="contain"
+              />
               <Text
-                style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}
+                style={[
+                  styles.fileInfo,
+                  {
+                    color: theme.colors.textMuted,
+                    fontFamily: theme.typography.fontRegular,
+                    fontSize: theme.typography.sizeSm,
+                    marginTop: theme.spacing.sm,
+                  },
+                ]}
               >
                 {filename}
               </Text>
 
-              <View style={styles.buttonRow}>
+              <View
+                style={[
+                  styles.buttonRow,
+                  { marginVertical: theme.spacing.md, gap: theme.spacing.md },
+                ]}
+              >
                 <Pressable
                   onPress={handleSharePress}
-                  style={[styles.buttonHalf, { backgroundColor: colors.accent2 }]}
+                  style={({ pressed }) => [
+                    styles.buttonHalf,
+                    {
+                      backgroundColor: theme.colors.accentSecondary,
+                      borderRadius: theme.components.button.radius,
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
                 >
-                  <Ionicons name="share-outline" size={20} color="#fff" />
-                  <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
+                  <Ionicons name="share-outline" size={20} color={theme.colors.textInverse} />
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      {
+                        fontFamily: theme.typography.fontBold,
+                        color: theme.colors.textInverse,
+                        marginLeft: 8,
+                      },
+                    ]}
+                  >
                     Share
                   </Text>
                 </Pressable>
 
                 <Pressable
                   onPress={handleDownloadPress}
-                  style={[styles.buttonHalf, { backgroundColor: colors.accent }]}
+                  style={({ pressed }) => [
+                    styles.buttonHalf,
+                    {
+                      backgroundColor: theme.colors.accent,
+                      borderRadius: theme.components.button.radius,
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
                 >
-                  <Ionicons name="download-outline" size={20} color="#fff" />
-                  <Text style={[styles.buttonText, { fontFamily: fontConfig.bold, marginLeft: 8 }]}>
+                  <Ionicons name="download-outline" size={20} color={theme.colors.textInverse} />
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      {
+                        fontFamily: theme.typography.fontBold,
+                        color: theme.colors.textInverse,
+                        marginLeft: 8,
+                      },
+                    ]}
+                  >
                     Download
                   </Text>
                 </Pressable>
@@ -476,13 +607,17 @@ export default function EncoderScreen() {
                 <Text
                   style={[
                     styles.infoText,
-                    { color: colors.accent, fontFamily: fontConfig.regular },
+                    {
+                      color: theme.colors.accent,
+                      fontFamily: theme.typography.fontRegular,
+                      fontSize: theme.typography.sizeMd,
+                    },
                   ]}
                 >
-                  💡 Download will let you choose where to save the file
+                  Download will let you choose where to save the file
                 </Text>
               )}
-            </View>
+            </MotiView>
           )}
         </ScrollView>
       </MotiView>
@@ -496,61 +631,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  section: {
-    marginVertical: 12,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
+  content: {},
+  title: {},
+  subtitle: {},
+  section: {},
+  label: {},
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
     paddingHorizontal: 16,
   },
   input: {
     flex: 1,
     paddingVertical: 14,
-    fontSize: 16,
   },
   eyeIcon: {
     paddingLeft: 12,
   },
   button: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginVertical: 12,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
+  buttonText: {},
   buttonRow: {
     flexDirection: "row",
-    gap: 12,
-    marginVertical: 12,
   },
   buttonHalf: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
@@ -558,20 +668,13 @@ const styles = StyleSheet.create({
   imagePreview: {
     width: "100%",
     height: 300,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
     marginTop: 8,
   },
   fileInfo: {
-    fontSize: 12,
-    marginTop: 8,
     fontStyle: "italic",
   },
   infoText: {
-    fontSize: 14,
     textAlign: "center",
-    marginTop: 12,
     paddingHorizontal: 16,
   },
 });

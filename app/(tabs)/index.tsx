@@ -18,7 +18,7 @@ import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { useAuth } from "../../src/context/AuthContext";
 import { useInactivityTracker } from "../../src/utils/inactivityTracker";
-import { useAnimation } from "../../src/context/AnimationContext";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 import FAB from "../../src/components/FAB";
 import FormModal from "../../src/components/FormModal";
 import DeleteModal from "../../src/components/DeleteModal";
@@ -35,7 +35,8 @@ import { log } from "@/src/utils/logger";
 const SORT_PREFERENCE_KEY = "@PM:sort_preference";
 
 export default function ManageScreen() {
-  const { colors, fontConfig, fontsLoaded } = useTheme();
+  const { fontsLoaded } = useTheme();
+  const theme = useAppTheme();
   const router = useRouter();
   const {
     database,
@@ -49,8 +50,6 @@ export default function ManageScreen() {
 
   const { isAuthEnabled } = useAuth();
   const { updateActivity } = useInactivityTracker(isAuthEnabled);
-
-  const { TAB_ANIMATION } = useAnimation();
 
   const [animationKey, setAnimationKey] = useState(0);
 
@@ -329,44 +328,57 @@ export default function ManageScreen() {
   if (isDbLoading || !fontsLoaded) {
     return (
       <View
-        style={{
-          ...styles.root,
-          backgroundColor: colors.bg[0],
-          paddingTop: insets.top,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
+        style={[
+          styles.root,
+          {
+            backgroundColor: theme.colors.background,
+            paddingTop: insets.top,
+            justifyContent: "center",
+            alignItems: "center",
+          },
+        ]}
       >
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={theme.colors.accent} />
       </View>
     );
   }
 
   return (
     <View
-      style={{
-        ...styles.root,
-        backgroundColor: colors.bg[0],
-        paddingTop: insets.top,
-      }}
+      style={[
+        styles.root,
+        {
+          backgroundColor: theme.colors.background,
+          paddingTop: insets.top,
+          paddingHorizontal: theme.spacing.screenPadding,
+        },
+      ]}
     >
       <MotiView
         key={animationKey}
-        from={TAB_ANIMATION.from}
-        animate={TAB_ANIMATION.animate}
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
         transition={{
-          type: TAB_ANIMATION.type,
-          duration: TAB_ANIMATION.duration,
+          type: "timing",
+          duration: theme.animations.durationNormal,
         }}
         style={{ flex: 1 }}
       >
-        <View style={styles.headerRow}>
+        <View
+          style={[
+            styles.headerRow,
+            { marginTop: theme.spacing.lg, marginBottom: theme.spacing.lg },
+          ]}
+        >
           <Text
-            style={{
-              ...styles.title,
-              color: colors.text,
-              fontFamily: fontConfig.bold,
-            }}
+            style={[
+              styles.title,
+              {
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.typography.sizeHero,
+              },
+            ]}
           >
             {isSelectionMode ? `${selectedPlatforms.size} Selected` : "Manage"}
           </Text>
@@ -377,18 +389,19 @@ export default function ManageScreen() {
                 style={[
                   styles.selectAllBtn,
                   {
-                    borderColor: colors.cardBorder,
-                    backgroundColor: colors.card,
+                    borderColor: theme.colors.surfaceBorder,
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.shapes.radiusMd,
                   },
                 ]}
-                android_ripple={{ color: colors.accent + "33" }}
+                android_ripple={{ color: theme.colors.accentMuted }}
               >
-                <Ionicons name="close-circle-outline" size={18} color={colors.accent} />
+                <Ionicons name="close-circle-outline" size={18} color={theme.colors.accent} />
                 <Text
                   style={{
-                    ...styles.selectAllText,
-                    color: colors.accent,
-                    fontFamily: fontConfig.bold,
+                    color: theme.colors.accent,
+                    fontFamily: theme.typography.fontBold,
+                    fontSize: theme.typography.sizeMd,
                   }}
                 >
                   Deselect All
@@ -400,18 +413,19 @@ export default function ManageScreen() {
                 style={[
                   styles.selectAllBtn,
                   {
-                    borderColor: colors.cardBorder,
-                    backgroundColor: colors.card,
+                    borderColor: theme.colors.surfaceBorder,
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.shapes.radiusMd,
                   },
                 ]}
-                android_ripple={{ color: colors.accent + "33" }}
+                android_ripple={{ color: theme.colors.accentMuted }}
               >
-                <Ionicons name="checkmark-done-outline" size={18} color={colors.accent} />
+                <Ionicons name="checkmark-done-outline" size={18} color={theme.colors.accent} />
                 <Text
                   style={{
-                    ...styles.selectAllText,
-                    color: colors.accent,
-                    fontFamily: fontConfig.bold,
+                    color: theme.colors.accent,
+                    fontFamily: theme.typography.fontBold,
+                    fontSize: theme.typography.sizeMd,
                   }}
                 >
                   Select All
@@ -424,18 +438,19 @@ export default function ManageScreen() {
               style={[
                 styles.settingsBtn,
                 {
-                  borderColor: colors.cardBorder,
-                  backgroundColor: colors.card,
+                  borderColor: theme.colors.surfaceBorder,
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: theme.shapes.radiusMd,
                 },
               ]}
-              android_ripple={{ color: colors.accent + "33" }}
+              android_ripple={{ color: theme.colors.accentMuted }}
             >
-              <Ionicons name="settings-outline" size={18} color={colors.accent} />
+              <Ionicons name="settings-outline" size={18} color={theme.colors.accent} />
               <Text
                 style={{
-                  ...styles.settingsBtnText,
-                  color: colors.accent,
-                  fontFamily: fontConfig.regular,
+                  color: theme.colors.accent,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeMd,
                 }}
               >
                 Settings
@@ -445,7 +460,7 @@ export default function ManageScreen() {
         </View>
 
         {!isSelectionMode && (
-          <View style={styles.searchSortRow}>
+          <View style={[styles.searchSortRow, { marginBottom: theme.spacing.sm }]}>
             <View style={styles.searchContainer}>
               <SearchBar
                 value={searchQuery}
@@ -459,24 +474,31 @@ export default function ManageScreen() {
               style={[
                 styles.sortButton,
                 {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.shapes.radiusMd,
+                  width: theme.components.input.height,
+                  height: theme.components.input.height,
                 },
               ]}
-              android_ripple={{ color: colors.accent + "22" }}
+              android_ripple={{ color: theme.colors.accentMuted }}
             >
-              <Ionicons name="funnel-outline" size={20} color={colors.accent} />
+              <Ionicons name="funnel-outline" size={20} color={theme.colors.accent} />
             </Pressable>
           </View>
         )}
 
         {!isSelectionMode && debouncedQuery.trim() && (
           <Text
-            style={{
-              ...styles.resultCount,
-              color: colors.muted,
-              fontFamily: fontConfig.regular,
-            }}
+            style={[
+              styles.resultCount,
+              {
+                color: theme.colors.textMuted,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeSm,
+                marginBottom: theme.spacing.md,
+              },
+            ]}
           >
             Showing {sortedPlatforms.length} of {platforms.length} platforms
           </Text>
@@ -491,8 +513,8 @@ export default function ManageScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.accent}
-              colors={[colors.accent]}
+              tintColor={theme.colors.accent}
+              colors={[theme.colors.accent]}
             />
           }
           renderItem={({ item, index }) => {
@@ -504,116 +526,142 @@ export default function ManageScreen() {
               matchInfo.matchedAccounts.length > 0;
 
             return (
-              <Pressable
-                onPress={() => handlePlatformPress(item.key, item.name)}
-                onLongPress={() => handleLongPress(item.key)}
-                delayLongPress={500}
-                android_ripple={{ color: colors.accent + "22" }}
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: selectedPlatforms.has(item.key)
-                      ? colors.accent
-                      : colors.cardBorder,
-                    borderWidth: selectedPlatforms.has(item.key) ? 2 : 1,
-                  },
-                ]}
+              <MotiView
+                from={{ opacity: 0, translateY: 30 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: "timing",
+                  duration: theme.animations.durationNormal,
+                  delay: index * theme.animations.listItemStagger,
+                }}
               >
-                {isSelectionMode && (
-                  <View style={styles.selectionIndicator}>
-                    <Ionicons
-                      name={
-                        selectedPlatforms.has(item.key) ? "checkmark-circle" : "ellipse-outline"
-                      }
-                      size={24}
-                      color={selectedPlatforms.has(item.key) ? colors.accent : colors.muted}
-                    />
-                  </View>
-                )}
-
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <PlatformIcon
-                      platformName={item.name}
-                      iconKey={item.icon}
-                      iconColor={item.iconColor}
-                      size={48}
-                    />
-                    <View style={styles.cardInfo}>
-                      <Text
-                        style={{
-                          ...styles.cardTitle,
-                          color: colors.text,
-                          fontFamily: fontConfig.bold,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {item.name}
-                      </Text>
-                      <Text
-                        style={{
-                          ...styles.cardSubtitle,
-                          color: colors.subtext,
-                          fontFamily: fontConfig.regular,
-                        }}
-                      >
-                        {item.count} account{item.count !== 1 ? "s" : ""}
-                      </Text>
-                      {showAccountMatchIndicator && (
-                        <Text
-                          style={{
-                            ...styles.matchIndicator,
-                            color: colors.accent,
-                            fontFamily: fontConfig.regular,
-                          }}
-                        >
-                          <Ionicons name="search" size={12} color={colors.accent} />{" "}
-                          {matchInfo.matchedAccounts!.length} matching account
-                          {matchInfo.matchedAccounts!.length !== 1 ? "s" : ""}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-
-                  {!isSelectionMode && (
-                    <View style={styles.actions}>
-                      <Pressable
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          setPlatformModal({
-                            visible: true,
-                            editing: item,
-                          });
-                          if (isAuthEnabled) {
-                            updateActivity();
-                          }
-                        }}
-                        style={styles.iconBtn}
-                        android_ripple={{ color: colors.accent + "33" }}
-                      >
-                        <Ionicons name="create-outline" size={20} color={colors.text} />
-                      </Pressable>
-                      <Pressable
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          setDeleteModal({
-                            visible: true,
-                            item,
-                          });
-                          if (isAuthEnabled) {
-                            updateActivity();
-                          }
-                        }}
-                        style={styles.iconBtn}
-                        android_ripple={{ color: colors.danger + "33" }}
-                      >
-                        <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                      </Pressable>
+                <Pressable
+                  onPress={() => handlePlatformPress(item.key, item.name)}
+                  onLongPress={() => handleLongPress(item.key)}
+                  delayLongPress={500}
+                  android_ripple={{ color: theme.colors.accentMuted }}
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: selectedPlatforms.has(item.key)
+                        ? theme.colors.accent
+                        : theme.colors.surfaceBorder,
+                      borderWidth: selectedPlatforms.has(item.key)
+                        ? theme.shapes.borderThick
+                        : theme.shapes.borderThin,
+                      borderRadius: theme.components.card.radius,
+                      padding: theme.components.card.padding,
+                      marginBottom: theme.spacing.md,
+                    },
+                  ]}
+                >
+                  {isSelectionMode && (
+                    <View style={styles.selectionIndicator}>
+                      <Ionicons
+                        name={
+                          selectedPlatforms.has(item.key) ? "checkmark-circle" : "ellipse-outline"
+                        }
+                        size={24}
+                        color={
+                          selectedPlatforms.has(item.key)
+                            ? theme.colors.accent
+                            : theme.colors.textMuted
+                        }
+                      />
                     </View>
                   )}
-                </View>
-              </Pressable>
+
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardLeft}>
+                      <PlatformIcon
+                        platformName={item.name}
+                        iconKey={item.icon}
+                        iconColor={item.iconColor}
+                        size={48}
+                      />
+                      <View style={styles.cardInfo}>
+                        <Text
+                          style={{
+                            color: theme.colors.textPrimary,
+                            fontFamily: theme.typography.fontBold,
+                            fontSize: theme.typography.sizeXl,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {item.name}
+                        </Text>
+                        <Text
+                          style={{
+                            color: theme.colors.textSecondary,
+                            fontFamily: theme.typography.fontRegular,
+                            fontSize: theme.typography.sizeMd,
+                            marginTop: 4,
+                          }}
+                        >
+                          {item.count} account{item.count !== 1 ? "s" : ""}
+                        </Text>
+                        {showAccountMatchIndicator && (
+                          <Text
+                            style={{
+                              color: theme.colors.accent,
+                              fontFamily: theme.typography.fontRegular,
+                              fontSize: theme.typography.sizeSm,
+                              marginTop: 4,
+                              fontStyle: "italic",
+                            }}
+                          >
+                            <Ionicons name="search" size={12} color={theme.colors.accent} />{" "}
+                            {matchInfo.matchedAccounts!.length} matching account
+                            {matchInfo.matchedAccounts!.length !== 1 ? "s" : ""}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+
+                    {!isSelectionMode && (
+                      <View style={styles.actions}>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            setPlatformModal({
+                              visible: true,
+                              editing: item,
+                            });
+                            if (isAuthEnabled) {
+                              updateActivity();
+                            }
+                          }}
+                          style={[styles.iconBtn, { borderRadius: theme.shapes.radiusMd }]}
+                          android_ripple={{ color: theme.colors.accentMuted }}
+                        >
+                          <Ionicons
+                            name="create-outline"
+                            size={20}
+                            color={theme.colors.textPrimary}
+                          />
+                        </Pressable>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            setDeleteModal({
+                              visible: true,
+                              item,
+                            });
+                            if (isAuthEnabled) {
+                              updateActivity();
+                            }
+                          }}
+                          style={[styles.iconBtn, { borderRadius: theme.shapes.radiusMd }]}
+                          android_ripple={{ color: theme.colors.error + "33" }}
+                        >
+                          <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              </MotiView>
             );
           }}
           ListEmptyComponent={
@@ -621,13 +669,15 @@ export default function ManageScreen() {
               <Ionicons
                 name={debouncedQuery.trim() ? "search-outline" : "folder-open-outline"}
                 size={64}
-                color={colors.muted}
+                color={theme.colors.textMuted}
               />
               <Text
                 style={{
-                  ...styles.emptyText,
-                  color: colors.subtext,
-                  fontFamily: fontConfig.regular,
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.typography.fontRegular,
+                  fontSize: theme.typography.sizeLg,
+                  textAlign: "center",
+                  paddingHorizontal: 32,
                 }}
               >
                 {debouncedQuery.trim()
@@ -641,15 +691,15 @@ export default function ManageScreen() {
 
       {isSelectionMode && selectedPlatforms.size > 0 ? (
         <>
-          <View style={{ ...styles.fabContainer, bottom: insets.bottom + 90 }}>
-            <FAB onPress={handleDeleteSelected} icon="trash" color={colors.danger} />
+          <View style={[styles.fabContainer, { bottom: insets.bottom + 90 }]}>
+            <FAB onPress={handleDeleteSelected} icon="trash" color={theme.colors.error} />
           </View>
-          <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
-            <FAB onPress={exitSelectionMode} icon="close" color={colors.cardBorder} />
+          <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
+            <FAB onPress={exitSelectionMode} icon="close" color={theme.colors.surfaceBorder} />
           </View>
         </>
       ) : (
-        <View style={{ ...styles.fabContainer, bottom: insets.bottom + 20 }}>
+        <View style={[styles.fabContainer, { bottom: insets.bottom + 20 }]}>
           <FAB
             onPress={() => {
               setPlatformModal({ visible: true });
@@ -658,7 +708,7 @@ export default function ManageScreen() {
               }
             }}
             icon="add"
-            color={colors.fab}
+            color={theme.colors.buttonPrimary}
           />
         </View>
       )}
@@ -694,27 +744,21 @@ export default function ManageScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 18 },
+  root: { flex: 1 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    marginTop: 16,
     paddingVertical: 10,
   },
-  title: { fontSize: 30 },
+  title: {},
   settingsBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 12,
     borderWidth: 1,
-  },
-  settingsBtnText: {
-    fontSize: 14,
   },
   selectAllBtn: {
     flexDirection: "row",
@@ -722,37 +766,24 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 12,
     borderWidth: 1,
-  },
-  selectAllText: {
-    fontSize: 14,
   },
   searchSortRow: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 8,
   },
   searchContainer: {
     flex: 1,
   },
   sortButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   resultCount: {
-    fontSize: 13,
-    marginBottom: 12,
     paddingHorizontal: 4,
   },
   card: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
     overflow: "hidden",
     position: "relative",
   },
@@ -770,19 +801,12 @@ const styles = StyleSheet.create({
   cardInfo: {
     flex: 1,
   },
-  cardTitle: { fontSize: 18 },
-  cardSubtitle: { fontSize: 14, marginTop: 4 },
-  matchIndicator: {
-    fontSize: 12,
-    marginTop: 4,
-    fontStyle: "italic",
-  },
   actions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  iconBtn: { padding: 8, borderRadius: 10 },
+  iconBtn: { padding: 8 },
   selectionIndicator: {
     position: "absolute",
     top: 12,
@@ -794,11 +818,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 60,
     gap: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: "center",
-    paddingHorizontal: 32,
   },
   fabContainer: {
     position: "absolute",

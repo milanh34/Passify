@@ -13,11 +13,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
-import { useTheme } from "../../src/context/ThemeContext";
 import { useDb } from "../../src/context/DbContext";
 import { useAuth } from "../../src/context/AuthContext";
 import { useInactivityTracker } from "../../src/utils/inactivityTracker";
+import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 import { Ionicons } from "@expo/vector-icons";
+import { MotiView } from "moti";
 import Toast from "../../src/components/Toast";
 import ProgressBar from "../../src/components/ProgressBar";
 import DecodedDataDisplay from "../../src/components/DecodedDataDisplay";
@@ -33,8 +34,6 @@ import {
 import { loadPNGAsPixels } from "../../src/utils/image";
 import { ThrottledProgress, ProgressUpdate } from "../../src/types/progress";
 import { generateExportText, toTitleCase } from "../../src/utils/transferParser";
-import { useAnimation } from "../../src/context/AnimationContext";
-import { MotiView } from "moti";
 import { log } from "@/src/utils/logger";
 
 interface DecodedData {
@@ -43,13 +42,12 @@ interface DecodedData {
 }
 
 export default function DecoderScreen() {
-  const { colors, fontConfig } = useTheme();
+  const theme = useAppTheme();
   const { database, schemas, addPlatform, addAccount, updateAccount, updatePlatformSchema } =
     useDb();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { TAB_ANIMATION } = useAnimation();
   const [animationKey, setAnimationKey] = useState(0);
 
   const { isAuthEnabled } = useAuth();
@@ -493,75 +491,131 @@ export default function DecoderScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg[0] }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <MotiView
         key={animationKey}
-        from={TAB_ANIMATION.from}
-        animate={TAB_ANIMATION.animate}
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
         transition={{
-          type: TAB_ANIMATION.type,
-          duration: TAB_ANIMATION.duration,
+          type: "timing",
+          duration: theme.animations.durationNormal,
         }}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 },
+            {
+              paddingTop: insets.top + theme.spacing.xl,
+              paddingBottom: insets.bottom + theme.spacing.xxl,
+              paddingHorizontal: theme.spacing.xl,
+              gap: theme.spacing.xxl,
+            },
           ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.accent}
-              colors={[colors.accent]}
+              tintColor={theme.colors.accent}
+              colors={[theme.colors.accent]}
             />
           }
         >
-          <Text style={[styles.title, { color: colors.text, fontFamily: fontConfig.bold }]}>
-            Decode from Image
-          </Text>
+          <View>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeXxl,
+                  marginBottom: theme.spacing.sm,
+                },
+              ]}
+            >
+              Decode from Image
+            </Text>
 
-          <Text
-            style={[styles.description, { color: colors.muted, fontFamily: fontConfig.regular }]}
-          >
-            Recover your account data from a colored encrypted image.
-          </Text>
+            <Text
+              style={{
+                color: theme.colors.textMuted,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeLg,
+              }}
+            >
+              Recover your account data from a colored encrypted image.
+            </Text>
+          </View>
 
           <Pressable
             onPress={handlePickImage}
             disabled={loading}
-            style={[styles.button, { backgroundColor: colors.accent2, opacity: loading ? 0.7 : 1 }]}
+            style={({ pressed }) => [
+              styles.button,
+              {
+                backgroundColor: theme.colors.accentSecondary,
+                opacity: loading ? 0.7 : pressed ? 0.8 : 1,
+                borderRadius: theme.components.button.radius,
+                height: theme.components.button.height,
+              },
+            ]}
           >
-            <Ionicons name="folder-open" size={20} color="#fff" />
-            <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+            <Ionicons name="folder-open" size={20} color={theme.colors.textInverse} />
+            <Text
+              style={{
+                fontFamily: theme.typography.fontBold,
+                fontSize: theme.components.button.fontSize,
+                color: theme.colors.textInverse,
+              }}
+            >
               {imageUri ? "Change Image" : "Select Image"}
             </Text>
           </Pressable>
 
           {imageUri && (
             <Text
-              style={[styles.fileInfo, { color: colors.muted, fontFamily: fontConfig.regular }]}
+              style={{
+                color: theme.colors.textMuted,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeMd,
+                fontStyle: "italic",
+              }}
             >
-              📄 {imageUri.split("/").pop()}
+              {imageUri.split("/").pop()}
             </Text>
           )}
 
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}>
+          <View style={[styles.section, { gap: theme.spacing.sm }]}>
+            <Text
+              style={{
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontRegular,
+                fontSize: theme.typography.sizeLg,
+              }}
+            >
               Password
             </Text>
             <View
               style={[
                 styles.inputContainer,
                 {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderWidth: theme.shapes.borderThin,
+                  borderRadius: theme.components.input.radius,
+                  height: theme.components.input.height,
                 },
               ]}
             >
               <TextInput
-                style={[styles.input, { color: colors.text, fontFamily: fontConfig.regular }]}
+                style={[
+                  styles.input,
+                  {
+                    color: theme.colors.textPrimary,
+                    fontFamily: theme.typography.fontRegular,
+                    fontSize: theme.components.input.fontSize,
+                  },
+                ]}
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
@@ -570,7 +624,7 @@ export default function DecoderScreen() {
                   }
                 }}
                 placeholder="Enter decryption password"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={theme.colors.textMuted}
                 secureTextEntry={!showPassword}
                 editable={!loading}
               />
@@ -583,7 +637,11 @@ export default function DecoderScreen() {
                 }}
                 style={styles.eyeIcon}
               >
-                <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.muted} />
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color={theme.colors.textMuted}
+                />
               </Pressable>
             </View>
           </View>
@@ -601,20 +659,28 @@ export default function DecoderScreen() {
           <Pressable
             onPress={handleDecode}
             disabled={loading || !imageUri}
-            style={[
+            style={({ pressed }) => [
               styles.button,
               {
-                backgroundColor: colors.accent,
-                opacity: !imageUri || loading ? 0.5 : 1,
+                backgroundColor: theme.colors.buttonPrimary,
+                opacity: !imageUri || loading ? 0.5 : pressed ? 0.8 : 1,
+                borderRadius: theme.components.button.radius,
+                height: theme.components.button.height,
               },
             ]}
           >
             {loading && !decodedData ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={theme.colors.textInverse} />
             ) : (
               <>
-                <Ionicons name="lock-open" size={20} color="#fff" />
-                <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                <Ionicons name="lock-open" size={20} color={theme.colors.textInverse} />
+                <Text
+                  style={{
+                    fontFamily: theme.typography.fontBold,
+                    fontSize: theme.components.button.fontSize,
+                    color: theme.colors.textInverse,
+                  }}
+                >
                   Decode Image
                 </Text>
               </>
@@ -622,42 +688,73 @@ export default function DecoderScreen() {
           </Pressable>
 
           {decodedData && !loading && (
-            <View style={styles.section}>
+            <MotiView
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "timing", duration: theme.animations.durationNormal }}
+              style={[styles.section, { gap: theme.spacing.md }]}
+            >
               <View
                 style={[
                   styles.successCard,
-                  { backgroundColor: colors.card, borderColor: colors.accent },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.accent,
+                    borderWidth: theme.shapes.borderThick,
+                    borderRadius: theme.components.card.radius,
+                    padding: theme.spacing.xxl,
+                  },
                 ]}
               >
-                <Ionicons name="checkmark-circle" size={48} color={colors.accent} />
+                <Ionicons name="checkmark-circle" size={48} color={theme.colors.accent} />
                 <Text
-                  style={[styles.successText, { color: colors.text, fontFamily: fontConfig.bold }]}
+                  style={{
+                    color: theme.colors.textPrimary,
+                    fontFamily: theme.typography.fontBold,
+                    fontSize: theme.typography.sizeXl,
+                    textAlign: "center",
+                  }}
                 >
                   Decoding Successful!
                 </Text>
                 <Text
-                  style={[
-                    styles.successSubtext,
-                    { color: colors.muted, fontFamily: fontConfig.regular },
-                  ]}
+                  style={{
+                    color: theme.colors.textMuted,
+                    fontFamily: theme.typography.fontRegular,
+                    fontSize: theme.typography.sizeMd,
+                    textAlign: "center",
+                  }}
                 >
                   {Object.keys(decodedData.database).length} platforms •{" "}
                   {Object.values(decodedData.database).flat().length} accounts
                 </Text>
               </View>
 
-              <View style={styles.actionButtons}>
+              <View style={[styles.actionButtons, { gap: theme.spacing.md }]}>
                 <Pressable
                   onPress={handleImportToAccounts}
                   disabled={loading}
-                  style={[styles.button, styles.primaryAction, { backgroundColor: colors.accent }]}
+                  style={({ pressed }) => [
+                    styles.button,
+                    {
+                      backgroundColor: theme.colors.buttonPrimary,
+                      borderRadius: theme.components.button.radius,
+                      height: theme.components.button.height,
+                      opacity: loading ? 0.6 : pressed ? 0.8 : 1,
+                    },
+                  ]}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={theme.colors.textInverse} size="small" />
                   ) : (
                     <>
-                      <Ionicons name="cloud-upload" size={20} color="#fff" />
-                      <Text style={[styles.buttonText, { fontFamily: fontConfig.bold }]}>
+                      <Ionicons name="cloud-upload" size={20} color={theme.colors.textInverse} />
+                      <Text
+                        style={{
+                          fontFamily: theme.typography.fontBold,
+                          color: theme.colors.textInverse,
+                        }}
+                      >
                         Import to Accounts
                       </Text>
                     </>
@@ -667,22 +764,24 @@ export default function DecoderScreen() {
                 {viewMode === "formatted" ? (
                   <Pressable
                     onPress={handleGetFormattedText}
-                    style={[
+                    style={({ pressed }) => [
                       styles.button,
-                      styles.secondaryAction,
                       {
-                        backgroundColor: colors.card,
-                        borderColor: colors.cardBorder,
-                        borderWidth: 1,
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.surfaceBorder,
+                        borderWidth: theme.shapes.borderThin,
+                        borderRadius: theme.components.button.radius,
+                        height: theme.components.button.height,
+                        opacity: pressed ? 0.8 : 1,
                       },
                     ]}
                   >
-                    <Ionicons name="document-text" size={20} color={colors.text} />
+                    <Ionicons name="document-text" size={20} color={theme.colors.textPrimary} />
                     <Text
-                      style={[
-                        styles.buttonText,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
+                      style={{
+                        color: theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontBold,
+                      }}
                     >
                       Get Text Export
                     </Text>
@@ -690,22 +789,24 @@ export default function DecoderScreen() {
                 ) : (
                   <Pressable
                     onPress={handleShowFormatted}
-                    style={[
+                    style={({ pressed }) => [
                       styles.button,
-                      styles.secondaryAction,
                       {
-                        backgroundColor: colors.card,
-                        borderColor: colors.cardBorder,
-                        borderWidth: 1,
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.surfaceBorder,
+                        borderWidth: theme.shapes.borderThin,
+                        borderRadius: theme.components.button.radius,
+                        height: theme.components.button.height,
+                        opacity: pressed ? 0.8 : 1,
                       },
                     ]}
                   >
-                    <Ionicons name="list" size={20} color={colors.text} />
+                    <Ionicons name="list" size={20} color={theme.colors.textPrimary} />
                     <Text
-                      style={[
-                        styles.buttonText,
-                        { color: colors.text, fontFamily: fontConfig.bold },
-                      ]}
+                      style={{
+                        color: theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontBold,
+                      }}
                     >
                       Show Formatted View
                     </Text>
@@ -719,23 +820,25 @@ export default function DecoderScreen() {
                   onCopyField={(value) => showToastMessage("Copied to clipboard", "info")}
                 />
               ) : (
-                <View style={styles.section}>
+                <View style={[styles.section, { gap: theme.spacing.sm }]}>
                   <View style={styles.labelRow}>
                     <Text
-                      style={[styles.label, { color: colors.text, fontFamily: fontConfig.regular }]}
+                      style={{
+                        color: theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontRegular,
+                        fontSize: theme.typography.sizeLg,
+                      }}
                     >
                       Text Export
                     </Text>
                     <Pressable onPress={handleCopyText} style={styles.copyButton}>
-                      <Ionicons name="copy-outline" size={18} color={colors.accent} />
+                      <Ionicons name="copy-outline" size={18} color={theme.colors.accent} />
                       <Text
-                        style={[
-                          styles.copyText,
-                          {
-                            color: colors.accent,
-                            fontFamily: fontConfig.regular,
-                          },
-                        ]}
+                        style={{
+                          color: theme.colors.accent,
+                          fontFamily: theme.typography.fontRegular,
+                          fontSize: theme.typography.sizeMd,
+                        }}
                       >
                         Copy All
                       </Text>
@@ -746,24 +849,29 @@ export default function DecoderScreen() {
                     style={[
                       styles.outputBox,
                       {
-                        backgroundColor: colors.card,
-                        borderColor: colors.cardBorder,
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.surfaceBorder,
+                        borderWidth: theme.shapes.borderThin,
+                        borderRadius: theme.shapes.radiusMd,
+                        padding: theme.spacing.lg,
                       },
                     ]}
                     nestedScrollEnabled
                   >
                     <Text
-                      style={[
-                        styles.outputText,
-                        { color: colors.text, fontFamily: fontConfig.regular },
-                      ]}
+                      style={{
+                        color: theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontRegular,
+                        fontSize: theme.typography.sizeMd,
+                        lineHeight: 20,
+                      }}
                     >
                       {exportText}
                     </Text>
                   </ScrollView>
                 </View>
               )}
-            </View>
+            </MotiView>
           )}
         </ScrollView>
       </MotiView>
@@ -777,42 +885,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    padding: 20,
-    gap: 24,
-  },
-  title: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  section: {
-    gap: 12,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  labelRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
+  content: {},
+  title: {},
+  section: {},
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
-    borderWidth: 1,
     paddingHorizontal: 16,
   },
   input: {
     flex: 1,
     paddingVertical: 16,
-    fontSize: 16,
   },
   eyeIcon: {
     padding: 8,
@@ -822,46 +905,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  fileInfo: {
-    fontSize: 14,
-    fontStyle: "italic",
   },
   successCard: {
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 2,
     alignItems: "center",
     gap: 8,
   },
-  successText: {
-    fontSize: 20,
-    textAlign: "center",
-  },
-  successSubtext: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  actionButtons: {
-    gap: 12,
-  },
-  primaryAction: {},
-  secondaryAction: {},
-  outputBox: {
-    maxHeight: 300,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-  },
-  outputText: {
-    fontSize: 14,
-    lineHeight: 20,
+  actionButtons: {},
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   copyButton: {
     flexDirection: "row",
@@ -869,7 +922,7 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: 8,
   },
-  copyText: {
-    fontSize: 14,
+  outputBox: {
+    maxHeight: 300,
   },
 });
