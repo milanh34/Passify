@@ -52,7 +52,7 @@ export default function PINInputModal({
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (visible) {
+    if (visible && mode === "unlock") {
       checkAndUpdateLockoutStatus();
     }
 
@@ -61,7 +61,7 @@ export default function PINInputModal({
         clearInterval(countdownIntervalRef.current);
       }
     };
-  }, [visible]);
+  }, [visible, mode]);
 
   useEffect(() => {
     if (isLockedOut && lockoutRemainingMs > 0) {
@@ -135,7 +135,7 @@ export default function PINInputModal({
   const handleSubmit = async (pinToSubmit?: string) => {
     const currentPin = pinToSubmit || pin;
 
-    if (isLockedOut) {
+    if (mode === "unlock" && isLockedOut) {
       setError(`Locked out. Wait ${formatRemainingTime(lockoutRemainingMs)}`);
       Vibration.vibrate(100);
       return;
@@ -157,21 +157,27 @@ export default function PINInputModal({
     setIsVerifying(true);
     setIsLoading(true);
 
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     try {
       const success = await onSubmit(currentPin);
 
       if (!success) {
-        await checkAndUpdateLockoutStatus();
+        if (mode === "unlock") {
+          await checkAndUpdateLockoutStatus();
 
-        if (isLockedOut) {
-          setError(`Too many attempts. Wait ${formatRemainingTime(lockoutRemainingMs)}`);
-        } else {
-          const nextLockout = await getAttemptsUntilNextLockout();
-          if (nextLockout.attemptsRemaining <= 3) {
-            setError(`Incorrect PIN. ${nextLockout.attemptsRemaining} attempts remaining.`);
+          if (isLockedOut) {
+            setError(`Too many attempts. Wait ${formatRemainingTime(lockoutRemainingMs)}`);
           } else {
-            setError("Incorrect PIN. Try again.");
+            const nextLockout = await getAttemptsUntilNextLockout();
+            if (nextLockout.attemptsRemaining <= 3) {
+              setError(`Incorrect PIN. ${nextLockout.attemptsRemaining} attempts remaining.`);
+            } else {
+              setError("Incorrect PIN. Try again.");
+            }
           }
+        } else {
+          setError("Failed to set PIN. Try again.");
         }
 
         setPin("");
@@ -185,6 +191,17 @@ export default function PINInputModal({
       setPin("");
       setIsLoading(false);
       setIsVerifying(false);
+    }
+  };
+
+  const getLoadingText = () => {
+    switch (mode) {
+      case "setup":
+        return "Setting up PIN...";
+      case "change":
+        return "Updating PIN...";
+      default:
+        return "Verifying PIN...";
     }
   };
 
@@ -300,7 +317,7 @@ export default function PINInputModal({
   };
 
   const renderLockoutOverlay = () => {
-    if (!isLockedOut) return null;
+    if (!isLockedOut || mode !== "unlock") return null;
 
     return (
       <MotiView
@@ -388,7 +405,7 @@ export default function PINInputModal({
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ type: "timing", duration: 150 }}
+        transition={{ type: "timing", duration: 100 }}
         style={styles.loadingOverlay}
       >
         <View
@@ -411,7 +428,7 @@ export default function PINInputModal({
               },
             ]}
           >
-            Verifying PIN...
+            {getLoadingText()}
           </Text>
         </View>
       </MotiView>
@@ -488,7 +505,8 @@ export default function PINInputModal({
             )}
           </AnimatePresence>
 
-          {!isLockedOut &&
+          {mode === "unlock" &&
+            !isLockedOut &&
             attemptsRemaining > 0 &&
             attemptsRemaining <= 3 &&
             failedAttempts > 0 && (
@@ -542,7 +560,7 @@ export default function PINInputModal({
                       },
                     ]}
                   >
-                    Submit
+                    {mode === "setup" ? "Set PIN" : "Update PIN"}
                   </Text>
                 )}
               </Pressable>

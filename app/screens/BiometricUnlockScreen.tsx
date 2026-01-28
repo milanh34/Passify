@@ -9,7 +9,7 @@ import { useAuth } from "../../src/context/AuthContext";
 import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 import { authenticateWithBiometric } from "../../src/utils/biometricAuth";
 import { verifyPINWithDetails, getPINLockoutStatus } from "../../src/utils/pinCode";
-import { formatRemainingTime } from "../../src/utils/pinAttemptTracker";
+import { formatRemainingTime, recordSuccessfulAttempt } from "../../src/utils/pinAttemptTracker";
 import {
   preventScreenCapture,
   allowScreenCapture,
@@ -115,6 +115,7 @@ export default function BiometricUnlockScreen() {
     setIsAuthenticating(false);
 
     if (result.success) {
+      await recordSuccessfulAttempt();
       await unlock("biometric");
     } else {
       if (result.error === "Authentication cancelled") {

@@ -12,7 +12,7 @@ import { log } from "./logger";
 const PIN_HASH_KEY = "Passify_pin_hash";
 const PIN_SALT_KEY = "Passify_pin_salt";
 
-const PIN_HASH_ITERATIONS = 50000;
+const PIN_HASH_ITERATIONS = 10000;
 
 export interface PINValidation {
   isValid: boolean;
