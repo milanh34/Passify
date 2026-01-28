@@ -83,7 +83,7 @@ export const retroTheme: CompleteTheme = {
     listItemPadding: 14,
     modalPadding: 24,
     headerHeight: 64,
-    tabBarHeight: 72,
+    tabBarHeight: 86,
   },
 
   shapes: {
@@ -240,7 +240,7 @@ export const retroTheme: CompleteTheme = {
       backButtonRadius: 4,
     },
     tabBar: {
-      height: 72,
+      height: 86,
       iconSize: 22,
       labelSize: 11,
       indicatorStyle: "underline",
@@ -249,7 +249,7 @@ export const retroTheme: CompleteTheme = {
       radius: 4,
       padding: 14,
       position: "bottom",
-      offset: 28,
+      offset: 100,
     },
     listItem: {
       minHeight: 54,

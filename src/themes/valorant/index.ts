@@ -83,7 +83,7 @@ export const valorantTheme: CompleteTheme = {
     listItemPadding: 12,
     modalPadding: 20,
     headerHeight: 64,
-    tabBarHeight: 64,
+    tabBarHeight: 80,
   },
 
   shapes: {
@@ -240,7 +240,7 @@ export const valorantTheme: CompleteTheme = {
       backButtonRadius: 0,
     },
     tabBar: {
-      height: 64,
+      height: 80,
       iconSize: 20,
       labelSize: 10,
       indicatorStyle: "underline",
@@ -249,7 +249,7 @@ export const valorantTheme: CompleteTheme = {
       radius: 0,
       padding: 12,
       position: "top",
-      offset: 20,
+      offset: 60,
     },
     listItem: {
       minHeight: 48,

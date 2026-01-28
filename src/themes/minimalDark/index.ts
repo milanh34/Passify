@@ -83,7 +83,7 @@ export const minimalDarkTheme: CompleteTheme = {
     listItemPadding: 16,
     modalPadding: 28,
     headerHeight: 64,
-    tabBarHeight: 72,
+    tabBarHeight: 86,
   },
 
   shapes: {
@@ -222,7 +222,7 @@ export const minimalDarkTheme: CompleteTheme = {
       backButtonRadius: 10,
     },
     tabBar: {
-      height: 72,
+      height: 86,
       iconSize: 22,
       labelSize: 11,
       indicatorStyle: "none",
@@ -231,7 +231,7 @@ export const minimalDarkTheme: CompleteTheme = {
       radius: 8,
       padding: 16,
       position: "bottom",
-      offset: 32,
+      offset: 100,
     },
     listItem: {
       minHeight: 56,

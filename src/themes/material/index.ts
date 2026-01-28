@@ -83,7 +83,7 @@ export const materialTheme: CompleteTheme = {
     listItemPadding: 16,
     modalPadding: 24,
     headerHeight: 64,
-    tabBarHeight: 80,
+    tabBarHeight: 92,
   },
 
   shapes: {
@@ -246,7 +246,7 @@ export const materialTheme: CompleteTheme = {
       backButtonRadius: 12,
     },
     tabBar: {
-      height: 80,
+      height: 92,
       iconSize: 24,
       labelSize: 12,
       indicatorStyle: "background",
@@ -255,7 +255,7 @@ export const materialTheme: CompleteTheme = {
       radius: 4,
       padding: 14,
       position: "bottom",
-      offset: 24,
+      offset: 100,
     },
     listItem: {
       minHeight: 56,

@@ -3,14 +3,18 @@
 import { Tabs, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 
 export default function TabsLayout() {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const segments = useSegments();
 
   const isOnAccounts = segments[segments.length - 1] === "accounts";
   const isOnConnectedAccounts = segments[segments.length - 1] === "connected-accounts";
+
+  const tabBarBottomPadding = Math.max(insets.bottom, 12);
 
   return (
     <Tabs
@@ -21,8 +25,9 @@ export default function TabsLayout() {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.surfaceBorder,
           borderTopWidth: theme.shapes.borderThin,
-          height: theme.components.tabBar.height,
-          paddingBottom: 10,
+          height: theme.components.tabBar.height + tabBarBottomPadding,
+          paddingBottom: tabBarBottomPadding,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontFamily: theme.typography.fontBold,

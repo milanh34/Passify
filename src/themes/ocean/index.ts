@@ -83,7 +83,7 @@ export const oceanTheme: CompleteTheme = {
     listItemPadding: 18,
     modalPadding: 26,
     headerHeight: 66,
-    tabBarHeight: 78,
+    tabBarHeight: 90,
   },
 
   shapes: {
@@ -243,7 +243,7 @@ export const oceanTheme: CompleteTheme = {
       backButtonRadius: 14,
     },
     tabBar: {
-      height: 78,
+      height: 90,
       iconSize: 24,
       labelSize: 11,
       indicatorStyle: "dot",
@@ -252,7 +252,7 @@ export const oceanTheme: CompleteTheme = {
       radius: 14,
       padding: 16,
       position: "bottom",
-      offset: 34,
+      offset: 110,
     },
     listItem: {
       minHeight: 62,

@@ -83,7 +83,7 @@ export const duskTheme: CompleteTheme = {
     listItemPadding: 16,
     modalPadding: 24,
     headerHeight: 64,
-    tabBarHeight: 72,
+    tabBarHeight: 86,
   },
 
   shapes: {
@@ -246,7 +246,7 @@ export const duskTheme: CompleteTheme = {
       backButtonRadius: 10,
     },
     tabBar: {
-      height: 72,
+      height: 86,
       iconSize: 22,
       labelSize: 11,
       indicatorStyle: "background",
@@ -255,7 +255,7 @@ export const duskTheme: CompleteTheme = {
       radius: 12,
       padding: 14,
       position: "bottom",
-      offset: 28,
+      offset: 100,
     },
     listItem: {
       minHeight: 56,
