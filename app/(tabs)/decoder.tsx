@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 10,
   },
   eyeIcon: {
     padding: 8,

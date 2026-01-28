@@ -1,6 +1,14 @@
 // src/themes/types.ts
 
-export type GlobalThemeName = "original" | "material" | "valorant" | "minimal" | "minimalDark" | "retro" | "dusk" | "ocean";
+export type GlobalThemeName =
+  | "original"
+  | "material"
+  | "valorant"
+  | "minimal"
+  | "minimalDark"
+  | "retro"
+  | "dusk"
+  | "ocean";
 
 export interface ThemeColors {
   background: string;

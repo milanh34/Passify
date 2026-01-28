@@ -88,10 +88,10 @@ export const duskTheme: CompleteTheme = {
 
   shapes: {
     radiusNone: 0,
-    radiusSm: 8,
-    radiusMd: 12,
-    radiusLg: 16,
-    radiusXl: 24,
+    radiusSm: 10,
+    radiusMd: 15,
+    radiusLg: 18,
+    radiusXl: 28,
     radiusFull: 9999,
 
     cardRadius: 16,
@@ -210,13 +210,13 @@ export const duskTheme: CompleteTheme = {
       border: "#5F5888",
       borderWidth: 1,
       padding: 16,
-      radius: 16,
+      radius: 28,
       shadow: "sm",
     },
     button: {
       height: 52,
       paddingHorizontal: 24,
-      radius: 12,
+      radius: 28,
       fontWeight: "600",
       fontSize: 14,
       letterSpacing: 0.1,
@@ -224,7 +224,7 @@ export const duskTheme: CompleteTheme = {
     input: {
       height: 52,
       paddingHorizontal: 16,
-      radius: 12,
+      radius: 32,
       borderWidth: 1,
       fontSize: 15,
     },

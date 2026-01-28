@@ -103,7 +103,7 @@ export function useAppTheme(): AppThemeValues {
   const { colors: legacyColors, fontConfig, mode } = themeContext;
   const { currentTheme, theme: globalTheme } = globalThemeContext;
 
-  const themeKey = `${currentTheme}-${mode}-${legacyColors.name}-${(globalTheme as any)._version || 0}`;
+  const themeVersion = (globalTheme as any)._version || 0;
 
   return useMemo(() => {
     const isOriginal = currentTheme === "original";
@@ -324,5 +324,5 @@ export function useAppTheme(): AppThemeValues {
       globalThemeName: currentTheme,
       isDark: gt.isDark,
     };
-  }, [themeKey, currentTheme, globalTheme, legacyColors, fontConfig, mode]);
+  }, [currentTheme, globalTheme, themeVersion, legacyColors, fontConfig, mode]);
 }

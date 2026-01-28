@@ -32,15 +32,14 @@ export function GlobalThemeProvider({ children }: { children: React.ReactNode })
     }
   };
 
-  const setTheme = useCallback(async (themeName: GlobalThemeName) => {
-    try {
-      await AsyncStorage.setItem(GLOBAL_THEME_KEY, themeName);
-      setCurrentTheme(themeName);
-      setThemeVersion((v) => v + 1);
-      log.info(`Global theme changed to: ${themeName}`);
-    } catch (error) {
+  const setTheme = useCallback((themeName: GlobalThemeName) => {
+    setCurrentTheme(themeName);
+    setThemeVersion((v) => v + 1);
+    log.info(`Global theme changed to: ${themeName}`);
+
+    AsyncStorage.setItem(GLOBAL_THEME_KEY, themeName).catch((error) => {
       log.error("Failed to save global theme:", error);
-    }
+    });
   }, []);
 
   const theme = useMemo(() => {

@@ -472,7 +472,6 @@ function AnimationPreviewCard({
   const rotate = useSharedValue(0);
 
   useEffect(() => {
-    // Reset all values
     translateX.value = 0;
     translateY.value = 0;
     scale.value = 1;

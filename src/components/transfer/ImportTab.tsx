@@ -59,6 +59,7 @@ export default function ImportTab() {
 
   const globalResolutionRef = useRef<ConflictResolution | null>(null);
   const resolutionCallbackRef = useRef<((action: ConflictResolution) => void) | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const showToastMessage = (
     message: string,
@@ -598,26 +599,48 @@ export default function ImportTab() {
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.expandModalContent}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
           >
-            <TextInput
-              value={expandedText}
-              onChangeText={setExpandedText}
-              placeholder="Paste your data here..."
-              placeholderTextColor={theme.colors.textMuted}
-              multiline
-              autoFocus
+            <ScrollView
+              ref={scrollViewRef}
               style={[
-                styles.expandedTextInput,
+                styles.expandedScrollContainer,
                 {
-                  color: theme.colors.textPrimary,
-                  fontFamily: theme.typography.fontRegular,
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.surfaceBorder,
                   borderRadius: theme.shapes.radiusMd,
                 },
               ]}
-              textAlignVertical="top"
-            />
+              contentContainerStyle={styles.expandedScrollContent}
+              showsVerticalScrollIndicator={true}
+              indicatorStyle={theme.isDark ? "white" : "black"}
+              scrollEventThrottle={16}
+              decelerationRate="normal"
+              bounces={true}
+              overScrollMode="always"
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+            >
+              <TextInput
+                value={expandedText}
+                onChangeText={setExpandedText}
+                placeholder="Paste your data here..."
+                placeholderTextColor={theme.colors.textMuted}
+                multiline
+                autoFocus
+                scrollEnabled={false}
+                style={[
+                  styles.expandedTextInput,
+                  {
+                    color: theme.colors.textPrimary,
+                    fontFamily: theme.typography.fontRegular,
+                    backgroundColor: "transparent",
+                  },
+                ]}
+                textAlignVertical="top"
+              />
+            </ScrollView>
           </KeyboardAvoidingView>
 
           <View
@@ -790,12 +813,19 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  expandedScrollContainer: {
+    flex: 1,
+    borderWidth: 1,
+  },
+  expandedScrollContent: {
+    flexGrow: 1,
+    padding: 16,
+  },
   expandedTextInput: {
     flex: 1,
     fontSize: 14,
     lineHeight: 22,
-    padding: 16,
-    borderWidth: 1,
+    minHeight: 300,
   },
   expandModalFooter: {
     flexDirection: "row",
