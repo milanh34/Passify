@@ -1,4 +1,4 @@
-// app/onboarding/Slide4ManageAccounts.tsx
+// app/onboarding/Slide4ManageAccounts.tsx - VERSION 2 (Professional)
 
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
@@ -7,49 +7,18 @@ import { MotiView } from "moti";
 import Animated, { useAnimatedStyle, useSharedValue, interpolate } from "react-native-reanimated";
 import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
 
-const features = [
-  {
-    icon: "add-circle",
-    title: "Add Accounts",
-    description:
-      "Use the + button to add individual accounts, or use the Transfer tab to import accounts in bulk from external sources.",
-  },
-  {
-    icon: "create",
-    title: "Edit Accounts",
-    description:
-      "Tap any account card to expand it, then tap the edit icon to modify usernames, passwords, or platform details.",
-  },
-  {
-    icon: "trash",
-    title: "Delete Accounts",
-    description:
-      "Remove accounts you no longer need. Expand a card and tap the delete icon to remove it permanently.",
-  },
-  {
-    icon: "search",
-    title: "Search Accounts",
-    description:
-      "Quickly find any account using the search bar. Search by platform name, username, or any keyword.",
-  },
-  {
-    icon: "funnel",
-    title: "Sort & Filter",
-    description:
-      "Organize your accounts by date added, platform name, alphabetically, or custom sorting preferences.",
-  },
-  {
-    icon: "shield-checkmark",
-    title: "Encrypt Data",
-    description:
-      "Encrypt your entire credential database into a secure image format using your master password.",
-  },
-  {
-    icon: "key",
-    title: "Decrypt Data",
-    description:
-      "Decrypt your encrypted image back to access all your credentials using your master password.",
-  },
+const capabilities = [
+  { icon: "add-circle", label: "Add", desc: "Create accounts with custom fields" },
+  { icon: "create", label: "Edit", desc: "Update credentials anytime" },
+  { icon: "trash", label: "Delete", desc: "Remove or bulk delete" },
+  { icon: "search", label: "Search", desc: "Find anything instantly" },
+  { icon: "funnel", label: "Sort", desc: "Organize your way" },
+  { icon: "link", label: "Connect", desc: "View related accounts" },
+];
+
+const formats = [
+  { icon: "calendar", title: "Date Formats", options: ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"] },
+  { icon: "call", title: "Phone Formats", options: ["Plain", "Dashed", "Parentheses"] },
 ];
 
 export default function Slide4ManageAccounts() {
@@ -84,11 +53,12 @@ export default function Slide4ManageAccounts() {
 
   return (
     <View style={[styles.wrapper, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.container, { paddingHorizontal: theme.spacing.xl }]}>
+      <View style={styles.container}>
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: "timing", duration: theme.animations.durationNormal }}
+          transition={{ type: "timing", duration: 300 }}
+          style={styles.header}
         >
           <Text
             style={[
@@ -96,34 +66,28 @@ export default function Slide4ManageAccounts() {
               {
                 color: theme.colors.textPrimary,
                 fontFamily: theme.typography.fontBold,
-                fontSize: theme.typography.sizeXxl + 4,
-                marginBottom: theme.spacing.sm,
               },
             ]}
           >
-            Managing Your Accounts
+            Powerful Vault Management
           </Text>
-
           <Text
             style={[
               styles.subtitle,
               {
                 color: theme.colors.textSecondary,
                 fontFamily: theme.typography.fontRegular,
-                fontSize: theme.typography.sizeMd,
-                marginBottom: theme.spacing.lg,
               },
             ]}
           >
-            Complete control over your credentials:
+            Everything you need to manage your digital identity
           </Text>
         </MotiView>
 
         <View style={styles.scrollContainer}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollContent, { gap: theme.spacing.md }]}
-            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
             onContentSizeChange={(_, height) => {
               setCompleteScrollBarHeight(height);
             }}
@@ -137,16 +101,188 @@ export default function Slide4ManageAccounts() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
           >
-            {features.map((feature, index) => (
-              <FeatureItem
-                key={index}
-                icon={feature.icon}
-                title={feature.title}
-                description={feature.description}
-                theme={theme}
-                index={index}
-              />
-            ))}
+            <MotiView
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "timing", duration: 300, delay: 150 }}
+              style={[
+                styles.capabilitiesCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.shapes.radiusLg,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeMd + 1,
+                  marginBottom: 16,
+                }}
+              >
+                Core Capabilities
+              </Text>
+              <View style={styles.capabilitiesGrid}>
+                {capabilities.map((cap, index) => (
+                  <MotiView
+                    key={cap.label}
+                    from={{ opacity: 0, translateY: 10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    transition={{
+                      type: "timing",
+                      duration: 200,
+                      delay: 250 + index * 50,
+                    }}
+                    style={[
+                      styles.capabilityItem,
+                      {
+                        backgroundColor: theme.colors.background,
+                        borderRadius: theme.shapes.radiusMd,
+                      },
+                    ]}
+                  >
+                    <Ionicons name={cap.icon as any} size={22} color={theme.colors.accent} />
+                    <Text
+                      style={{
+                        color: theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontBold,
+                        fontSize: theme.typography.sizeSm,
+                        marginTop: 6,
+                      }}
+                    >
+                      {cap.label}
+                    </Text>
+                    <Text
+                      style={{
+                        color: theme.colors.textMuted,
+                        fontFamily: theme.typography.fontRegular,
+                        fontSize: 10,
+                        textAlign: "center",
+                        marginTop: 2,
+                      }}
+                    >
+                      {cap.desc}
+                    </Text>
+                  </MotiView>
+                ))}
+              </View>
+            </MotiView>
+
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: "timing", duration: 300, delay: 500 }}
+              style={[
+                styles.formatsCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.surfaceBorder,
+                  borderRadius: theme.shapes.radiusLg,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: theme.colors.textPrimary,
+                  fontFamily: theme.typography.fontBold,
+                  fontSize: theme.typography.sizeMd + 1,
+                  marginBottom: 16,
+                }}
+              >
+                Display Customization
+              </Text>
+              {formats.map((format, index) => (
+                <View
+                  key={format.title}
+                  style={[
+                    styles.formatRow,
+                    index < formats.length - 1 && {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.surfaceBorder,
+                      paddingBottom: 14,
+                      marginBottom: 14,
+                    },
+                  ]}
+                >
+                  <View style={styles.formatHeader}>
+                    <Ionicons name={format.icon as any} size={18} color={theme.colors.accent} />
+                    <Text
+                      style={{
+                        color: theme.colors.textPrimary,
+                        fontFamily: theme.typography.fontBold,
+                        fontSize: theme.typography.sizeSm + 1,
+                      }}
+                    >
+                      {format.title}
+                    </Text>
+                  </View>
+                  <View style={styles.formatOptions}>
+                    {format.options.map((option) => (
+                      <View
+                        key={option}
+                        style={[
+                          styles.formatBadge,
+                          {
+                            backgroundColor: theme.colors.accentMuted,
+                            borderRadius: theme.shapes.radiusSm,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            color: theme.colors.accent,
+                            fontFamily: theme.typography.fontRegular,
+                            fontSize: 11,
+                          }}
+                        >
+                          {option}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </MotiView>
+
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: "timing", duration: 300, delay: 600 }}
+              style={[
+                styles.platformsCard,
+                {
+                  backgroundColor: theme.colors.accentMuted,
+                  borderRadius: theme.shapes.radiusMd,
+                },
+              ]}
+            >
+              <View style={styles.platformsContent}>
+                <Ionicons name="layers" size={28} color={theme.colors.accent} />
+                <View style={styles.platformsText}>
+                  <Text
+                    style={{
+                      color: theme.colors.textPrimary,
+                      fontFamily: theme.typography.fontBold,
+                      fontSize: theme.typography.sizeMd,
+                    }}
+                  >
+                    200+ Platform Icons
+                  </Text>
+                  <Text
+                    style={{
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.typography.fontRegular,
+                      fontSize: theme.typography.sizeSm,
+                      marginTop: 2,
+                    }}
+                  >
+                    Auto-detected for Google, GitHub, Discord, and more
+                  </Text>
+                </View>
+              </View>
+            </MotiView>
           </ScrollView>
 
           <View style={styles.scrollBarContainer}>
@@ -178,120 +314,83 @@ export default function Slide4ManageAccounts() {
   );
 }
 
-function FeatureItem({
-  icon,
-  title,
-  description,
-  theme,
-  index,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-  theme: ReturnType<typeof useAppTheme>;
-  index: number;
-}) {
-  return (
-    <MotiView
-      from={{ opacity: 0, translateX: -20 }}
-      animate={{ opacity: 1, translateX: 0 }}
-      transition={{
-        type: "timing",
-        duration: theme.animations.durationNormal,
-        delay: index * theme.animations.listItemStagger,
-      }}
-      style={[
-        styles.featureCard,
-        {
-          backgroundColor: theme.colors.surface,
-          borderRadius: theme.shapes.radiusMd,
-          borderWidth: theme.shapes.borderThin,
-          borderColor: theme.colors.surfaceBorder,
-          padding: theme.spacing.md,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.iconBox,
-          {
-            backgroundColor: theme.colors.accentMuted,
-            borderRadius: theme.shapes.radiusMd,
-          },
-        ]}
-      >
-        <Ionicons name={icon as any} size={24} color={theme.colors.accent} />
-      </View>
-      <View style={styles.featureContent}>
-        <Text
-          style={[
-            styles.featureTitle,
-            {
-              color: theme.colors.textPrimary,
-              fontFamily: theme.typography.fontBold,
-              fontSize: theme.typography.sizeMd + 1,
-            },
-          ]}
-        >
-          {title}
-        </Text>
-        <Text
-          style={[
-            styles.featureDescription,
-            {
-              color: theme.colors.textSecondary,
-              fontFamily: theme.typography.fontRegular,
-              fontSize: theme.typography.sizeSm + 1,
-              lineHeight: 19,
-            },
-          ]}
-        >
-          {description}
-        </Text>
-      </View>
-    </MotiView>
-  );
-}
-
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
   },
   container: {
     flex: 1,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
-  title: {},
-  subtitle: {},
+  header: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 26,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
+  },
   scrollContainer: {
     flex: 1,
     flexDirection: "row",
   },
-  scrollView: {
-    flex: 1,
-  },
   scrollContent: {
-    paddingBottom: 20,
+    gap: 14,
+    paddingBottom: 8,
     paddingRight: 8,
   },
-  featureCard: {
+  capabilitiesCard: {
+    padding: 16,
+    borderWidth: 1,
+  },
+  capabilitiesGrid: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  capabilityItem: {
+    width: "48%",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+  },
+  formatsCard: {
+    padding: 16,
+    borderWidth: 1,
+  },
+  formatRow: {},
+  formatHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  formatOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  formatBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  platformsCard: {
+    padding: 16,
+  },
+  platformsContent: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 14,
   },
-  iconBox: {
-    width: 44,
-    height: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  featureContent: {
+  platformsText: {
     flex: 1,
-    gap: 4,
   },
-  featureTitle: {},
-  featureDescription: {},
   scrollBarContainer: {
     width: 6,
     marginLeft: 8,

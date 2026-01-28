@@ -1,152 +1,246 @@
-// app/onboarding/Slide3SecurityTools.tsx
+// app/onboarding/Slide3SecurityTools.tsx - VERSION 2 (Professional)
 
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
+import Animated, { useAnimatedStyle, useSharedValue, interpolate } from "react-native-reanimated";
 import { useAppTheme } from "../../src/themes/hooks/useAppTheme";
+
+const securityFeatures = [
+  {
+    icon: "key",
+    title: "Smart Password Generator",
+    points: [
+      "Customizable 8-64 character length",
+      "Include symbols, numbers, uppercase",
+      "Passphrase mode for memorability",
+      "Real-time strength indicator",
+    ],
+  },
+  {
+    icon: "link",
+    title: "Connected Accounts Discovery",
+    points: [
+      "Auto-detect shared emails",
+      "View linked platforms at a glance",
+      "Navigate between related accounts",
+      "Security audit visibility",
+    ],
+  },
+  {
+    icon: "finger-print",
+    title: "Biometric & PIN Authentication",
+    points: [
+      "Face ID / Touch ID support",
+      "Secure PIN backup option",
+      "Progressive lockout protection",
+      "Configurable auto-lock timer",
+    ],
+  },
+  {
+    icon: "image",
+    title: "Encrypted Image Backups",
+    points: [
+      "AES-256-CTR encryption",
+      "Hidden in plain PNG images",
+      "Password-protected recovery",
+      "Safe for cloud storage",
+    ],
+  },
+];
 
 export default function Slide3SecurityTools() {
   const theme = useAppTheme();
+  const [completeScrollBarHeight, setCompleteScrollBarHeight] = useState(1);
+  const [visibleScrollBarHeight, setVisibleScrollBarHeight] = useState(0);
+  const scrollIndicator = useSharedValue(0);
+
+  const scrollIndicatorSize =
+    completeScrollBarHeight > visibleScrollBarHeight
+      ? (visibleScrollBarHeight * visibleScrollBarHeight) / completeScrollBarHeight
+      : visibleScrollBarHeight;
+
+  const difference =
+    visibleScrollBarHeight > scrollIndicatorSize ? visibleScrollBarHeight - scrollIndicatorSize : 1;
+
+  const scrollIndicatorPosition = useAnimatedStyle(() => {
+    const position = interpolate(
+      scrollIndicator.value,
+      [0, completeScrollBarHeight - visibleScrollBarHeight],
+      [0, difference]
+    );
+
+    return {
+      transform: [{ translateY: position }],
+    };
+  });
+
+  const handleScroll = (event: any) => {
+    scrollIndicator.value = event.nativeEvent.contentOffset.y;
+  };
 
   return (
     <View style={[styles.wrapper, { backgroundColor: theme.colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        <View style={[styles.container, { paddingHorizontal: theme.spacing.xl }]}>
-          <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: theme.animations.durationNormal }}
+      <View style={styles.container}>
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 300 }}
+          style={styles.header}
+        >
+          <View
+            style={[
+              styles.headerBadge,
+              {
+                backgroundColor: theme.colors.accentMuted,
+                borderRadius: theme.shapes.radiusSm,
+              },
+            ]}
           >
+            <Ionicons name="shield-checkmark" size={16} color={theme.colors.accent} />
             <Text
+              style={{
+                color: theme.colors.accent,
+                fontFamily: theme.typography.fontBold,
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: 1,
+              }}
+            >
+              Security First
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: theme.colors.textPrimary,
+                fontFamily: theme.typography.fontBold,
+              },
+            ]}
+          >
+            Enterprise-Grade Protection
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontRegular,
+              },
+            ]}
+          >
+            Your credentials are protected with industry-leading security standards
+          </Text>
+        </MotiView>
+
+        <View style={styles.scrollContainer}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            onContentSizeChange={(_, height) => {
+              setCompleteScrollBarHeight(height);
+            }}
+            onLayout={({
+              nativeEvent: {
+                layout: { height },
+              },
+            }) => {
+              setVisibleScrollBarHeight(height);
+            }}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            {securityFeatures.map((feature, index) => (
+              <MotiView
+                key={feature.title}
+                from={{ opacity: 0, translateY: 30 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: "timing",
+                  duration: 400,
+                  delay: 150 + index * 100,
+                }}
+                style={[
+                  styles.featureCard,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.shapes.radiusLg,
+                  },
+                ]}
+              >
+                <View style={styles.featureHeader}>
+                  <View
+                    style={[
+                      styles.featureIcon,
+                      {
+                        backgroundColor: theme.colors.accentMuted,
+                        borderRadius: theme.shapes.radiusMd,
+                      },
+                    ]}
+                  >
+                    <Ionicons name={feature.icon as any} size={24} color={theme.colors.accent} />
+                  </View>
+                  <Text
+                    style={{
+                      color: theme.colors.textPrimary,
+                      fontFamily: theme.typography.fontBold,
+                      fontSize: theme.typography.sizeMd + 1,
+                      flex: 1,
+                    }}
+                  >
+                    {feature.title}
+                  </Text>
+                </View>
+                <View style={styles.pointsList}>
+                  {feature.points.map((point, pointIndex) => (
+                    <View key={pointIndex} style={styles.pointItem}>
+                      <Ionicons name="checkmark-circle" size={16} color={theme.colors.accent} />
+                      <Text
+                        style={{
+                          color: theme.colors.textSecondary,
+                          fontFamily: theme.typography.fontRegular,
+                          fontSize: theme.typography.sizeSm + 1,
+                          flex: 1,
+                        }}
+                      >
+                        {point}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </MotiView>
+            ))}
+          </ScrollView>
+
+          <View style={styles.scrollBarContainer}>
+            <View
               style={[
-                styles.title,
+                styles.scrollBarTrack,
                 {
-                  color: theme.colors.textPrimary,
-                  fontFamily: theme.typography.fontBold,
-                  fontSize: theme.typography.sizeXxl + 4,
-                  marginBottom: theme.spacing.sm,
+                  backgroundColor: theme.colors.accentMuted,
+                  borderRadius: theme.shapes.radiusSm,
                 },
               ]}
             >
-              Security & Encoding Tools
-            </Text>
-
-            <Text
-              style={[
-                styles.subtitle,
-                {
-                  color: theme.colors.textSecondary,
-                  fontFamily: theme.typography.fontRegular,
-                  fontSize: theme.typography.sizeMd,
-                  marginBottom: theme.spacing.xl,
-                },
-              ]}
-            >
-              Advanced features for data security:
-            </Text>
-          </MotiView>
-
-          <ToolCard
-            icon="lock-closed"
-            title="Encoder"
-            description="Converts your data into encrypted text, then transforms it into a secure image format for maximum protection."
-            accentColor="#FF9800"
-            theme={theme}
-            delay={150}
-          />
-
-          <ToolCard
-            icon="key"
-            title="Decoder"
-            description="Decodes the encrypted image using your password. The decrypted data can then be imported directly into the app."
-            accentColor="#2196F3"
-            theme={theme}
-            delay={300}
-          />
+              <Animated.View
+                style={[
+                  styles.scrollBarThumb,
+                  {
+                    backgroundColor: theme.colors.accent,
+                    height: scrollIndicatorSize,
+                    borderRadius: theme.shapes.radiusSm,
+                  },
+                  scrollIndicatorPosition,
+                ]}
+              />
+            </View>
+          </View>
         </View>
-      </ScrollView>
-    </View>
-  );
-}
-
-function ToolCard({
-  icon,
-  title,
-  description,
-  accentColor,
-  theme,
-  delay,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-  accentColor: string;
-  theme: ReturnType<typeof useAppTheme>;
-  delay: number;
-}) {
-  const color = theme.isOriginalTheme ? accentColor : theme.colors.accent;
-
-  return (
-    <MotiView
-      from={{ opacity: 0, translateX: 30 }}
-      animate={{ opacity: 1, translateX: 0 }}
-      transition={{ type: "timing", duration: theme.animations.durationNormal, delay }}
-      style={[
-        styles.card,
-        {
-          backgroundColor: color + "15",
-          borderColor: color,
-          borderWidth: theme.shapes.borderThin,
-          borderRadius: theme.components.card.radius,
-          padding: theme.components.card.padding,
-          marginBottom: theme.spacing.lg,
-        },
-      ]}
-    >
-      <View style={styles.cardHeader}>
-        <View
-          style={[
-            styles.iconBox,
-            {
-              backgroundColor: color + "30",
-              borderRadius: theme.shapes.radiusMd,
-            },
-          ]}
-        >
-          <Ionicons name={icon as any} size={28} color={color} />
-        </View>
-        <Text
-          style={[
-            styles.cardTitle,
-            {
-              color: theme.colors.textPrimary,
-              fontFamily: theme.typography.fontBold,
-              fontSize: theme.typography.sizeXl,
-            },
-          ]}
-        >
-          {title}
-        </Text>
       </View>
-      <Text
-        style={[
-          styles.cardDescription,
-          {
-            color: theme.colors.textSecondary,
-            fontFamily: theme.typography.fontRegular,
-            fontSize: theme.typography.sizeSm + 1,
-            lineHeight: 20,
-          },
-        ]}
-      >
-        {description}
-      </Text>
-    </MotiView>
+    </View>
   );
 }
 
@@ -154,31 +248,78 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingVertical: 20,
-  },
   container: {
     flex: 1,
-    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
-  title: {},
-  subtitle: {},
-  card: {
-    gap: 12,
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
   },
-  cardHeader: {
+  headerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 26,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+  },
+  scrollContainer: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  scrollContent: {
+    gap: 14,
+    paddingBottom: 8,
+    paddingRight: 8,
+  },
+  featureCard: {
+    padding: 16,
+    borderWidth: 1,
+  },
+  featureHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    marginBottom: 14,
   },
-  iconBox: {
-    width: 48,
-    height: 48,
-    justifyContent: "center",
+  featureIcon: {
+    width: 44,
+    height: 44,
     alignItems: "center",
+    justifyContent: "center",
   },
-  cardTitle: {},
-  cardDescription: {},
+  pointsList: {
+    gap: 8,
+  },
+  pointItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  scrollBarContainer: {
+    width: 6,
+    marginLeft: 8,
+    justifyContent: "center",
+  },
+  scrollBarTrack: {
+    width: 6,
+    height: "100%",
+  },
+  scrollBarThumb: {
+    width: 6,
+  },
 });
