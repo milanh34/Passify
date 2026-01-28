@@ -18,6 +18,9 @@ const LEGACY_DB_KEY = "@PM:database";
 const LEGACY_SCHEMA_KEY = "@PM:schemas";
 const LEGACY_METADATA_KEY = "@PM:platform_metadata";
 
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder("utf-8");
+
 export interface EncryptedStorageStatus {
   isEncrypted: boolean;
   hasLegacyData: boolean;
@@ -99,7 +102,7 @@ async function encryptData(data: string): Promise<string> {
     const key = await getDatabaseEncryptionKey();
     const iv = await getOrCreateIV(true);
 
-    const textBytes = aesjs.utils.utf8.toBytes(data);
+    const textBytes = textEncoder.encode(data);
     const aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(Array.from(iv)));
     const encryptedBytes = aesCtr.encrypt(textBytes);
 
@@ -125,7 +128,7 @@ async function decryptData(encryptedHex: string): Promise<string> {
     const aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(Array.from(iv)));
     const decryptedBytes = aesCtr.decrypt(ciphertext);
 
-    return aesjs.utils.utf8.fromBytes(decryptedBytes);
+    return textDecoder.decode(decryptedBytes);
   } catch (error) {
     log.error("❌ Decryption failed:", error);
     throw new Error("Failed to decrypt data");

@@ -10,13 +10,16 @@ const KEY_LENGTH = 32;
 const PBKDF2_ITERATIONS = 100000;
 const CHUNK_SIZE = 8192;
 
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder("utf-8");
+
 async function deriveKeys(
   password: string,
   salt: Uint8Array,
   phase: ProgressPhase,
   progress?: ThrottledProgress
 ): Promise<{ aesKey: Uint8Array; hmacKey: Uint8Array }> {
-  const passwordBuffer = new TextEncoder().encode(password);
+  const passwordBuffer = textEncoder.encode(password);
   const input = new Uint8Array(passwordBuffer.length + salt.length);
   input.set(passwordBuffer);
   input.set(salt, passwordBuffer.length);
@@ -126,7 +129,7 @@ export async function encryptData(
   try {
     const progress = onProgress ? new ThrottledProgress(onProgress) : undefined;
 
-    const textBytes = aesjs.utils.utf8.toBytes(data);
+    const textBytes = textEncoder.encode(data);
     const totalInputBytes = textBytes.length;
 
     const salt = new Uint8Array(SALT_LENGTH);
@@ -217,7 +220,7 @@ export async function decryptData(
 
     progress?.update("decrypt", ciphertext.length, ciphertext.length);
 
-    return aesjs.utils.utf8.fromBytes(decryptedBytes);
+    return textDecoder.decode(decryptedBytes);
   } catch (error: any) {
     log.error("🔴 Decryption error:", error);
 
