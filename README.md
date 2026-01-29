@@ -1,772 +1,392 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/icon.png" alt="Passify Logo" width="256" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=180&section=header&text=PASSIFY&fontSize=80&fontColor=fff&fontAlignY=33&desc=The%20Password%20Manager%20That%20Actually%20Respects%20Your%20Privacy&descAlignY=55&descSize=18" width="100%"/>
 
-<h1> Passify </h1>
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/icon.png" width="256"/>
 
-<h4> A Privacy-First, Offline Password Manager </h4>
+<br/><br/>
+
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=6366F1&center=true&vCenter=true&multiline=true&repeat=true&width=720&height=100&lines=Zero+Network+Requests+%7C+Zero+Telemetry+%7C+Zero+Servers;AES-256-CTR+%7C+PBKDF2+100K+%7C+HMAC-SHA256;100%25+Offline+%7C+100%25+Yours" alt="Typing SVG" /></a>
+
+<br/>
 
 <p align="center">
-  <img src="https://komarev.com/ghpvc/?username=milanh34&repo=Passify" />
-  <img src="https://img.shields.io/github/stars/milanh34/Passify?style=flat&color=22c55e" />
-  <img src="https://img.shields.io/github/forks/milanh34/Passify?style=flat&color=f97316" />
-  <img src="https://img.shields.io/github/last-commit/milanh34/Passify?style=flat&color=ef4444" />
+<img src="https://img.shields.io/badge/dynamic/json?color=6366F1&label=Version&query=version&url=https://raw.githubusercontent.com/milanh34/Passify/main/package.json&style=for-the-badge&logo=semver&logoColor=white"/>
+<img src="https://img.shields.io/badge/React_Native-0.81.5-61DAFB?style=for-the-badge&logo=react&logoColor=white"/>
+<img src="https://img.shields.io/badge/Expo-SDK_54-000020?style=for-the-badge&logo=expo&logoColor=white"/>
+<img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/>
 </p>
+
+<p align="center">
+<img src="https://img.shields.io/github/last-commit/milanh34/Passify?style=for-the-badge&logo=git&color=green&labelColor=black"/>
+<img src="https://img.shields.io/github/repo-size/milanh34/Passify?style=for-the-badge&logo=github&color=blue&labelColor=black"/>
+<img src="https://img.shields.io/badge/License-MIT-brightgreen?style=for-the-badge&labelColor=black"/>
+</p>
+
 </div>
 
----
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
-## 🎯 About The Project
+## 🎯 The Problem
 
-**The Problem:** Managing passwords across multiple platforms is challenging. Traditional password managers require cloud sync, raising privacy concerns. Users need a secure, offline-first solution that puts them in complete control.
-
-**The Solution:** Passify is a modern, cross-platform password manager that stores and protects your credentials locally using strong cryptographic primitives. Your data never leaves your device, and you can export everything as a visually encoded image backup.
-
-### ✨ Key Highlights
-
-<table align='center'>
+<div align="center">
+<table>
 <tr>
-<td align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" width="60" />
-<br><b>Military-Grade Encryption</b><br>AES-256 with PBKDF2
+<td style="color: #ff0000;">
+
+### 😤 What Others Do
+
+```diff
+- Upload your passwords to "secure" servers
+- Require monthly subscriptions
+- Track your usage patterns
+- Lock features behind paywalls
+- Have data breaches (looking at you, LastPass)
+- Require internet connection
+- Own YOUR data
+```
+
 </td>
-<td align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Floppy%20Disk.png" width="60" />
-<br><b>Image-Based Backups</b><br>Convert to encrypted PNG
-</td>
-<td align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/No%20Entry.png" width="60" />
-<br><b>100% Offline</b><br>No cloud sync
-</td>
-</tr>
-<tr>
-<td align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Magnifying%20Glass%20Tilted%20Right.png" width="60" />
-<br><b>Smart Search & Sort</b><br>Find anything instantly
-</td>
-<td align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Paintbrush.png" width="60" />
-<br><b>Highly Customizable</b><br>11 themes, 10+ fonts
-</td>
-<td align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="60" />
-<br><b>Fast & Smooth</b><br>Optimized performance
+<td style="color: #00cc00;">
+
+### 😎 What Passify Does
+
+```diff
++ Everything stays on YOUR device
++ Completely FREE, forever
++ Zero telemetry, zero tracking
++ All features, no paywalls
++ Can't breach what doesn't exist
++ Works in airplane mode
++ YOU own your data
+```
+
 </td>
 </tr>
 </table>
+</div>
 
----
+<div align="center">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png" width="50"/>
+<br/>
+<i>"I needed a password manager that doesn't phone home. So I built one."</i>
+</div>
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="30" /> Features
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
-### 🗂️ Password Management
-
-- Organize by platform (Gmail, GitHub, Instagram, etc.)
-- Custom field schemas per platform
-- Batch operations & multi-select
-- Visual platform icons with custom colors
-
-### 🔍 Search & Organization
-
-- Real-time search with suggestions
-- Multiple sorting options (recent, alphabetical, date)
-- Smart filtering & highlighted matches
-
-### 🔐 Encryption & Security
-
-- AES-based symmetric encryption
-- Password-derived keys using PBKDF2
-- HMAC-based integrity verification
-- Checksum validation for corruption detection
-
-### 📸 Encoder & 🔓 Decoder
-
-- Convert database to encrypted PNG
-- Visual progress tracking
-- Share/download backups
-- Password-protected restoration
-- Preview before importing
-
-### 🔄 Import & Export
-
-- Import from text files or clipboard
-- Export to formatted text
-- Bulk import with auto-detection
-
-### 🔑 Authentication
-
-- Biometric (Face ID, Touch ID, Fingerprint)
-- PIN code protection
-- Auto-lock (1, 5, 10, 30 min, or never)
-- App background blur
-
-### 🎨 Customization
-
-- **11 Themes** (Sunrise, Ocean, Forest, Rose Gold, OLED Dark, etc.)
-- **10+ Fonts** (Inter, Lexend, Poppins, Roboto Mono, JetBrains Mono, etc.)
-- **Screen Transitions** (Slide, Fade, Scale, Flip)
-
-### 🎓 User Experience
-
-- Interactive 6-slide onboarding
-- Smooth Moti & Reanimated animations
-- Pull-to-refresh everywhere
-- Toast notifications
-
----
-
-## 📱 App Screenshots
-
-<details>
-<summary><b>🗂️ Platform & Account Management</b></summary>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/platforms.png" width="30%" />
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/accounts.png" width="30%" />
-</p>
-
-<p align="center">
-  <i>Platform overview and individual account management screens</i>
-</p>
-
-</details>
-
-<details>
-<summary><b>🔐 Encoder & Decoder</b></summary>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/encoder.png" width="30%" />
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/decoder.png" width="30%" />
-</p>
-
-<p align="center">
-  <i>Encrypted image backup creation and restoration flow</i>
-</p>
-
-</details>
-
-<details>
-<summary><b>🎨 Customization</b></summary>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-theme.png" width="22%" />
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-font.png" width="22%" />
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-animation.png" width="22%" />
-  <img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/customize-security.png" width="22%" />
-</p>
-
-<p align="center">
-  <i>Theme, font, animation style, and security customization screens</i>
-</p>
-
-</details>
-
----
-
-## 🛠️ Tech Stack
+## 🚀 Features
 
 <div align="center">
 
-<img src="https://skillicons.dev/icons?i=react,typescript,nodejs,git,github,firebase,vscode&theme=dark" alt="Tech Stack" />
-
-<br><br>
-
-**Additional Technologies:**
-Expo - Moti - Reanimated - AES-JS - AsyncStorage - Ionicons
+|     | Feature                 | Description                                             |
+| :-: | :---------------------- | :------------------------------------------------------ |
+| 🔐  | **Military Encryption** | AES-256-CTR, PBKDF2 100K iterations, HMAC-SHA256        |
+| 🔗  | **Connected Accounts**  | Auto-detect accounts sharing emails for security audits |
+| 📸  | **Image Backups**       | Export encrypted database to PNG, store anywhere        |
+| 🔑  | **Password Generator**  | 8-64 chars, passphrases, entropy calculation            |
+| 🎨  | **8 Themes**            | Material, Sharp, Dusk, Ocean + 16 color schemes         |
+| 🔍  | **Fuzzy Search**        | Typo-tolerant instant search with highlighting          |
+| 👆  | **Biometric Auth**      | Face ID, Touch ID, Fingerprint + PIN lockout            |
+| 📱  | **200+ Icons**          | Auto-detected platform icons                            |
+| 🔄  | **Import/Export**       | Bulk operations with conflict resolution                |
+| ⚙️  | **Customization**       | Date/phone formats, 11 fonts, 12 animations             |
 
 </div>
 
-<details>
-<summary><b>📦 View All Dependencies</b></summary>
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
-**Core Technologies**
+## 📱 Screenshots
 
-- React Native, Expo, TypeScript
+<div align="center">
 
-**Navigation & Routing**
+### Core Screens
 
-- Expo Router (file-based routing)
+<p>
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/platforms.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/accounts.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/connected.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/settings.png" width="180"/>
+</p>
 
-**Animation Libraries**
+### Backup & Security
 
-- Moti, React Native Reanimated, Gesture Handler
+<p>
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/encoder.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/decoder.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/generator.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/biometric.png" width="180"/>
+</p>
 
-**Security & Storage**
+### Customization
 
-- AES-JS, Expo Secure Store, Expo Local Authentication, AsyncStorage
+<p>
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/themes.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/fonts.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/animations.png" width="180"/>
+&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/milanh34/Passify/refs/heads/main/assets/images/display.png" width="180"/>
+</p>
 
-**UI Components**
+</div>
 
-- Expo Linear Gradient, Ionicons, 10+ Google Fonts
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
-**File & Media**
+## 🛡️ Security Breakdown
 
-- Expo Document Picker, File System, Sharing, Clipboard
+### Complete Encryption Pipeline
 
-</details>
+```mermaid
+flowchart LR
+    subgraph INPUT["📥 Input"]
+        DATA["📝 Your Data"]
+    end
 
----
+    subgraph ENCRYPT["🔐 Encryption"]
+        JSON["JSON Serialize"] --> AES["AES-256-CTR"]
+        AES --> HMAC["HMAC-SHA256"]
+        HMAC --> CRC["CRC32 Checksum"]
+    end
 
-## 🧠 High-Level Architecture
+    subgraph OUTPUT["📤 Output"]
+        CRC --> PNG["🎨 PNG Encode"]
+        PNG --> FILE["💾 Backup.png"]
+    end
+
+    DATA --> JSON
+
+    style DATA fill:#10B981,stroke:#059669,color:#fff
+    style AES fill:#6366F1,stroke:#4F46E5,color:#fff
+    style HMAC fill:#F59E0B,stroke:#D97706,color:#fff
+    style CRC fill:#EF4444,stroke:#DC2626,color:#fff
+    style PNG fill:#8B5CF6,stroke:#7C3AED,color:#fff
+    style FILE fill:#EC4899,stroke:#DB2777,color:#fff
+```
+
+### Key Derivation Process
+
+```mermaid
+flowchart TD
+    subgraph INPUTS["Inputs"]
+        PW["🔑 Your Password"]
+        SALT["🧂 Random 32-byte Salt"]
+    end
+
+    subgraph KDF["Key Derivation"]
+        PBKDF["⚡ PBKDF2-SHA256<br/>100,000 iterations"]
+    end
+
+    subgraph OUTPUTS["Derived Keys"]
+        AES_KEY["🔐 AES-256 Key<br/>(32 bytes)"]
+        HMAC_KEY["🛡️ HMAC Key<br/>(32 bytes)"]
+    end
+
+    PW --> PBKDF
+    SALT --> PBKDF
+    PBKDF --> AES_KEY
+    PBKDF --> HMAC_KEY
+
+    style PW fill:#6366F1,color:#fff
+    style SALT fill:#8B5CF6,color:#fff
+    style PBKDF fill:#F59E0B,color:#fff
+    style AES_KEY fill:#10B981,color:#fff
+    style HMAC_KEY fill:#EC4899,color:#fff
+```
+
+### Secure Storage Model
+
+```mermaid
+flowchart TB
+    subgraph HARDWARE["🔒 Hardware-Backed (Keychain/Keystore)"]
+        DEK["Database Encryption Key"]
+        IV["Initialization Vector"]
+    end
+
+    subgraph STORAGE["📦 AsyncStorage (Encrypted)"]
+        EDB["Encrypted Database"]
+        ESCH["Encrypted Schemas"]
+        EMETA["Encrypted Metadata"]
+    end
+
+    subgraph NOWHERE["🚫 Not Stored Anywhere"]
+        SERVERS["No Servers"]
+        CLOUD["No Cloud"]
+        NETWORK["Zero Network Requests"]
+    end
+
+    DEK --> EDB
+    IV --> EDB
+
+    style DEK fill:#EF4444,color:#fff
+    style IV fill:#EF4444,color:#fff
+    style EDB fill:#6366F1,color:#fff
+    style ESCH fill:#6366F1,color:#fff
+    style EMETA fill:#6366F1,color:#fff
+    style SERVERS fill:#374151,color:#9CA3AF
+    style CLOUD fill:#374151,color:#9CA3AF
+    style NETWORK fill:#374151,color:#9CA3AF
+```
+
+### Multi-Layer Authentication
+
+```mermaid
+flowchart TD
+    APP["🚀 App Launch"] --> CHECK{"Authentication<br/>Required?"}
+
+    CHECK -->|Yes| L1["<b>Layer 1: Biometric</b><br/>👆 Touch ID<br/>👤 Face ID<br/>🖐️ Fingerprint"]
+    CHECK -->|No| OPEN["🔓 Open"]
+
+    L1 -->|Success| UNLOCK["🔓 Unlocked"]
+    L1 -->|Fail/Skip| L2["<b>Layer 2: PIN</b><br/>●●●●<br/>4-6 digits"]
+
+    L2 -->|Success| UNLOCK
+    L2 -->|3 Fails| LOCKOUT["🔒 Progressive Lockout<br/>15s → 30s → 60s → 5m"]
+
+    LOCKOUT --> L2
+
+    UNLOCK --> L3["<b>Layer 3: Auto-Lock</b><br/>1 min | 5 min | 10 min | 30 min"]
+    L3 -->|Timeout| APP
+
+    style APP fill:#6366F1,color:#fff
+    style L1 fill:#8B5CF6,color:#fff
+    style L2 fill:#F59E0B,color:#fff
+    style UNLOCK fill:#10B981,color:#fff
+    style LOCKOUT fill:#EF4444,color:#fff
+    style L3 fill:#06B6D4,color:#fff
+```
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
+
+## 🏗️ Tech Stack
+
+<div align="center">
+
+```
+╔════════════════════════════════════════════════════════════════════════╗
+║                                                                        ║
+║   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   ║
+║   │   REACT     │  │    EXPO     │  │ TYPESCRIPT  │  │    MOTI     │   ║
+║   │   NATIVE    │  │   SDK 54    │  │    5.9      │  │  + REANI-   │   ║
+║   │   0.81      │  │             │  │             │  │   MATED     │   ║
+║   └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘   ║
+║                                                                        ║
+║   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   ║
+║   │   AES-JS    │  │   EXPO      │  │   ASYNC     │  │   EXPO      │   ║
+║   │   AES-256   │  │   CRYPTO    │  │   STORAGE   │  │   ROUTER    │   ║
+║   │             │  │   PBKDF2    │  │   (Encrypt) │  │   (Files)   │   ║
+║   └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘   ║
+║                                                                        ║
+╚════════════════════════════════════════════════════════════════════════╝
+```
+
+</div>
+
+### Architecture Overview
 
 ```mermaid
 graph TB
-  UI[📱 Expo Router UI]
-  CTX[🧩 Context Providers]
-  SEC[🔐 Auth & Security Layer]
-  STORE[💾 Local Storage]
+    subgraph PRESENTATION["📱 Presentation Layer"]
+        TABS["Tab Navigator"]
+        SCREENS["Screens"]
+        COMPONENTS["30+ Components"]
+    end
 
-  UI --> CTX
-  CTX --> SEC
-  SEC --> STORE
+    subgraph STATE["🧩 State Management"]
+        AUTH["AuthContext<br/>(Biometric/PIN)"]
+        DB["DbContext<br/>(CRUD Ops)"]
+        THEME["ThemeContext<br/>(8 Themes)"]
+        ANIM["AnimationContext<br/>(12 Presets)"]
+    end
 
-  STORE -->|No network| STORE
+    subgraph SERVICES["🔧 Service Layer"]
+        CRYPTO["Crypto Utils<br/>(AES/PBKDF2/HMAC)"]
+        STORAGE["Encrypted Storage"]
+        SEARCH["Fuzzy Search<br/>(Levenshtein)"]
+        CONN["Connected Accounts"]
+    end
+
+    subgraph PERSIST["💾 Persistence"]
+        SECURE["Secure Store<br/>(Keys)"]
+        ASYNC["AsyncStorage<br/>(Encrypted DB)"]
+    end
+
+    TABS --> SCREENS --> COMPONENTS
+    COMPONENTS --> AUTH & DB & THEME & ANIM
+    AUTH --> CRYPTO
+    DB --> CRYPTO & STORAGE & SEARCH & CONN
+    CRYPTO --> SECURE
+    STORAGE --> ASYNC
+
+    style TABS fill:#6366F1,color:#fff
+    style AUTH fill:#10B981,color:#fff
+    style CRYPTO fill:#F59E0B,color:#fff
+    style SECURE fill:#EF4444,color:#fff
 ```
 
-> Passify operates entirely offline. All data flows remain within the device.
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
----
+## ⚡ Get Started
 
-## 📁 Folder Structure
-
-```mermaid
-graph TB
-    A[📦 Passify Root]
-
-    A --> B[📱 app/]
-    A --> C[🔧 src/]
-    A --> D[🎨 assets/]
-    A --> E[⚙️ Config Files]
-
-    B --> B1[📂 tabs/]
-    B --> B2[📂 onboarding/]
-    B --> B3[📂 screens/]
-    B --> B4[_layout.tsx]
-    B --> B5[index.tsx]
-    B --> B6[onboarding.tsx]
-
-    B1 --> B1A[index.tsx]
-    B1 --> B1B[accounts.tsx]
-    B1 --> B1C[transfer.tsx]
-    B1 --> B1D[encoder.tsx]
-    B1 --> B1E[decoder.tsx]
-    B1 --> B1F[settings.tsx]
-
-    B2 --> B2A[Slide1Welcome]
-    B2 --> B2B[Slide2Tabs]
-    B2 --> B2C[Slide3Security]
-    B2 --> B2D[Slide4Manage]
-    B2 --> B2E[Slide5Tips]
-    B2 --> B2F[Slide6Start]
-
-    B3 --> B3A[BiometricUnlock]
-
-    C --> C1[🧩 components/]
-    C --> C2[🌐 context/]
-    C --> C3[🔧 utils/]
-    C --> C4[📝 types/]
-
-    C1 --> C1A[FormModal]
-    C1 --> C1B[Toast]
-    C1 --> C1C[ProgressBar]
-    C1 --> C1D[SearchBar]
-    C1 --> C1E[+15 more]
-
-    C2 --> C2A[ThemeContext]
-    C2 --> C2B[DbContext]
-    C2 --> C2C[AuthContext]
-    C2 --> C2D[AnimationContext]
-
-    C3 --> C3A[crypto.ts]
-    C3 --> C3B[image.ts]
-    C3 --> C3C[biometricAuth.ts]
-    C3 --> C3D[+12 more files]
-
-    C4 --> C4A[aes-js.d.ts]
-    C4 --> C4B[progress.ts]
-
-    D --> D1[images/]
-    D --> D2[database.json]
-
-    D1 --> D1A[icon.png]
-    D1 --> D1B[splash-icon.png]
-    D1 --> D1C[favicon.png]
-    D1 --> D1D[android-icons]
-
-    E --> E1[app.json]
-    E --> E2[package.json]
-    E --> E3[tsconfig.json]
-    E --> E4[eas.json]
-    E --> E5[.eslintrc.js]
-
-    style A fill:#667eea,stroke:#764ba2,stroke-width:4px,color:#fff
-    style B fill:#f093fb,stroke:#f5576c,stroke-width:2px
-    style C fill:#4facfe,stroke:#00f2fe,stroke-width:2px
-    style D fill:#43e97b,stroke:#38f9d7,stroke-width:2px
-    style E fill:#fa709a,stroke:#fee140,stroke-width:2px
-
-    style B1 fill:#c471f5,stroke:#fa71cd,stroke-width:1px
-    style C1 fill:#69c0ff,stroke:#40a9ff,stroke-width:1px
-    style C2 fill:#95de64,stroke:#73d13d,stroke-width:1px
-    style C3 fill:#ffd666,stroke:#ffc53d,stroke-width:1px
-```
-
-<details>
-<summary><b>🗂️ Detailed File Tree</b></summary>
-
-```
-Passify/
-├── 📱 app/                              # Expo Router app directory
-│   ├── _layout.tsx                     # Root layout with providers
-│   ├── index.tsx                       # App entry redirect
-│   ├── +not-found.tsx                  # 404 error screen
-│   ├── onboarding.tsx                  # Onboarding flow entry
-│   │
-│   ├── 🎓 (onboarding)/                # Onboarding slides
-│   │   ├── Slide1Welcome.tsx          # Welcome & introduction
-│   │   ├── Slide2Tabs.tsx             # App structure overview
-│   │   ├── Slide3SecurityTools.tsx    # Encoder/Decoder explanation
-│   │   ├── Slide4ManageAccounts.tsx   # Account management tutorial
-│   │   ├── Slide5Tips.tsx             # Customization tips
-│   │   └── Slide6GetStarted.tsx       # Final call-to-action
-│   │
-│   ├── 🔒 (screens)/                   # Full-screen modals
-│   │   ├── BiometricUnlockScreen.tsx  # Auth unlock screen
-│   │   └── _layout.tsx                # Modal layout config
-│   │
-│   └── 📱 (tabs)/                      # Main app tabs
-│       ├── _layout.tsx                 # Tab navigator
-│       ├── index.tsx                   # Manage tab (platforms)
-│       ├── accounts.tsx                # Individual platform accounts
-│       ├── transfer.tsx                # Import/Export hub
-│       ├── encoder.tsx                 # Data-to-image encryption
-│       ├── decoder.tsx                 # Image-to-data decryption
-│       └── settings.tsx               # Settings & customization
-│
-├── 🔧 src/                              # Source code
-│   ├── 🧩 components/                  # Reusable UI components (20 files)
-│   │   ├── AccountSortModal.tsx
-│   │   ├── BiometricPrompt.tsx
-│   │   ├── ConfirmModal.tsx
-│   │   ├── DecodedDataDisplay.tsx
-│   │   ├── DeleteModal.tsx
-│   │   ├── FAB.tsx
-│   │   ├── FormModal.tsx
-│   │   ├── OnboardingSlide.tsx
-│   │   ├── PINInputModal.tsx
-│   │   ├── PlatformIcon.tsx
-│   │   ├── ProgressBar.tsx
-│   │   ├── SchemaModal.tsx
-│   │   ├── SearchBar.tsx
-│   │   ├── SortModal.tsx
-│   │   ├── ThemeSelector.tsx
-│   │   ├── Toast.tsx
-│   │   └── (transfer)/
-│   │       ├── ImportTab.tsx
-│   │       └── ExportTab.tsx
-│   │
-│   ├── 🌐 context/                     # React Context providers
-│   │   ├── AnimationContext.tsx       # Animation preferences
-│   │   ├── AuthContext.tsx            # Authentication state
-│   │   ├── DbContext.tsx              # Database state management
-│   │   └── ThemeContext.tsx           # Theme state & switching
-│   │
-│   ├── 📝 types/                       # TypeScript type definitions
-│   │   ├── aes-js.d.ts               # AES-JS type declarations
-│   │   └── progress.ts                # Progress tracking types
-│   │
-│   └── 🔧 utils/                       # Utility functions (15 files)
-│       ├── biometricAuth.ts
-│       ├── blocks.ts
-│       ├── crypto.ts
-│       ├── fileSharing.ts
-│       ├── iconLibrary.ts
-│       ├── image.ts
-│       ├── inactivityTracker.ts
-│       ├── onboardingState.ts
-│       ├── pinCode.ts
-│       ├── searchAccounts.ts
-│       ├── searchFilter.ts
-│       ├── sortAccounts.ts
-│       ├── sortPlatforms.ts
-│       └── transferParser.ts
-│
-├── 🎨 assets/                           # Static assets
-│   ├── images/                         # App icons & images
-│   │   ├── icon.png                   # App icon (1024x1024)
-│   │   ├── splash-icon.png            # Splash screen icon
-│   │   ├── favicon.png                # Web favicon
-│   │   ├── android-icon-*.png         # Android adaptive icons
-│   │   └── apple-touch-icon.png       # iOS home screen icon
-│   └── database.json                   # Sample database structure
-│
-├── ⚙️ app.json                          # Expo configuration
-├── 📦 package.json                      # Dependencies & scripts
-├── 🔧 tsconfig.json                     # TypeScript configuration
-├── 🏗️ eas.json                         # EAS Build configuration
-├── 📏 .eslintrc.js                      # ESLint rules
-├── 🎨 .prettierrc                       # Prettier formatting rules
-├── 🚫 .gitignore                        # Git ignore patterns
-└── 📖 README.md                         # This file
-```
-
-</details>
-
----
-
-## ⚙️ Installation & Setup
-
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" width="25" /> **Prerequisites**
-
-| Requirement  | Version | Check Command        |
-| ------------ | ------- | -------------------- |
-| **Node.js**  | ≥ 20.x  | `node --version`     |
-| **npm/yarn** | Latest  | `npm --version`      |
-| **Expo CLI** | Latest  | `npx expo --version` |
-
-### 🚀 Quick Start
-
-**Step 1: Clone the repository**
+### Development
 
 ```bash
 git clone https://github.com/milanh34/Passify.git
-cd passify
-```
-
-**Step 2: Install dependencies**
-
-```bash
+cd Passify
 npm install
-```
-
-**Step 3: Start development server**
-
-```bash
 npx expo start
 ```
 
-**Step 4: Run on specific platform**
-
-```bash
-# iOS
-npx expo start --ios
-
-# Android
-npx expo start --android
-
-# Web
-npx expo start --web
-```
-
-### 🏗️ Production Build
-
-**Step 1: Install EAS CLI**
+### Production
 
 ```bash
 npm install -g eas-cli
-```
-
-**Step 2: Login to Expo**
-
-```bash
 eas login
-```
-
-**Step 3: Build for Android**
-
-```bash
 eas build --platform android --profile production
-```
-
-**Step 4: Build for iOS**
-
-```bash
 eas build --platform ios --profile production
 ```
 
----
-
-## 📖 Usage
-
-### 🎬 Adding Your First Account
-
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Waving%20Hand.png" width="40" />
-
-1. **Create Platform:** Tap **+** on Manage tab → Enter "Gmail"
-2. **Add Account:** Open Gmail → Tap **+** → Fill details → Save
-3. **Custom Fields:** Tap **⚙️** → Add fields (e.g., "recovery email", "2FA backup codes")
-
-### 🔐 Creating Encrypted Backup
-
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked%20with%20Pen.png" width="40" />
-
-1. Go to **Encoder** tab
-2. Enter strong master password
-3. Tap **Generate Encrypted Image**
-4. **Share** or **Download** the PNG
-
-**Encoding Process Flow:**
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#f093fb','secondaryColor':'#43e97b','tertiaryColor':'#4facfe'}}}%%
-graph TB
-    A[📊 Your Database<br/>accounts, passwords, platforms]
-    B[📝 Serialize to JSON<br/>Convert to text format]
-    C[🔒 AES-256 Encryption<br/>Military-grade security]
-    D[🛡️ Add HMAC Signature<br/>Prevent tampering]
-    E[📦 Pack Header<br/>Add metadata & checksum]
-    F[🎨 Encode to RGB Pixels<br/>Convert to image data]
-    G[💾 Save as PNG<br/>Your encrypted backup!]
-
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-
-    style A fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
-    style C fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
-    style D fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
-    style G fill:#fa709a,stroke:#fee140,stroke-width:3px,color:#fff
-```
-
-### 🔓 Restoring from Backup
-
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Key.png" width="40" />
-
-1. Go to **Decoder** tab
-2. Select encrypted PNG
-3. Enter master password
-4. Tap **Import to Accounts**
-
-**Decoding Process Flow:**
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#4facfe','primaryTextColor':'#fff','primaryBorderColor':'#00f2fe','lineColor':'#f093fb','secondaryColor':'#43e97b','tertiaryColor':'#667eea'}}}%%
-graph TB
-    A[🎨 Encrypted PNG Image<br/>Your backup file]
-    B[🔍 Decode RGB Pixels<br/>Extract raw bytes]
-    C[📦 Unpack Header<br/>Read metadata]
-    D[✅ Verify Checksum<br/>Check integrity]
-    E[🛡️ Validate HMAC<br/>Authenticate data]
-    F[🔓 Decrypt with AES-256<br/>Use your password]
-    G[📝 Parse JSON<br/>Convert back to data]
-    H[✨ Import Accounts<br/>Restore complete!]
-
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-    G --> H
-
-    style A fill:#fa709a,stroke:#fee140,stroke-width:3px,color:#fff
-    style E fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
-    style F fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
-    style H fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
-```
-
-### 🔄 Import/Export
-
-**Import Format:**
-
-```
-=== Gmail ===
-Account: john_doe
-Email: john@gmail.com
-Password: SecurePass123
----
-=== GitHub ===
-Account: jane_dev
-Username: janedoe
-Password: GitHubPass456
----
-```
-
-### 🎨 Customization
-
-Navigate to **Settings** tab:
-
-- **Themes:** Nord, Sky, Tokyo Night, Lavender, Vaporwave, Peach, etc.
-- **Fonts:** Inter, Lexend, Poppins, Roboto Mono, JetBrains Mono, etc.
-- **Transitions:** Slide, Fade, Scale, Flip, etc.
-- **Security:** Biometric, PIN, Auto-lock timeout
-
----
-
-## 🧭 Design Philosophy
-
-- Offline-first by design
-- User owns their data entirely
-- No cloud, no servers, no tracking
-- Security boundaries aligned with personal devices
-- Explicit user responsibility over forced restrictions
-
----
-
-## 🔒 Security & Encryption
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Shield.png" width="100" />
-</div>
-
-### Encryption: AES-256-CTR
-
-**Key Derivation:** PBKDF2 with 100,000 iterations  
-**Authentication:** HMAC-SHA256  
-**Checksum:** CRC32 validation
-
-### Complete Security Architecture
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#f093fb','secondaryColor':'#43e97b','tertiaryColor':'#4facfe','fontSize':'14px'}}}%%
-graph TB
-    A[🔑 Master Password<br/>Your secret key]
-    B[⚡ PBKDF2 Derivation<br/>100,000 iterations]
-    C[🔐 256-bit AES Key<br/>For encryption]
-    D[🛡️ 256-bit HMAC Key<br/>For authentication]
-
-    E[📊 Database JSON<br/>Your accounts data]
-    F[📝 Plain Text<br/>Serialized]
-    G[🔒 Encrypted Bytes<br/>AES-256-CTR mode]
-
-    H[🔏 HMAC Tag<br/>SHA-256 signature]
-    I[📦 Signed Data<br/>With authentication]
-    J[📋 Image Header<br/>Magic number + metadata]
-    K[✅ CRC32 Checksum<br/>Integrity verification]
-    L[🎨 RGB Pixel Array<br/>Image encoding]
-    M[💾 backup.png<br/>Final encrypted file]
-
-    A --> B
-    B --> C
-    B --> D
-
-    E --> F
-    F --> G
-    C -.encrypts.-> G
-
-    G --> H
-    D -.signs.-> H
-    H --> I
-    I --> J
-    J --> K
-    K --> L
-    L --> M
-
-    style A fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
-    style G fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
-    style H fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#fff
-    style M fill:#fa709a,stroke:#fee140,stroke-width:3px,color:#fff
-```
-
-### Security Features
-
-| Feature                | Implementation                         |
-| ---------------------- | -------------------------------------- |
-| 🔐 **Local Storage**   | AsyncStorage + Expo Secure Store       |
-| 🚫 **No Cloud Sync**   | 100% offline, zero network requests    |
-| 🕵️ **No Analytics**    | No tracking or telemetry               |
-| 👁️ **Background Blur** | Sensitive data hidden in app switcher  |
-| ⏱️ **Auto-Lock**       | Configurable timeout (1-30 min)        |
-| 🔒 **Biometric Auth**  | Face ID, Touch ID, Fingerprint         |
-| 🛡️ **Data Integrity**  | HMAC authentication prevents tampering |
-
-### 🔑 Password Best Practices
-
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" width="20" /> Use 12+ characters  
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" width="20" /> Mix uppercase, lowercase, numbers, symbols  
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" width="20" /> Use memorable passphrase (e.g., "Blue!Elephant#Runs@7am")  
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Cross%20Mark.png" width="20" /> Don't use birthdays, names, or dictionary words
-
-> **⚠️ Critical:** Never forget your master password! There's no recovery mechanism.
-
----
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
 ## 🤝 Contributing
 
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Handshake.png" width="40" />
+<div align="center">
 
-1. **Fork** the repository
-2. **Create branch:** `git checkout -b feature/amazing-feature`
-3. **Commit:** `git commit -m "feat: Add feature"`
-4. **Push:** `git push origin feature/amazing-feature`
-5. **Open Pull Request**
+**Fork → Branch → Code → Commit → Push → PR**
 
-**Commit Format:**
+</div>
 
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `style:` Formatting
-- `refactor:` Code refactoring
+```bash
+git clone https://github.com/YOUR_USERNAME/Passify.git
+git checkout -b feature/awesome-feature
+git commit -m "feat: add awesome feature"
+git push origin feature/awesome-feature
+```
 
----
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
-## 📜 License & Contact
+## 📜 License
 
-**License:** MIT License
+```
+MIT License • Copyright (c) 2026 Milan Haria
+Do whatever you want. Just don't sue me if you forget your password.
+```
 
-**Author:** Milan Haria
-
-- 💼 GitHub: [milanh34](https://github.com/milanh34)
-- 💌 LinkedIn: [milan-haria04](https://www.linkedin.com/in/milan-haria04)
-
----
-
-## ❓ FAQ
-
-<details>
-<summary><b>Is Passify really free?</b></summary>
-<br>
-Yes! Completely free and open-source. No premium features or ads.
-</details>
-
-<details>
-<summary><b>Can I sync across devices?</b></summary>
-<br>
-Currently offline-only. Use encrypted image backups to transfer data between devices manually.
-</details>
-
-<details>
-<summary><b>What if I forget my master password?</b></summary>
-<br>
-Unfortunately, no recovery is possible. Write it down and store securely!
-</details>
-
-<details>
-<summary><b>How secure is the encryption?</b></summary>
-<br>
-Military-grade AES-256 with 100k PBKDF2 iterations - industry-standard cryptographic algorithms used for local data protection.
-</details>
-
-<details>
-<summary><b>Does it work offline?</b></summary>
-<br>
-Yes! 100% offline, no internet connection required.
-</details>
-
----
-
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Folded%20Hands.png" width="24" /> Acknowledgments
-
-- **[Expo](https://expo.dev/)** - App foundation
-- **[React Native](https://reactnative.dev/)** - Cross-platform framework
-- **[Moti](https://moti.fyi/)** - Smooth animations
-- **[AES-JS](https://github.com/ricmoo/aes-js)** - Encryption implementation
-- **[Ionicons](https://ionic.io/ionicons)** - Beautiful icons
-
----
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
 <div align="center">
 
-**Made with ❤️ and 🔐 by [Milan Haria](https://github.com/milanh34)**
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=120&section=footer&animation=twinkling"/>
 
-_Your data. Your device. Your control._
+### Built by [Milan Haria](https://github.com/milanh34)
 
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Star.png" width="25" />
-
-[⬆ Back to Top](#-passify)
+<a href="https://github.com/milanh34"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white"/></a>
+<a href="https://linkedin.com/in/milan-haria04"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"/></a>
 
 </div>
