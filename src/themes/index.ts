@@ -3,7 +3,7 @@
 import { CompleteTheme, GlobalThemeName } from "./types";
 import { originalTheme } from "./original";
 import { materialTheme } from "./material";
-import { valorantTheme } from "./valorant";
+import { sharpTheme } from "./sharp";
 import { minimalTheme } from "./minimal";
 import { minimalDarkTheme } from "./minimalDark";
 import { retroTheme } from "./retro";
@@ -13,7 +13,7 @@ import { oceanTheme } from "./ocean";
 export * from "./types";
 export { originalTheme } from "./original";
 export { materialTheme } from "./material";
-export { valorantTheme } from "./valorant";
+export { sharpTheme } from "./sharp";
 export { minimalTheme } from "./minimal";
 export { minimalDarkTheme } from "./minimalDark";
 export { retroTheme } from "./retro";
@@ -26,7 +26,7 @@ export type { AppThemeValues } from "./hooks/useAppTheme";
 export const themes: Record<GlobalThemeName, CompleteTheme> = {
   original: originalTheme,
   material: materialTheme,
-  valorant: valorantTheme,
+  sharp: sharpTheme,
   minimal: minimalTheme,
   minimalDark: minimalDarkTheme,
   retro: retroTheme,
@@ -37,7 +37,7 @@ export const themes: Record<GlobalThemeName, CompleteTheme> = {
 export const themeList: { id: GlobalThemeName; theme: CompleteTheme }[] = [
   { id: "original", theme: originalTheme },
   { id: "material", theme: materialTheme },
-  { id: "valorant", theme: valorantTheme },
+  { id: "sharp", theme: sharpTheme },
   { id: "minimal", theme: minimalTheme },
   { id: "minimalDark", theme: minimalDarkTheme },
   { id: "retro", theme: retroTheme },

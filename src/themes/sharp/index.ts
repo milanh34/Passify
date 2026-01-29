@@ -1,10 +1,10 @@
-// src/themes/valorant/index.ts
+// src/themes/sharp/index.ts
 
 import { CompleteTheme } from "../types";
 
-export const valorantTheme: CompleteTheme = {
-  name: "valorant",
-  displayName: "Valorant",
+export const sharpTheme: CompleteTheme = {
+  name: "sharp",
+  displayName: "Sharp",
   description: "Tactical, sharp, competitive",
   isDark: true,
 

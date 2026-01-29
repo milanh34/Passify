@@ -93,24 +93,6 @@ export default function Settings() {
         <TutorialSection />
         <LegalSection />
       </ScrollView>
-
-      <View style={[styles.footer, { bottom: insets.bottom + 12 }]}>
-        <Text
-          style={[
-            styles.footerText,
-            { color: theme.colors.textSecondary, fontFamily: theme.typography.fontRegular },
-          ]}
-        >
-          Passify · Made by{" "}
-          <Text
-            style={{ color: theme.colors.accent, fontFamily: theme.typography.fontBold }}
-            onPress={() => Linking.openURL("https://github.com/milanh34")}
-          >
-            Milan Haria
-          </Text>
-        </Text>
-      </View>
-
       <Toast visible={showToast} message={toastMessage} type={toastType} />
     </View>
   );

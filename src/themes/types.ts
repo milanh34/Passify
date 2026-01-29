@@ -3,7 +3,7 @@
 export type GlobalThemeName =
   | "original"
   | "material"
-  | "valorant"
+  | "sharp"
   | "minimal"
   | "minimalDark"
   | "retro"
